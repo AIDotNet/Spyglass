@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A headless Avalonia app that knows nothing about Spyglass: the startup hook test attaches to it from outside. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" VersionOverride="11.2.2" />
+    <PackageReference Include="Avalonia.Headless" VersionOverride="11.2.2" />
+    <PackageReference Include="Avalonia.Skia" VersionOverride="11.2.2" />
+    <PackageReference Include="Avalonia.Themes.Simple" VersionOverride="11.2.2" />
+  </ItemGroup>
+</Project>

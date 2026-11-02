@@ -1,21 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Attach without touching the app: DOTNET_STARTUP_HOOKS=<this dll> dotnet MyApp.dll (design D14).
-       The agent and its dependencies are loaded into their own load context from this folder, so they never
-       clash with the app's own (e.g. System.Text.Json 9 here vs the framework's 8). Avalonia is shared with the app. -->
+  <!-- Attach without touching the app: DOTNET_STARTUP_HOOKS=<this dll> dotnet MyApp.dll (design D14, design/startup-hook).
+       The agent and its dependencies are loaded into their own load context from a sub-folder of this one, chosen at runtime by
+       the app's Avalonia version, so they never clash with the app's own (e.g. System.Text.Json 9 here vs the framework's 8).
+       Avalonia itself is shared with the app. Output layout (directly usable from the build folder):
+         Spyglass.StartupHook.dll
+         avalonia12/  Spyglass.Agent (+ Advanced), Protocol, System.Text.Json ...
+         avalonia11/  Spyglass.Agent (built for Avalonia 11.2.2), Protocol, System.Text.Json ... -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Spyglass.StartupHook</AssemblyName>
     <RootNamespace>Spyglass.StartupHook</RootNamespace>
-    <!-- The hook must not drag its own copy of the app's Avalonia along. -->
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Spyglass.Agent\Spyglass.Agent.csproj" />
-    <PackageReference Include="Avalonia" ExcludeAssets="runtime" />
+    <!-- Built (for ordering) but not referenced: their outputs are published into the sub-folders below. -->
+    <ProjectReference Include="..\Spyglass.Agent\Spyglass.Agent.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Spyglass.Agent.Advanced\Spyglass.Agent.Advanced.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Spyglass.Agent.Avalonia11\Spyglass.Agent.Avalonia11.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
-  <Target Name="DropAvaloniaFromOutput" AfterTargets="ResolveReferences">
+  <Target Name="PublishAgents" AfterTargets="Build">
+    <PropertyGroup><_Out>$([System.IO.Path]::GetFullPath('$(OutDir)'))</_Out></PropertyGroup>
+    <MSBuild Projects="..\Spyglass.Agent\Spyglass.Agent.csproj" Targets="Publish" Properties="NoBuild=true;PublishDir=$(_Out)avalonia12\" />
+    <MSBuild Projects="..\Spyglass.Agent.Advanced\Spyglass.Agent.Advanced.csproj" Targets="Publish" Properties="NoBuild=true;PublishDir=$(_Out)avalonia12\" />
+    <MSBuild Projects="..\Spyglass.Agent.Avalonia11\Spyglass.Agent.Avalonia11.csproj" Targets="Publish" Properties="NoBuild=true;PublishDir=$(_Out)avalonia11\" />
     <ItemGroup>
-      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="$([System.String]::Copy('%(Filename)').StartsWith('Avalonia')) Or $([System.String]::Copy('%(Filename)').StartsWith('MicroCom')) Or $([System.String]::Copy('%(Filename)').StartsWith('Microsoft.CodeAnalysis'))" />
+      <!-- Avalonia and its native/compiler helpers come from the app, never from here. -->
+      <_Foreign Include="$(_Out)avalonia1*\Avalonia*.dll;$(_Out)avalonia1*\MicroCom*.dll;$(_Out)avalonia1*\Microsoft.CodeAnalysis*.dll;$(_Out)avalonia1*\*.deps.json" />
     </ItemGroup>
+    <Delete Files="@(_Foreign)" />
+    <RemoveDir Directories="$(_Out)avalonia12\runtimes;$(_Out)avalonia11\runtimes" />
   </Target>
 </Project>

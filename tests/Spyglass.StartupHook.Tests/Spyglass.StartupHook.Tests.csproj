@@ -14,6 +14,9 @@
     <!-- Built, not referenced: the test starts them as separate processes. -->
     <ProjectReference Include="..\..\src\Spyglass.StartupHook\Spyglass.StartupHook.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Spyglass.StartupHook.TestApp\Spyglass.StartupHook.TestApp.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Spyglass.StartupHook.TestApp11\Spyglass.StartupHook.TestApp11.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Spyglass.StartupHook.TestAppSelf\Spyglass.StartupHook.TestAppSelf.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Spyglass.StartupHook.TestAppOld\Spyglass.StartupHook.TestAppOld.csproj" ReferenceOutputAssembly="false" />
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
       <_Parameter1>HookDll</_Parameter1>
       <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\src\Spyglass.StartupHook\bin\$(Configuration)\net8.0\Spyglass.StartupHook.dll'))</_Parameter2>
@@ -21,6 +24,18 @@
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
       <_Parameter1>TestAppDll</_Parameter1>
       <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Spyglass.StartupHook.TestApp\bin\$(Configuration)\net10.0\Spyglass.StartupHook.TestApp.dll'))</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>TestApp11Dll</_Parameter1>
+      <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Spyglass.StartupHook.TestApp11\bin\$(Configuration)\net10.0\Spyglass.StartupHook.TestApp11.dll'))</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>TestAppSelfDll</_Parameter1>
+      <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Spyglass.StartupHook.TestAppSelf\bin\$(Configuration)\net10.0\Spyglass.StartupHook.TestAppSelf.dll'))</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>TestAppOldDll</_Parameter1>
+      <_Parameter2>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\Spyglass.StartupHook.TestAppOld\bin\$(Configuration)\net10.0\Spyglass.StartupHook.TestAppOld.dll'))</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
 </Project>
