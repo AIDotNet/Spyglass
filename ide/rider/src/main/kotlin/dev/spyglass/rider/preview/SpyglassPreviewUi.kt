@@ -209,7 +209,7 @@ class PreviewPanel(private val service: SpyglassPreviewService) : JPanel(BorderL
         errorBar.isVisible = err?.error != null
         if (err?.error != null) {
             val where = if (err.line != null) " (line ${err.line}${err.column?.let { ", column $it" } ?: ""})" else ""
-            errorBar.text = "<html>" + escape(SpyglassPreviewService.firstLine(err.error)) + escape(where) + "</html>"
+            errorBar.text = "<html>" + escape(SpyglassPreviewService.errorSummary(err.error)) + escape(where) + "</html>"
             errorBar.toolTipText = "<html>Click to go to the error<pre>" + escape(err.error) + "</pre></html>"
         }
         messageLabel.text = service.message ?: ""
@@ -228,7 +228,7 @@ class PreviewPanel(private val service: SpyglassPreviewService) : JPanel(BorderL
         themeBox.selectedIndex = service.theme.ordinal
         updatingControls = false
 
-        val (level, text) = PreviewStatus.describe(phase, service.updating, service.lastUpdateMs, err?.error?.let(SpyglassPreviewService::firstLine), service.message)
+        val (level, text) = PreviewStatus.describe(phase, service.updating, service.lastUpdateMs, err?.error?.let(SpyglassPreviewService::errorSummary), service.message)
         dot.level = level
         statusLabel.text = text
         statusLabel.toolTipText = text

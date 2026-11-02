@@ -350,8 +350,8 @@ class SpyglassPreviewService(val project: Project) : Disposable {
         lastUpdateMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - sentAt)
         updating = false
         val f = sentFile
-        val items = if (mapped.error == null) emptyList() else listOf(XamlDiagnostic("error", firstLine(mapped.error), line, column, null))
-        if (f != null) diagnostics.show(XamlDiagnostics(path = Path.of(f.path).toString(), items = items, summary = mapped.error?.let(::firstLine) ?: "ok"))
+        val items = if (mapped.error == null) emptyList() else listOf(XamlDiagnostic("error", errorSummary(mapped.error), line, column, null))
+        if (f != null) diagnostics.show(XamlDiagnostics(path = Path.of(f.path).toString(), items = items, summary = mapped.error?.let(::errorSummary) ?: "ok"))
         if (phase != PreviewPhase.READY) { phase = PreviewPhase.READY; message = null }
         changed()
     }
@@ -377,7 +377,19 @@ class SpyglassPreviewService(val project: Project) : Disposable {
     companion object {
         fun getInstance(project: Project): SpyglassPreviewService = project.service()
 
-        /** The host reports `ex.ToString()`; the first line is the message. */
-        fun firstLine(text: String): String = text.lineSequence().firstOrNull { it.isNotBlank() }?.trim() ?: text
+        /** Exceptions that only wrap the real cause (the previewer loads XAML through reflection). */
+        private val WRAPPERS = Regex("^(System\\.Reflection\\.TargetInvocationException|System\\.TypeInitializationException|System\\.AggregateException)\\b")
+
+        /**
+         * One line for the host's `ex.ToString()`: the first exception in the chain (outer, then each ` ---> ` inner) that is not
+         * a mere wrapper, so "TargetInvocationException: Exception has been thrown by the target of an invocation." shows its cause.
+         */
+        fun errorSummary(text: String): String {
+            val lines = text.lines().map { it.trim() }
+            val first = lines.firstOrNull { it.isNotEmpty() }
+            val headers = listOfNotNull(first) + lines.filter { it.startsWith("--->") }.map { it.removePrefix("--->").trim() }
+            val pick = headers.firstOrNull { !WRAPPERS.containsMatchIn(it) } ?: headers.lastOrNull() ?: text.trim()
+            return if (pick.length > 300) pick.take(297) + "…" else pick
+        }
     }
 }

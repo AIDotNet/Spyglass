@@ -290,7 +290,7 @@ public sealed class PreviewController : IAsyncDisposable
             if (path is not null) DiagnosticsChanged?.Invoke(path, null);
             return;
         }
-        var message = r.Error.Trim();
+        var message = PreviewErrorText.Summary(r.Error);
         SetStatus(new(PreviewStatusKind.Running, $"XAML error · {(long)_updateClock.Elapsed.TotalMilliseconds} ms", XamlError: message, ErrorLine: _pendingEdit.MapBack(r.Line, r.Column).Line, ErrorColumn: _pendingEdit.MapBack(r.Line, r.Column).Column));
         var (line, column) = _pendingEdit.MapBack(r.Line, r.Column);
         if (path is not null) DiagnosticsChanged?.Invoke(path, new PreviewDiagnostic(path, line, column, message));

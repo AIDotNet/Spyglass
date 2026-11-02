@@ -208,4 +208,18 @@ class PreviewLogicTest {
         assertEquals(PreviewTheme.DEFAULT, PreviewTheme.parse("nope"))
         assertEquals(PreviewTheme.DEFAULT, PreviewTheme.parse(null))
     }
+
+    // ---------- host error summary ----------
+
+    @Test
+    fun `a TargetInvocationException is summarised by its inner cause`() {
+        val tie = "System.Reflection.TargetInvocationException: Exception has been thrown by the target of an invocation.\n" +
+            " ---> System.ArgumentException: -5 is not a valid value for 'MinWidth'.\n   at Avalonia.Layout.Layoutable.Validate()\n" +
+            "--- End of stack trace from previous location ---\n   --- End of inner exception stack trace ---\n   at System.Reflection.Invoke()"
+        assertEquals("System.ArgumentException: -5 is not a valid value for 'MinWidth'.", SpyglassPreviewService.errorSummary(tie))
+        val parse = "XamlX.XamlParseException: bad value. Line 1, position 9.\n ---> System.FormatException: bad\n   --- End of inner exception stack trace ---"
+        assertEquals("XamlX.XamlParseException: bad value. Line 1, position 9.", SpyglassPreviewService.errorSummary(parse))
+        assertEquals("System.Reflection.TargetInvocationException: x", SpyglassPreviewService.errorSummary("System.Reflection.TargetInvocationException: x\n   at Foo()"))
+        assertEquals("System.Xml.XmlException: bad", SpyglassPreviewService.errorSummary("\n System.Xml.XmlException: bad\n   at Foo()"))
+    }
 }

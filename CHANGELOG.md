@@ -3,6 +3,15 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
+## Unreleased
+
+### Fixed
+- **IDE preview error bar** (VS Code, Rider, Visual Studio): errors raised while the XAML is loaded (for example an invalid
+  property value half-way through typing) showed only `System.Reflection.TargetInvocationException: Exception has been thrown
+  by the target of an invocation.` The error bar and the squiggle now show the inner cause, such as
+  `System.ArgumentException: -5 is not a valid value for 'MinWidth'.` Visual Studio also no longer puts the whole stack trace
+  in the error bar and the Error List.
+
 ## 0.2.0
 
 ### Added

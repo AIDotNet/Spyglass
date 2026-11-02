@@ -1,7 +1,7 @@
 // VS Code side of the design-time preview (design/preview/README.md §4): one webview panel beside the editor that
 // follows the active .axaml, feeds the unsaved buffer to the Avalonia previewer host (debounced), shows errors as
 // diagnostics + a clickable error bar, forwards pointer/keyboard input, and offers zoom and theme switching.
-import { firstLine } from "./message";
+import { errorSummary } from "./message";
 import { execFile } from "child_process";
 import { randomBytes } from "crypto";
 import * as fs from "fs";
@@ -312,7 +312,7 @@ export class PreviewController implements vscode.Disposable {
     const range = line < doc.lineCount
       ? doc.getWordRangeAtPosition(new vscode.Position(line, col), /[\w:.{}-]+/) ?? doc.lineAt(line).range
       : new vscode.Range(line, col, line, col + 1);
-    const short = firstLine(r.error);
+    const short = errorSummary(r.error);
     const d = new vscode.Diagnostic(range, short, vscode.DiagnosticSeverity.Error);
     d.source = "Spyglass Preview";
     this.pendingDiag = d;
