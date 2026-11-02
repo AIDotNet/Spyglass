@@ -69,6 +69,11 @@ Theme, accent colour, animations, port, Network capture options and the editor u
 **Settings** page. They apply immediately and are stored in `~/.spyglass/settings.json`
 (`SPYGLASS_HOME` moves the whole folder, `SPYGLASS_SETTINGS` just this file; settings from the old OS app-data folder are copied over once).
 
+- **Language**: English, 简体中文 or 繁體中文 (Settings › Appearance; changes live).
+- **Keyboard shortcuts**: the Network page keys can be changed in Settings (click a field, press the keys).
+- **Other devices** (off by default): Settings › Connection lets phones or other machines connect with a 6-digit pairing code.
+  Only the agent endpoint is reachable from the network (MCP stays local); the connection is not encrypted, use trusted networks only.
+
 ## Test
 
 ```bash
