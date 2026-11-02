@@ -100,6 +100,10 @@ public readonly record struct Gesture(bool Ctrl, bool Alt, bool Shift, bool Meta
 /// <summary>The client's bindable actions and the rules for user overrides stored in <see cref="AppSettings.Shortcuts"/>.</summary>
 public static class ShortcutRegistry
 {
+    public const string PaletteOpen = "palette.open";
+    /// <summary>Navigation actions: id "nav.&lt;page key&gt;", bound to Mod+1…9 in sidebar order (see <see cref="NavPages"/>).</summary>
+    public static readonly IReadOnlyList<string> NavPages = ["elements", "events", "network", "resources", "bindings", "logs", "performance", "connections", "settings"];
+    public static string NavId(string page) => "nav." + page;
     public const string NetworkToggleRecord = "network.toggleRecord";
     public const string NetworkSearch = "network.search";
     public const string NetworkClose = "network.close";
@@ -109,6 +113,8 @@ public static class ShortcutRegistry
     /// <summary>Registry order is also the order of the Settings list and of dispatch.</summary>
     public static IReadOnlyList<ShortcutAction> Actions { get; } =
     [
+        new(PaletteOpen, "Window", "Command palette", "Mod+K"),
+        .. NavPages.Select((page, i) => new ShortcutAction(NavId(page), "Navigation", "Go to " + page, "Mod+" + (i + 1))),
         new(NetworkToggleRecord, "Network", "Start / stop recording", "Mod+E"),
         new(NetworkSearch, "Network", "Search headers, payloads and responses", "Mod+F"),
         new(NetworkClose, "Network", "Close the search / request details", "Escape"),

@@ -42,7 +42,13 @@
                      FontSize="{arc:ArcDesignTokenResource TypeSM}" Foreground="{arc:ArcDesignTokenResource TextSecondary}"
                      Text="{Binding WindowTitle}" />
           <!-- Right side on macOS (window buttons are on the left); leave room for caption buttons elsewhere. -->
-          <arc:ThemeSwitcher x:Name="ThemeSwitch" IsIconOnly="True" Variant="Reveal" HorizontalAlignment="Right" VerticalAlignment="Center" />
+          <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <arc:Button x:Name="PaletteButton" Variant="Ghost" Size="Small" arc:CommandPaletteDialog.Opens="{Binding #Palette}"
+                        AutomationProperties.Name="{loc:T Palette.Label}">
+              <lucide:LucideIcon Kind="Search" Width="16" Height="16" />
+            </arc:Button>
+            <arc:ThemeSwitcher x:Name="ThemeSwitch" IsIconOnly="True" Variant="Reveal" VerticalAlignment="Center" />
+          </StackPanel>
         </Grid>
 
         <!-- Status capsule -->
@@ -92,5 +98,9 @@
         </TransitioningContentControl>
       </DockPanel>
     </Panel>
+    <!-- Command palette (W6): Cmd/Ctrl+K or the search button; entries are rebuilt every time it opens. -->
+    <arc:CommandPaletteDialog x:Name="Palette" PlaceholderText="{loc:T Palette.Placeholder}" Label="{loc:T Palette.Label}"
+                              EmptyTitle="{loc:T Palette.EmptyTitle}" EmptyDescription="{loc:T Palette.EmptyDescription}"
+                              CloseButtonLabel="{loc:T Palette.Close}" ResultsLabel="{loc:T Palette.Results}" />
   </Panel>
 </Window>

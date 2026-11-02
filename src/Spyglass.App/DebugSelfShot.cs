@@ -122,6 +122,30 @@ internal static class DebugSelfShot
                     await Task.Delay(1000);
                     await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-elements-changed.png"));
                 }
+                // Command palette: SPYGLASS_SELFSHOT_PALETTE=<query> opens it (empty query: "1" shows everything).
+                if (Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT_PALETTE") is { Length: > 0 } query)
+                {
+                    await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "elements");
+                    await Task.Delay(600);
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        if (window.FindControl<TKCode.Arc.CommandPaletteDialog>("Palette") is { } p) p.IsOpen = true;
+                    });
+                    await Task.Delay(1200);
+                    await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-9-palette.png"));
+                    if (query != "1")
+                    {
+                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            var pal = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<TKCode.Arc.CommandPalette>().FirstOrDefault();
+                            if (pal is not null) pal.Query = query;
+                        });
+                        await Task.Delay(900);
+                        await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-9-palette-query.png"));
+                    }
+                    await Dispatcher.UIThread.InvokeAsync(() => { if (window.FindControl<TKCode.Arc.CommandPaletteDialog>("Palette") is { } p) p.IsOpen = false; });
+                    await Task.Delay(500);
+                }
                 await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "connections");
                 await Task.Delay(800);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-3-connections.png"));

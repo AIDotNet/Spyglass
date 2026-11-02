@@ -17,7 +17,8 @@ public partial class MainWindow : Window
         GlassMaterial.Attach(this);
         GlassDividers.HideEdge(Nav);
         GlassDividers.Ghost(ThemeSwitch);
-        if (!OperatingSystem.IsMacOS()) ThemeSwitch.Margin = new Thickness(0, 0, 140, 0);   // Windows/Linux caption buttons
+        if (!OperatingSystem.IsMacOS()) PaletteButton.Parent!.SetValue(MarginProperty, new Thickness(0, 0, 140, 0));   // Windows/Linux caption buttons
+        InitPalette();
         TitleBar.PointerPressed += (_, e) =>
         {
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
@@ -46,11 +47,50 @@ public partial class MainWindow : Window
 #endif
     }
 
+    PaletteController? _palette;
+
+    /// <summary>Command palette: entries are rebuilt when it opens; its gesture and the navigation shortcuts follow Settings.</summary>
+    void InitPalette()
+    {
+        Palette.ItemSelected += (_, e) => { if (e.Item.Id is { Length: > 0 } id) _palette?.Run(id); };
+        Palette.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TKCode.Arc.CommandPaletteDialog.IsOpenProperty && Palette.IsOpen && _palette is not null) Palette.ItemsSource = BuildPaletteItems();
+        };
+        void ApplyGesture()
+        {
+            var g = ShortcutBridge.ToKeyGesture(ShortcutBridge.Current.Get(Spyglass.App.Core.Settings.ShortcutRegistry.PaletteOpen));
+            Palette.IsShortcutEnabled = g is not null;
+            Palette.OpenGesture = g;
+            var hint = ShortcutBridge.Current.Get(Spyglass.App.Core.Settings.ShortcutRegistry.PaletteOpen)?.ToDisplay(OperatingSystem.IsMacOS()) ?? "";
+            Palette.ShortcutHint = hint;
+            ToolTip.SetTip(PaletteButton, hint.Length > 0 ? Spyglass.App.Localization.Loc.F("Palette.Open", hint) : Spyglass.App.Localization.Loc.T("Palette.Label"));
+        }
+        ApplyGesture();
+        Spyglass.App.Core.Settings.SettingsService.Shared.Changed += _ => ApplyGesture();
+        Spyglass.App.Localization.Loc.Changed += ApplyGesture;
+        AddHandler(KeyDownEvent, OnNavShortcut, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+    }
+
+    List<CommandPaletteItem> BuildPaletteItems() => _palette!.Build()
+        .Select(p => new CommandPaletteItem { Id = p.Id, Group = p.Group, Label = p.Label, Description = p.Description, Shortcut = p.Shortcut ?? "", Keywords = p.Keywords.Split(' ', StringSplitOptions.RemoveEmptyEntries) })
+        .ToList();
+
+    /// <summary>Mod+1…9 go to a page (configurable in Settings).</summary>
+    void OnNavShortcut(object? sender, KeyEventArgs e)
+    {
+        if (e.Handled || DataContext is not MainViewModel vm || ShortcutBridge.FromEvent(e) is not { } g) return;
+        if (ShortcutBridge.Current.Find(g) is not { Id: var id } || !id.StartsWith("nav.", StringComparison.Ordinal)) return;
+        _palette?.Run("nav:" + id["nav.".Length..]);
+        e.Handled = true;
+    }
+
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
         if (DataContext is MainViewModel vm)
         {
+            _palette = new PaletteController(vm, Spyglass.App.Core.Settings.SettingsService.Shared);
             vm.PropertyChanged += OnVmChanged;
             UpdateBadge(vm);
         }
