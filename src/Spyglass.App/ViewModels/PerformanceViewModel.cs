@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 
@@ -37,12 +38,13 @@ public sealed class PerformanceViewModel : ObservableObject
         _session = session;
         _showElement = showElement;
         session.MetricsSample += p => Dispatcher.UIThread.Post(() => Apply(p));
+        WatchLanguage();
         Overlays = new ObservableCollection<OverlayToggle>(
         [
-            new(DebugOverlay.Fps, "FPS counter", this),
-            new(DebugOverlay.DirtyRects, "Dirty rectangles", this),
-            new(DebugOverlay.LayoutTimeGraph, "Layout time graph", this),
-            new(DebugOverlay.RenderTimeGraph, "Render time graph", this),
+            new(DebugOverlay.Fps, "Perf.OverlayFps", this),
+            new(DebugOverlay.DirtyRects, "Perf.OverlayDirtyRects", this),
+            new(DebugOverlay.LayoutTimeGraph, "Perf.OverlayLayoutGraph", this),
+            new(DebugOverlay.RenderTimeGraph, "Perf.OverlayRenderGraph", this),
         ]);
         ResetCommand = new RelayCommand(async () =>
         {
@@ -103,7 +105,7 @@ public sealed class PerformanceViewModel : ObservableObject
                 if (!Supported) return;
                 _lease = await _session.AcquireMetricsAsync();
                 if (!_lease.Status.DiagnosticsSwitch)
-                    Status = "Avalonia diagnostics are off in this app (SpyglassAgentOptions.EnableAvaloniaDiagnostics).";
+                    Status = Loc.T("Perf.DiagnosticsOff");
                 await SyncOverlaysAsync();
             }
             else
@@ -143,8 +145,8 @@ public sealed class PerformanceViewModel : ObservableObject
 
     static readonly (string Kind, string Title)[] Kinds =
     [
-        ("style", "Styles (selector)"), ("resource", "Resource lookups (key)"), ("layout", "Layout (control self time)"),
-        ("event", "Routed events"), ("hitTest", "Hit tests"),
+        ("style", "Perf.KindStyle"), ("resource", "Perf.KindResource"), ("layout", "Perf.KindLayout"),
+        ("event", "Perf.KindEvent"), ("hitTest", "Perf.KindHitTest"),
     ];
 
     void Apply(MetricsSampleParams p)
@@ -168,23 +170,23 @@ public sealed class PerformanceViewModel : ObservableObject
             _peakFps = Math.Max(_peakFps, Fps);
             _lastActive = (now, Fps);
             FpsText = $"{Fps:0} fps";
-            FpsContext = $"{p.Frames} frames last second · peak {_peakFps:0}";
+            FpsContext = Loc.F("Perf.FramesLastSecond", p.Frames, _peakFps);
         }
         else
         {
-            FpsText = "Idle";
-            FpsContext = _lastActive is { } la ? $"no frames this second · last active {Ago(now - la.At)}: {la.Fps:0} fps" : "no frames yet: nothing has changed in the app";
+            FpsText = Loc.T("Perf.Idle");
+            FpsContext = _lastActive is { } la ? Loc.F("Perf.NoFramesLastActive", Ago(now - la.At), la.Fps) : Loc.T("Perf.NoFramesYet");
         }
 
         if (hasLayout) _lastLayout = (now, layout);
         LayoutText = hasLayout ? $"{LayoutMs:0.00} ms" : "–";
-        LayoutContext = p.Histograms.TryGetValue("avalonia.ui.measure.time", out var m) ? $"measure P95 {Ms(m.P95)}"
-            : _lastLayout is { } ll ? $"no layout this second · last {Ms(ll.Ms)}, {Ago(now - ll.At)}" : "no layout pass yet";
+        LayoutContext = p.Histograms.TryGetValue("avalonia.ui.measure.time", out var m) ? Loc.F("Perf.MeasureP95", Ms(m.P95))
+            : _lastLayout is { } ll ? Loc.F("Perf.NoLayoutLast", Ms(ll.Ms), Ago(now - ll.At)) : Loc.T("Perf.NoLayoutYet");
 
         if (hasRender) _lastRender = (now, render);
         RenderText = hasRender ? $"{RenderMs:0.00} ms" : "–";
         RenderContext = p.Histograms.TryGetValue("avalonia.ui.render.time", out var r) ? $"P95 {Ms(r.P95)}"
-            : _lastRender is { } lr ? $"no render this second · last {Ms(lr.Ms)}, {Ago(now - lr.At)}" : "no render yet";
+            : _lastRender is { } lr ? Loc.F("Perf.NoRenderLast", Ms(lr.Ms), Ago(now - lr.At)) : Loc.T("Perf.NoRenderYet");
 
         IsIdle = p.Frames == 0 && !hasLayout && !hasRender;
 
@@ -201,7 +203,7 @@ public sealed class PerformanceViewModel : ObservableObject
         {
             var rows = (p.HotSpots ?? []).Where(h => h.Kind == kind).OrderByDescending(h => h.TotalMs).Take(6)
                 .Select(h => new HotSpotRow(h.Name, "×" + h.Count.ToString("N0", Inv), Ms(h.TotalMs), Ms(h.MaxMs))).ToList();
-            if (rows.Count > 0) HotSpots.Add(new HotSpotGroup(title, rows));
+            if (rows.Count > 0) HotSpots.Add(new HotSpotGroup(Loc.T(title), rows));
         }
 
         Findings.Clear();
@@ -210,7 +212,7 @@ public sealed class PerformanceViewModel : ObservableObject
         RaiseState();
     }
 
-    static string Ago(TimeSpan t) => t.TotalSeconds < 60 ? $"{Math.Max(1, (int)t.TotalSeconds)} s ago" : $"{(int)t.TotalMinutes} min ago";
+    static string Ago(TimeSpan t) => t.TotalSeconds < 60 ? Loc.F("Perf.AgoSeconds", Math.Max(1, (int)t.TotalSeconds)) : Loc.F("Perf.AgoMinutes", (int)t.TotalMinutes);
 
     static string Ms(double v) => (v < 10 ? Math.Round(v, 2).ToString("0.##", Inv) : Math.Round(v, 1).ToString("0.#", Inv)) + " ms";
 
@@ -253,7 +255,7 @@ public sealed class OverlayToggle(DebugOverlay overlay, string label, Performanc
 {
     bool _on;
     public DebugOverlay Overlay { get; } = overlay;
-    public string Label { get; } = label;
+    public string Label => Loc.T(label);
     public bool IsOn { get => _on; set { if (Set(ref _on, value)) owner.OverlayChanged(); } }
     internal void SetSilently(bool on) { _on = on; Raise(nameof(IsOn)); }
 }

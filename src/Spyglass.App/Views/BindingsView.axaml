@@ -3,19 +3,20 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.BindingsView"
              x:DataType="vm:BindingsViewModel">
   <!-- Wireframe W4: aggregated binding errors, live -->
   <Border Classes="glass" Padding="16">
     <DockPanel>
       <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="4,0,0,12">
-        <TextBlock Text="Binding errors" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
+        <TextBlock Text="{loc:T Bindings.BindingErrors}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
         <arc:Badge Tone="Danger" Content="{Binding Count}" IsVisible="{Binding HasErrors}" VerticalAlignment="Center" />
       </StackPanel>
       <Panel>
         <arc:EmptyState IsVisible="{Binding IsEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Icon="{lucide:LucideGeometry Kind=Link}" Title="No binding errors"
-                        Description="Runtime binding failures (wrong paths, null DataContext, converter exceptions) appear here as they happen." />
+                        Icon="{lucide:LucideGeometry Kind=Link}" Title="{loc:T Bindings.NoBindingErrors}"
+                        Description="{loc:T Bindings.RuntimeBindingFailuresWrong}" />
         <ScrollViewer IsVisible="{Binding HasErrors}">
           <ItemsControl ItemsSource="{Binding Errors}">
             <ItemsControl.ItemsPanel>
@@ -35,10 +36,10 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Margin="12,0,0,0">
                       <arc:Badge Tone="Danger" Content="{Binding CountText}" Size="Small" VerticalAlignment="Center" />
                       <arc:Button Variant="Ghost" Size="Small" Command="{Binding OpenCommand}" IsEnabled="{Binding CanOpen}"
-                                  ToolTip.Tip="Open the XAML in your editor (Settings › Editor)" AutomationProperties.Name="Open in editor">
+                                  ToolTip.Tip="{loc:T Bindings.OpenTheXamlIn}" AutomationProperties.Name="{loc:T Bindings.OpenInEditor}">
                         <lucide:LucideIcon Kind="ExternalLink" Size="14" />
                       </arc:Button>
-                      <arc:Button Variant="Secondary" Size="Small" Content="Show element" Command="{Binding ShowCommand}" IsEnabled="{Binding CanShow}" />
+                      <arc:Button Variant="Secondary" Size="Small" Content="{loc:T Bindings.ShowElement}" Command="{Binding ShowCommand}" IsEnabled="{Binding CanShow}" />
                     </StackPanel>
                   </Grid>
                 </Border>

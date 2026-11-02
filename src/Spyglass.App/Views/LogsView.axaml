@@ -3,6 +3,7 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.LogsView"
              x:DataType="vm:LogsViewModel">
   <!-- Logs page: Avalonia's own log output, live (design/ux/01 Logs; D8 glass) -->
@@ -10,22 +11,22 @@
     <DockPanel>
       <!-- Title row -->
       <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,0,0,12">
-        <TextBlock Text="Logs" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
+        <TextBlock Text="{loc:T Logs.Logs}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
         <arc:Badge Grid.Column="1" Margin="10,0,0,0" Tone="Neutral" Content="{Binding CountText}" IsVisible="{Binding HasEntries}" VerticalAlignment="Center" />
         <TextBlock Grid.Column="2" Margin="12,0,0,0" Text="{Binding RecordingText}" VerticalAlignment="Center"
                    FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
-        <arc:Button Grid.Column="3" Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="Clear the list (the app keeps recording)"
-                    AutomationProperties.Name="Clear logs">
+        <arc:Button Grid.Column="3" Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="{loc:T Logs.ClearTheListThe}"
+                    AutomationProperties.Name="{loc:T Logs.ClearLogs}">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <lucide:LucideIcon Kind="Trash2" Size="14" />
-            <TextBlock Text="Clear" VerticalAlignment="Center" />
+            <TextBlock Text="{loc:T Logs.Clear}" VerticalAlignment="Center" />
           </StackPanel>
         </arc:Button>
       </Grid>
 
       <!-- Filters: level (also sets what the agent records), area, text -->
       <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*" Margin="0,0,0,10">
-        <arc:SegmentedControl SelectedValue="{Binding MinLevel}" AutomationProperties.Name="Minimum level" VerticalAlignment="Center">
+        <arc:SegmentedControl SelectedValue="{Binding MinLevel}" AutomationProperties.Name="{loc:T Logs.MinimumLevel}" VerticalAlignment="Center">
           <arc:SegmentedOption Value="Verbose" Label="Verbose" />
           <arc:SegmentedOption Value="Debug" Label="Debug" />
           <arc:SegmentedOption Value="Information" Label="Info" />
@@ -34,9 +35,9 @@
           <arc:SegmentedOption Value="Fatal" Label="Fatal" />
         </arc:SegmentedControl>
         <arc:Select Grid.Column="1" Margin="10,0,0,0" MinWidth="150" VerticalAlignment="Center"
-                    AutomationProperties.Name="Area" ItemsSource="{Binding AreaOptions}" SelectedItem="{Binding Area, Mode=TwoWay}" />
-        <arc:SearchField Grid.Column="2" Margin="10,0,0,0" Label="Filter logs" IsLabelVisible="False" VerticalAlignment="Center"
-                         Placeholder="Filter by message, area or element" Text="{Binding SearchText}" />
+                    AutomationProperties.Name="{loc:T Logs.Area}" ItemsSource="{Binding AreaOptions}" SelectedItem="{Binding Area, Mode=TwoWay}" />
+        <arc:SearchField Grid.Column="2" Margin="10,0,0,0" Label="{loc:T Logs.FilterLogs}" IsLabelVisible="False" VerticalAlignment="Center"
+                         Placeholder="{loc:T Logs.FilterByMessageArea}" Text="{Binding SearchText}" />
       </Grid>
 
       <Panel>
@@ -65,7 +66,7 @@
                                            FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeSM}" />
                       <arc:Button Grid.Column="4" Variant="Ghost" IsVisible="{Binding HasSource}" IsEnabled="{Binding CanShow}"
                                   Command="{Binding ShowCommand}" ToolTip.Tip="{Binding ShowTip}" VerticalAlignment="Top"
-                                  Padding="8,0" MinHeight="24" AutomationProperties.Name="Show element">
+                                  Padding="8,0" MinHeight="24" AutomationProperties.Name="{loc:T Logs.ShowElement}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                           <lucide:LucideIcon Kind="LocateFixed" Size="14" />
                           <TextBlock Text="{Binding SourceText}" VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis"

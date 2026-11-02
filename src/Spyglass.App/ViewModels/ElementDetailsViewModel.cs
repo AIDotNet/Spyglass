@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 using TKCode.Arc;
@@ -50,7 +51,7 @@ public sealed class ElementDetailsViewModel(AgentSession session) : ObservableOb
     public string DesiredText => _layout is { } l ? $"{N(l.DesiredSize.W)} × {N(l.DesiredSize.H)}" : "";
     public string ConstraintsText => _layout is { } l
         ? $"Width {O(l.Width)} · Min {O(l.MinWidth)} · Max {O(l.MaxWidth)}   |   Height {O(l.Height)} · Min {O(l.MinHeight)} · Max {O(l.MaxHeight)}" +
-          (l.ActiveConstraints.Count > 0 ? $"   (active: {string.Join(", ", l.ActiveConstraints)})" : "")
+          (l.ActiveConstraints.Count > 0 ? "   " + Loc.F("Details.ActiveConstraints", string.Join(", ", l.ActiveConstraints)) : "")
         : "";
     public string AlignmentText => _layout is { } l ? $"{l.HorizontalAlignment} / {l.VerticalAlignment}" : "";
 
@@ -146,7 +147,7 @@ public sealed class PropertyRowViewModel : ObservableObject
     public bool IsSet => _dto.IsSet;
     public bool IsModified => _dto.IsModifiedBySpyglass;
     public bool HasBinding => _dto.HasBinding;
-    public string Tooltip => $"{_dto.Owner}.{_dto.Name} · {_dto.Value.Type ?? _dto.Value.Kind.ToString()}{(HasBinding ? " · bound" : "")}";
+    public string Tooltip => $"{_dto.Owner}.{_dto.Name} · {_dto.Value.Type ?? _dto.Value.Kind.ToString()}{(HasBinding ? " · " + Loc.T("Details.Bound") : "")}";
     public bool IsBool => _dto.Value.Kind == ValueKind.Bool && !_dto.IsReadOnly;
     public bool IsText => !IsBool;
     /// <summary>Editable text value: gets the compact input. Everything else (read-only, computed, objects) is plain text.</summary>
@@ -223,13 +224,13 @@ public sealed class ValueFrameViewModel(ValueFrameDto f)
     {
         FrameSourceKind.Style => f.Source.Selector ?? "Style",
         FrameSourceKind.ControlTheme => $"ControlTheme · {f.Source.TargetType}",
-        FrameSourceKind.Local => "Local values",
+        FrameSourceKind.Local => Loc.T("Details.LocalValues"),
         FrameSourceKind.Template => $"Template · {f.Source.TargetType}",
         _ => f.Type,
     };
     public string Meta { get; } = string.Join("  ·  ", new[]
     {
-        f.IsActive ? "active" : "inactive",
+        f.IsActive ? Loc.T("Details.Active") : Loc.T("Details.Inactive"),
         f.Priority,
         f.Source.Location is { } l ? $"{Path.GetFileName(l.Uri)}:{l.Line}" : null,
     }.Where(x => x is not null));

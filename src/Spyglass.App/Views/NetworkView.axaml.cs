@@ -6,6 +6,7 @@ using Spyglass.App.Core.Network;
 using Spyglass.App.Core.Settings;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Spyglass.App.Localization;
 using Spyglass.App.ViewModels;
 using TKCode.Arc;
 
@@ -143,18 +144,18 @@ public partial class NetworkView : UserControl
         foreach (var c in NetworkViewModel.OptionalColumns)
             HeaderMenu.Items.Add(Entry(NetworkViewModel.TitleOf(c), "col:" + c, _vm.IsVisible(c)));
 
-        var response = new MenuEntry { Header = "Response Headers", HasSeparatorBefore = true };
-        foreach (var h in _vm.CustomHeaders) response.Items.Add(Entry($"Remove column “{h}”", "rm:" + h));
-        response.Items.Add(Entry("Add custom header…", "addheader", separator: _vm.CustomHeaders.Count > 0));
+        var response = new MenuEntry { Header = Loc.T("Network.ResponseHeaders"), HasSeparatorBefore = true };
+        foreach (var h in _vm.CustomHeaders) response.Items.Add(Entry(Loc.F("Net.RemoveColumn", h), "rm:" + h));
+        response.Items.Add(Entry(Loc.T("Net.AddCustomHeader"), "addheader", separator: _vm.CustomHeaders.Count > 0));
         HeaderMenu.Items.Add(response);
 
-        var waterfall = new MenuEntry { Header = "Waterfall" };
-        foreach (var (w, title) in new[] { (WaterfallSort.StartTime, "Start Time"), (WaterfallSort.ResponseTime, "Response Time"), (WaterfallSort.EndTime, "End Time"),
-                     (WaterfallSort.TotalDuration, "Total Duration"), (WaterfallSort.Latency, "Latency") })
+        var waterfall = new MenuEntry { Header = Loc.T("Net.Col.Waterfall") };
+        foreach (var (w, title) in new[] { (WaterfallSort.StartTime, Loc.T("Net.WfStart")), (WaterfallSort.ResponseTime, Loc.T("Net.WfResponse")), (WaterfallSort.EndTime, Loc.T("Net.WfEnd")),
+                     (WaterfallSort.TotalDuration, Loc.T("Net.WfTotal")), (WaterfallSort.Latency, Loc.T("Net.WfLatency")) })
             waterfall.Items.Add(Entry(title, "wf:" + w, _vm.Sort.Column == NetworkColumn.Waterfall && _vm.Sort.Waterfall == w, radio: true));
         HeaderMenu.Items.Add(waterfall);
-        HeaderMenu.Items.Add(Entry("Sort chronologically (default)", "sort-reset", separator: true));
-        HeaderMenu.Items.Add(Entry("Reset columns", "reset"));
+        HeaderMenu.Items.Add(Entry(Loc.T("Net.SortChrono"), "sort-reset", separator: true));
+        HeaderMenu.Items.Add(Entry(Loc.T("Net.ResetColumns"), "reset"));
     }
 
     void OnHeaderMenu(string? tag)
@@ -183,35 +184,39 @@ public partial class NetworkView : UserControl
     {
         if (_vm is null) return;
         RowMenu.Items.Clear();
-        var copy = new MenuEntry { Header = "Copy" };
+        var copy = new MenuEntry { Header = Loc.T("Net.Copy") };
         var sep = false;
         if (_vm.Selected is not null)
         {
-            copy.Items.Add(Entry("Copy URL", "row:url"));
-            copy.Items.Add(Entry("Copy as cURL", "row:curl"));
-            copy.Items.Add(Entry("Copy as PowerShell", "row:powershell"));
-            copy.Items.Add(Entry("Copy as fetch", "row:fetch"));
-            copy.Items.Add(Entry("Copy as fetch (Node.js)", "row:fetch-node"));
-            copy.Items.Add(Entry("Copy as C# (HttpClient)", "row:csharp"));
-            copy.Items.Add(Entry("Copy response", "row:response", separator: true));
-            copy.Items.Add(Entry("Copy stack trace", "row:stack"));
+            copy.Items.Add(Entry(Loc.T("Net.CopyUrl"), "row:url"));
+            copy.Items.Add(Entry(Loc.F("Net.CopyAs", "cURL"), "row:curl"));
+            copy.Items.Add(Entry(Loc.F("Net.CopyAs", "PowerShell"), "row:powershell"));
+            copy.Items.Add(Entry(Loc.F("Net.CopyAs", "fetch"), "row:fetch"));
+            copy.Items.Add(Entry(Loc.F("Net.CopyAs", "fetch (Node.js)"), "row:fetch-node"));
+            copy.Items.Add(Entry(Loc.F("Net.CopyAs", "C# (HttpClient)"), "row:csharp"));
+            copy.Items.Add(Entry(Loc.T("Net.CopyResponse"), "row:response", separator: true));
+            copy.Items.Add(Entry(Loc.T("Net.CopyStack"), "row:stack"));
             sep = true;
         }
-        void All(string scope, string label)
+        void All(string scope)
         {
             var first = true;
-            foreach (var (kind, text) in new[] { ("urls", "URLs"), ("curl", "as cURL"), ("powershell", "as PowerShell"), ("fetch", "as fetch"),
-                         ("fetch-node", "as fetch (Node.js)"), ("csharp", "as C#") })
-            { copy.Items.Add(Entry($"Copy {label} {text}", $"{scope}:{kind}", separator: first && sep)); first = false; sep = false; }
-            copy.Items.Add(Entry($"Copy {label} as HAR (sanitized)", $"{scope}:har"));
-            if (_vm.AllowSensitiveHar) copy.Items.Add(Entry($"Copy {label} as HAR (with sensitive data)", $"{scope}:har-sensitive"));
+            var listed = scope == "listed";
+            foreach (var (kind, text) in new[] { ("urls", ""), ("curl", "cURL"), ("powershell", "PowerShell"), ("fetch", "fetch"),
+                         ("fetch-node", "fetch (Node.js)"), ("csharp", "C#") })
+            {
+                var header = kind == "urls" ? Loc.T(listed ? "Net.CopyListedUrls" : "Net.CopyAllUrls") : Loc.F(listed ? "Net.CopyListedAs" : "Net.CopyAllAs", text);
+                copy.Items.Add(Entry(header, $"{scope}:{kind}", separator: first && sep)); first = false; sep = false;
+            }
+            copy.Items.Add(Entry(Loc.F(listed ? "Net.CopyListedAs" : "Net.CopyAllAs", Loc.T("Net.HarSanitized")), $"{scope}:har"));
+            if (_vm.AllowSensitiveHar) copy.Items.Add(Entry(Loc.F(listed ? "Net.CopyListedAs" : "Net.CopyAllAs", Loc.T("Net.HarSensitive")), $"{scope}:har-sensitive"));
             sep = true;
         }
-        All("all", "all");
-        if (_vm.IsFiltered) All("listed", "all listed");
+        All("all");
+        if (_vm.IsFiltered) All("listed");
         RowMenu.Items.Add(copy);
-        RowMenu.Items.Add(Entry("Save all as HAR (sanitized)…", "save:har", separator: true));
-        if (_vm.AllowSensitiveHar) RowMenu.Items.Add(Entry("Save all as HAR (with sensitive data)…", "save:har-sensitive"));
+        RowMenu.Items.Add(Entry(Loc.T("Net.SaveHarSanitized"), "save:har", separator: true));
+        if (_vm.AllowSensitiveHar) RowMenu.Items.Add(Entry(Loc.T("Net.SaveHarSensitive"), "save:har-sensitive"));
     }
 
     async Task OnRowMenu(string tag)
@@ -238,7 +243,7 @@ public partial class NetworkView : UserControl
         {
             var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
-                Title = sensitive ? "Export HAR (with sensitive data)" : "Export HAR (sanitized)",
+                Title = Loc.T(sensitive ? "Net.ExportTitleSensitive" : "Net.ExportTitleSanitized"),
                 SuggestedFileName = _vm.HarFileName(), DefaultExtension = "har", FileTypeChoices = [HarType],
             });
             if (file is null) return;
@@ -248,7 +253,7 @@ public partial class NetworkView : UserControl
             await stream.WriteAsync(new System.Text.UTF8Encoding(false).GetBytes(json));
             _vm.Notice = null;
         }
-        catch (Exception ex) { _vm.Notice = "Export failed: " + ex.Message; }
+        catch (Exception ex) { _vm.Notice = Loc.F("Net.ExportFailed", ex.Message); }
     }
 
     void OnExportHar(object? sender, RoutedEventArgs e)
@@ -256,15 +261,15 @@ public partial class NetworkView : UserControl
         if (_vm is null) return;
         if (!_vm.AllowSensitiveHar) { _ = ExportHar(false); return; }
         ExportMenu.Items.Clear();
-        ExportMenu.Items.Add(Entry("Export HAR (sanitized)…", "sanitized"));
-        ExportMenu.Items.Add(Entry("Export HAR (with sensitive data)…", "sensitive"));
+        ExportMenu.Items.Add(Entry(Loc.T("Network.ExportHarSanitized"), "sanitized"));
+        ExportMenu.Items.Add(Entry(Loc.T("Net.ExportMenuSensitive"), "sensitive"));
         ExportMenu.Open();
     }
 
     async void OnImportHar(object? sender, RoutedEventArgs e)
     {
         if (_vm is null || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage) return;
-        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title = "Import HAR file", AllowMultiple = true, FileTypeFilter = [HarType, FilePickerFileTypes.All] });
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions { Title = Loc.T("Net.ImportTitle"), AllowMultiple = true, FileTypeFilter = [HarType, FilePickerFileTypes.All] });
         foreach (var f in files) await ImportFile(f);
     }
 
@@ -276,7 +281,7 @@ public partial class NetworkView : UserControl
             using var reader = new StreamReader(stream);
             _vm?.ImportHar(await reader.ReadToEndAsync());
         }
-        catch (Exception ex) { if (_vm is not null) _vm.Notice = "Import failed: " + ex.Message; }
+        catch (Exception ex) { if (_vm is not null) _vm.Notice = Loc.F("Net.ImportFailed", ex.Message); }
     }
 
     static bool HasFiles(DragEventArgs e) => e.DataTransfer?.Contains(DataFormat.File) == true;
@@ -294,8 +299,8 @@ public partial class NetworkView : UserControl
     {
         if (_vm is null) return;
         SettingsMenu.Items.Clear();
-        SettingsMenu.Items.Add(Entry("Show overview", "overview", _vm.ShowOverview));
-        SettingsMenu.Items.Add(Entry("Allow to generate HAR with sensitive data", "sensitive", _vm.AllowSensitiveHar));
+        SettingsMenu.Items.Add(Entry(Loc.T("Net.ShowOverview"), "overview", _vm.ShowOverview));
+        SettingsMenu.Items.Add(Entry(Loc.T("Net.AllowSensitive"), "sensitive", _vm.AllowSensitiveHar));
         SettingsMenu.Open();
     }
 

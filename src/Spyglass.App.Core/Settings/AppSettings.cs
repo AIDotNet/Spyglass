@@ -16,6 +16,8 @@ public sealed class AppSettings
     /// <summary>Arc accent preset name: Neutral, Violet, Blue, Green, Amber, Orange, Coral, Rose.</summary>
     public string Accent { get; set; } = "Blue";
     [JsonConverter(typeof(JsonStringEnumConverter))] public MotionMode Motion { get; set; } = MotionMode.Full;
+    /// <summary>UI language: System (follow the OS), English, ChineseSimplified or ChineseTraditional. Unknown values mean English.</summary>
+    public string Language { get; set; } = Localization.Languages.System;
 
     // ---- connection ----
     /// <summary>Port debugged apps connect to. Null = default (29500). SPYGLASS_PORT overrides; takes effect at next start.</summary>
@@ -58,6 +60,7 @@ public sealed class AppSettings
         EventBufferLimit = Math.Clamp(EventBufferLimit, 100, 100_000);
         if (string.IsNullOrWhiteSpace(Accent)) Accent = "Blue";
         Shortcuts = ShortcutRegistry.Sanitize(Shortcuts, OperatingSystem.IsMacOS());
+        Language = Localization.Languages.Normalize(Language);
         return this;
     }
 }
@@ -119,7 +122,7 @@ public sealed class SettingsService(AppSettingsStore? store = null)
     public void Reset() => Update(s =>
     {
         var d = new AppSettings();
-        s.Appearance = d.Appearance; s.Accent = d.Accent; s.Motion = d.Motion; s.Port = d.Port; s.AllowLan = d.AllowLan;
+        s.Appearance = d.Appearance; s.Accent = d.Accent; s.Motion = d.Motion; s.Language = d.Language; s.Port = d.Port; s.AllowLan = d.AllowLan;
         s.ShowTemplateParts = d.ShowTemplateParts; s.KeepHighlight = d.KeepHighlight; s.EventBufferLimit = d.EventBufferLimit;
         s.AutoRecordNetwork = d.AutoRecordNetwork; s.CaptureBodies = d.CaptureBodies; s.BodyLimitKb = d.BodyLimitKb; s.CaptureInitiator = d.CaptureInitiator;
         s.Editor = d.Editor; s.CustomEditorCommand = d.CustomEditorCommand;

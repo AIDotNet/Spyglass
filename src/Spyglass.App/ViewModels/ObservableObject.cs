@@ -17,6 +17,12 @@ public abstract class ObservableObject : INotifyPropertyChanged
     }
 
     protected void Raise([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    /// <summary>Call from the constructor when the view model builds user-visible text in C#: <see cref="OnLanguageChanged"/> runs when the UI language changes.</summary>
+    protected void WatchLanguage() => Spyglass.App.Localization.LanguageWatch.Add(this);
+
+    /// <summary>Default: re-read every property (texts built with Loc.T/Loc.F are recomputed by their getters).</summary>
+    protected internal virtual void OnLanguageChanged() => Raise(string.Empty);
 }
 
 public sealed class RelayCommand(Func<Task> execute, Func<bool>? canExecute = null) : ICommand

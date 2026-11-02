@@ -3,6 +3,7 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.PerformanceView"
              x:DataType="vm:PerformanceViewModel">
   <!-- Wireframe W5: live metrics while this page is open (the agent profiles only then). -->
@@ -10,50 +11,50 @@
     <DockPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="4,0,0,12">
         <StackPanel Orientation="Horizontal" Spacing="10">
-          <TextBlock Text="Performance" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
-          <TextBlock Classes="cardmeta" Text="live while this page is open" VerticalAlignment="Center" />
+          <TextBlock Text="{loc:T Performance.Performance}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
+          <TextBlock Classes="cardmeta" Text="{loc:T Performance.LiveWhileThisPage}" VerticalAlignment="Center" />
         </StackPanel>
-        <arc:Button Grid.Column="1" Variant="Secondary" Size="Small" Content="Reset" Command="{Binding ResetCommand}" IsVisible="{Binding HasData}" />
+        <arc:Button Grid.Column="1" Variant="Secondary" Size="Small" Content="{loc:T Performance.Reset}" Command="{Binding ResetCommand}" IsVisible="{Binding HasData}" />
       </Grid>
       <arc:Alert DockPanel.Dock="Top" Tone="Warning" Title="{Binding Status}" IsOpen="True" Margin="0,0,0,10" IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
       <Panel>
         <arc:EmptyState IsVisible="{Binding Unsupported}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Icon="{lucide:LucideGeometry Kind=Activity}" Title="Metrics are not available"
-                        Description="This app's agent has no performance metrics: Avalonia diagnostics are switched off (EnableAvaloniaDiagnostics) or the agent is too old." />
+                        Icon="{lucide:LucideGeometry Kind=Activity}" Title="{loc:T Performance.MetricsAreNotAvailable}"
+                        Description="{loc:T Performance.ThisAppSAgent}" />
         <arc:EmptyState IsVisible="{Binding Waiting}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                        Icon="{lucide:LucideGeometry Kind=Activity}" Title="Collecting the first sample…"
-                        Description="Samples arrive once a second while this page is open. Profiling stops when you leave it." />
+                        Icon="{lucide:LucideGeometry Kind=Activity}" Title="{loc:T Performance.CollectingTheFirstSample}"
+                        Description="{loc:T Performance.SamplesArriveOnceA}" />
         <ScrollViewer IsVisible="{Binding HasData}">
           <StackPanel Spacing="12" Margin="0,0,10,0">
             <!-- an app with nothing changing renders nothing: explain, instead of showing zeros -->
-            <arc:Alert Tone="Info" IsOpen="True" IsVisible="{Binding IsIdle}" Title="The app is idle: there is nothing to measure right now"
-                       Content="Avalonia only renders and lays out when something changes. Move the mouse over the app, type, scroll, resize its window or start an animation, and the numbers below fill in." />
+            <arc:Alert Tone="Info" IsOpen="True" IsVisible="{Binding IsIdle}" Title="{loc:T Performance.TheAppIsIdle}"
+                       Content="{loc:T Performance.AvaloniaOnlyRendersAnd}" />
             <!-- metric cards -->
             <UniformGrid Columns="4">
               <Border Classes="card" Margin="0,0,10,0">
                 <StackPanel Spacing="2">
-                  <TextBlock Classes="cardmeta" Text="Frames per second" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.FramesPerSecond}" />
                   <TextBlock Text="{Binding FpsText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding FpsContext}" />
                 </StackPanel>
               </Border>
               <Border Classes="card" Margin="0,0,10,0">
                 <StackPanel Spacing="2">
-                  <TextBlock Classes="cardmeta" Text="Visuals" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.Visuals}" />
                   <TextBlock Text="{Binding Visuals, StringFormat={}{0:N0}}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
-                  <TextBlock Classes="cardmeta" Text="in all windows" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.InAllWindows}" />
                 </StackPanel>
               </Border>
               <Border Classes="card" Margin="0,0,10,0">
                 <StackPanel Spacing="2">
-                  <TextBlock Classes="cardmeta" Text="Layout per pass" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.LayoutPerPass}" />
                   <TextBlock Text="{Binding LayoutText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding LayoutContext}" />
                 </StackPanel>
               </Border>
               <Border Classes="card" >
                 <StackPanel Spacing="2">
-                  <TextBlock Classes="cardmeta" Text="Render per frame" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.RenderPerFrame}" />
                   <TextBlock Text="{Binding RenderText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding RenderContext}" />
                 </StackPanel>
@@ -64,10 +65,10 @@
             <Border Classes="card">
               <StackPanel Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock Classes="cardtitle" Text="Findings" VerticalAlignment="Center" />
+                  <TextBlock Classes="cardtitle" Text="{loc:T Performance.Findings}" VerticalAlignment="Center" />
                   <arc:Badge Tone="Warning" Content="{Binding Findings.Count}" IsVisible="{Binding HasFindings}" VerticalAlignment="Center" />
                 </StackPanel>
-                <TextBlock Classes="cardmeta" Text="No issues detected (non-virtualized lists, very large visual trees, slow layout)." IsVisible="{Binding NoFindings}" />
+                <TextBlock Classes="cardmeta" Text="{loc:T Performance.NoIssuesDetectedNon}" IsVisible="{Binding NoFindings}" />
                 <ItemsControl ItemsSource="{Binding Findings}" IsVisible="{Binding HasFindings}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
@@ -75,7 +76,7 @@
                       <Grid ColumnDefinitions="*,Auto">
                         <arc:Alert Tone="{Binding Tone}" Title="{Binding Message}" IsOpen="True" />
                         <arc:Button Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Variant="Secondary" Size="Small"
-                                    Content="Show element" Command="{Binding ShowCommand}" IsVisible="{Binding CanShow}" />
+                                    Content="{loc:T Performance.ShowElement}" Command="{Binding ShowCommand}" IsVisible="{Binding CanShow}" />
                       </Grid>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
@@ -87,8 +88,8 @@
             <UniformGrid Columns="2">
               <Border Classes="card" Margin="0,0,6,0">
                 <StackPanel Spacing="6">
-                  <TextBlock Classes="cardtitle" Text="Frame rate (last 60 s)" />
-                  <arc:LineChart Label="Frames per second" PlotHeight="150" YMinimum="0" ShowLegend="False" Unit="fps" Curve="Linear"
+                  <TextBlock Classes="cardtitle" Text="{loc:T Performance.FrameRateLast60}" />
+                  <arc:LineChart Label="{loc:T Performance.FramesPerSecond}" PlotHeight="150" YMinimum="0" ShowLegend="False" Unit="fps" Curve="Linear"
                                  ItemsSource="{Binding History}" XBinding="{CompiledBinding T, DataType=vm:PerfPoint}" ShowXAxis="False">
                     <arc:LineChart.Series>
                       <arc:ChartSeries Key="fps" Name="FPS" ValueBinding="{CompiledBinding Fps, DataType=vm:PerfPoint}" />
@@ -98,8 +99,8 @@
               </Border>
               <Border Classes="card" Margin="6,0,0,0">
                 <StackPanel Spacing="6">
-                  <TextBlock Classes="cardtitle" Text="Time per pass (ms)" />
-                  <arc:LineChart Label="Layout and render time" PlotHeight="150" YMinimum="0" Unit="ms" Curve="Linear" ValueFormat="0.##"
+                  <TextBlock Classes="cardtitle" Text="{loc:T Performance.TimePerPassMs}" />
+                  <arc:LineChart Label="{loc:T Performance.LayoutAndRenderTime}" PlotHeight="150" YMinimum="0" Unit="ms" Curve="Linear" ValueFormat="0.##"
                                  ItemsSource="{Binding History}" XBinding="{CompiledBinding T, DataType=vm:PerfPoint}" ShowXAxis="False">
                     <arc:LineChart.Series>
                       <arc:ChartSeries Key="layout" Name="Layout" ValueBinding="{CompiledBinding LayoutMs, DataType=vm:PerfPoint}" />
@@ -114,18 +115,18 @@
             <Grid ColumnDefinitions="*,260">
               <Border Classes="card" Margin="0,0,12,0">
                 <StackPanel Spacing="6">
-                  <TextBlock Classes="cardtitle" Text="Percentiles (rolling 10 s)" />
+                  <TextBlock Classes="cardtitle" Text="{loc:T Performance.PercentilesRolling10S}" />
                   <Grid ColumnDefinitions="150,*,*,*,*,*,70">
-                    <TextBlock Classes="cardmeta" Text="Pass" />
+                    <TextBlock Classes="cardmeta" Text="{loc:T Performance.Pass}" />
                     <TextBlock Classes="cardmeta" Grid.Column="1" Text="P50" />
                     <TextBlock Classes="cardmeta" Grid.Column="2" Text="P90" />
                     <TextBlock Classes="cardmeta" Grid.Column="3" Text="P95" />
-                    <TextBlock Classes="cardmeta" Grid.Column="4" Text="Avg" />
-                    <TextBlock Classes="cardmeta" Grid.Column="5" Text="Max" />
-                    <TextBlock Classes="cardmeta" Grid.Column="6" Text="Count" />
+                    <TextBlock Classes="cardmeta" Grid.Column="4" Text="{loc:T Performance.Avg}" />
+                    <TextBlock Classes="cardmeta" Grid.Column="5" Text="{loc:T Performance.Max}" />
+                    <TextBlock Classes="cardmeta" Grid.Column="6" Text="{loc:T Performance.Count}" />
                   </Grid>
                   <TextBlock Classes="cardmeta" IsVisible="{Binding NoPercentiles}" Margin="0,6,0,0"
-                             Text="No frames or layout passes in the last 10 seconds. The table fills in as soon as the app does something." />
+                             Text="{loc:T Performance.NoFramesOrLayout}" />
                   <ItemsControl ItemsSource="{Binding Percentiles}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -146,8 +147,8 @@
               </Border>
               <Border Grid.Column="1" Classes="card">
                 <StackPanel Spacing="8">
-                  <TextBlock Classes="cardtitle" Text="Overlays in the app" />
-                  <TextBlock Classes="cardmeta" Text="Drawn by Avalonia inside the app's window; restored when you disconnect." />
+                  <TextBlock Classes="cardtitle" Text="{loc:T Performance.OverlaysInTheApp}" />
+                  <TextBlock Classes="cardmeta" Text="{loc:T Performance.DrawnByAvaloniaInside}" />
                   <ItemsControl ItemsSource="{Binding Overlays}" IsEnabled="{Binding OverlaysSupported}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -166,8 +167,8 @@
             <!-- hot spots -->
             <Border Classes="card">
               <StackPanel Spacing="8">
-                <TextBlock Classes="cardtitle" Text="Hot spots since the page was opened (self time)" />
-                <TextBlock Classes="cardmeta" Text="Nothing recorded yet. Interact with the app: styles, resources and layout are profiled while you do." IsVisible="{Binding NoHotSpots}" />
+                <TextBlock Classes="cardtitle" Text="{loc:T Performance.HotSpotsSinceThe}" />
+                <TextBlock Classes="cardmeta" Text="{loc:T Performance.NothingRecordedYetInteract}" IsVisible="{Binding NoHotSpots}" />
                 <ItemsControl ItemsSource="{Binding HotSpots}" IsVisible="{Binding HasHotSpots}">
                   <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Mcp;
 using Spyglass.Protocol;
 
@@ -13,7 +14,7 @@ public sealed class MainViewModel : ObservableObject
     string _page = "connections";
     object? _pageContent;
     SessionViewModel? _current;
-    string _status = "Starting…";
+    bool _hubStarted;
     string? _hubError;
 
     public MainViewModel(SpyglassHub hub)
@@ -26,7 +27,10 @@ public sealed class MainViewModel : ObservableObject
         _pageContent = Connections;
         hub.SessionConnected += s => Dispatcher.UIThread.Post(() => OnConnected(s));
         hub.SessionDisconnected += s => Dispatcher.UIThread.Post(() => OnDisconnected(s));
+        WatchLanguage();
     }
+
+    protected internal override void OnLanguageChanged() { Raise(nameof(Status)); Raise(nameof(WindowTitle)); }
 
     public ObservableCollection<SessionViewModel> Sessions { get; } = new();
 
@@ -116,12 +120,17 @@ public sealed class MainViewModel : ObservableObject
         _ = Current.Events.EnsureStartedAsync();
     }
 
-    public string Status { get => _status; private set => Set(ref _status, value); }
+    public string Status => HubError is not null ? HubError
+        : Current is { } c ? Loc.F("Main.Connected", c.Session.App.Name, c.Session.App.Pid, c.Session.App.AvaloniaVersion, c.Session.Agent.Version, c.Session.Agent.Flavor.ToString().ToLowerInvariant())
+                             + (Sessions.Count > 1 ? "   ·   " + Loc.F("Main.AppCount", Sessions.Count) : "")
+        : !_hubStarted ? Loc.T("Main.Starting")
+        : Loc.F("Main.Waiting", Port, McpUrl);
     public string WindowTitle => Current is { } c ? $"Spyglass — {c.Session.App.Name}" : "Spyglass";
     public bool IsConnected => Current is not null;
 
     public void HubStarted()
     {
+        _hubStarted = true;
         Raise(nameof(Port));
         Raise(nameof(McpUrl));
         Connections.Refresh();
@@ -181,10 +190,7 @@ public sealed class MainViewModel : ObservableObject
     void UpdateStatus()
     {
         Raise(nameof(IsConnected));
-        Status = HubError is not null ? HubError
-            : Current is { } c ? $"Connected   {c.Session.App.Name} · PID {c.Session.App.Pid} · Avalonia {c.Session.App.AvaloniaVersion} · " +
-                                 $"Agent {c.Session.Agent.Version} ({c.Session.Agent.Flavor.ToString().ToLowerInvariant()}){(Sessions.Count > 1 ? $"   ·   {Sessions.Count} apps" : "")}"
-            : $"Waiting for an app · listening on 127.0.0.1:{Port} · MCP {McpUrl}";
+        Raise(nameof(Status));
     }
 }
 
@@ -206,11 +212,12 @@ public sealed class SessionViewModel(AgentSession session, Action<int> showEleme
 
 public sealed class ConnectionsViewModel(MainViewModel main) : ObservableObject
 {
+    protected internal override void OnLanguageChanged() => Raise(nameof(ListenText));
     public MainViewModel Main { get; } = main;
     public bool HasSessions => Main.Sessions.Count > 0;
     public bool NoSessions => !HasSessions;
     public LanViewModel Lan => Main.Lan;
-    public string ListenText => Main.HubError ?? $"Listening on {(Main.Lan.IsActive ? "0.0.0.0" : "127.0.0.1")}:{Main.Port} · protocol {SpyglassProtocol.Version}";
+    public string ListenText => Main.HubError ?? Loc.F("Connections.Listening", Main.Port, SpyglassProtocol.Version, Main.Lan.IsActive ? "0.0.0.0" : "127.0.0.1");
 
     public string AgentSnippet => """
         dotnet add package Spyglass.Agent
@@ -245,7 +252,7 @@ public sealed class PlaceholderViewModel(string page)
     public string Title => char.ToUpperInvariant(page[0]) + page[1..];
     public string Description => page switch
     {
-        "performance" => "Coming in v0.3.",
-        _ => "Coming soon.",
+        "performance" => Loc.T("Placeholder.ComingV03"),
+        _ => Loc.T("Placeholder.ComingSoon"),
     };
 }

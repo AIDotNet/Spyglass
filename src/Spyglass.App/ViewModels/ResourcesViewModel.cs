@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 
@@ -44,6 +45,7 @@ public sealed class ResourcesViewModel : ObservableObject
             return Task.CompletedTask;
         });
         ClearErrorCommand = new RelayCommand(() => Error = null);
+        WatchLanguage();
     }
 
     /// <summary>Asks the view to expand the tree down to a node.</summary>
@@ -72,10 +74,10 @@ public sealed class ResourcesViewModel : ObservableObject
     public bool NoSelection => SelectedProvider is null && Roots.Count > 0;
     public bool NoEntries => SelectedProvider is not null && !IsLoadingEntries && Entries.Count == 0;
     public bool HasEntries => Entries.Count > 0;
-    public string EmptyEntriesTitle => _all.Count == 0 ? "This provider has no keys of its own" : "No keys match";
+    public string EmptyEntriesTitle => _all.Count == 0 ? Loc.T("Resources.EmptyProviderTitle") : Loc.T("Resources.NoKeysMatch");
     public string EmptyEntriesText => _all.Count == 0
-        ? "Its keys live in the dictionaries listed below it in the tree."
-        : "Nothing in this provider contains that text in its key or value. Use Lookup to search the whole app.";
+        ? Loc.T("Resources.EmptyProviderText")
+        : Loc.T("Resources.NoKeysMatchText");
 
     void RaiseStates()
     {
@@ -85,9 +87,11 @@ public sealed class ResourcesViewModel : ObservableObject
     }
 
     /// <summary>Which element the "from element" providers and lookups start at; empty when none is selected in Elements.</summary>
-    public string ContextText { get => _contextText; private set { if (Set(ref _contextText, value)) Raise(nameof(HasContext)); } }
+    public string ContextText { get => _contextText; private set { if (Set(ref _contextText, value)) { Raise(nameof(HasContext)); Raise(nameof(ContextLabel)); } } }
+    public string ContextLabel => string.IsNullOrEmpty(_contextText) ? "" : Loc.F("Resources.FromElement", _contextText);
+    public string VariantLabel => Loc.F("Resources.ThemeLabel", _activeVariant);
     public bool HasContext => _elements.SelectedNode is not null;
-    public string ActiveVariant { get => _activeVariant; private set => Set(ref _activeVariant, value); }
+    public string ActiveVariant { get => _activeVariant; private set { if (Set(ref _activeVariant, value)) Raise(nameof(VariantLabel)); } }
 
     public bool IncludeElement
     {
@@ -95,7 +99,7 @@ public sealed class ResourcesViewModel : ObservableObject
         set { if (Set(ref _includeElement, value)) _ = LoadAsync(); }
     }
 
-    public string CountText => !HasEntries && _all.Count == 0 ? "" : Entries.Count == _all.Count ? $"{_all.Count} keys" : $"{Entries.Count} of {_all.Count} keys{(_truncated ? "+" : "")}";
+    public string CountText => !HasEntries && _all.Count == 0 ? "" : Entries.Count == _all.Count ? Loc.F("Resources.KeyCount", _all.Count) : Loc.F("Resources.KeyCountOf", Entries.Count, _all.Count) + (_truncated ? "+" : "");
     public bool AnyModified => _all.Any(e => e.IsModified);
 
     // ---------- provider tree ----------
@@ -205,7 +209,7 @@ public sealed class ResourcesViewModel : ObservableObject
     public bool CanEditText => SelectedEntry is { Editable: true };
     public bool CanEditColor => SelectedEntry is { Editable: true, EditableColor: not null };
     public string EditorTitle => SelectedEntry is { } e ? e.Key : "";
-    public string EditorMeta => SelectedEntry is { } e ? $"{e.TypeText}{(e.VariantText is { Length: > 0 } v ? " · " + v : "")} · {(e.Editable ? "editable" : "read-only")}" : "";
+    public string EditorMeta => SelectedEntry is { } e ? $"{e.TypeText}{(e.VariantText is { Length: > 0 } v ? " · " + v : "")} · {(e.Editable ? Loc.T("Resources.Editable") : Loc.T("Resources.ReadOnly"))}" : "";
 
     public Color EditColor
     {
@@ -301,7 +305,6 @@ public sealed class ResourcesViewModel : ObservableObject
     string _tab = "entries";
     string _lookupKey = "";
     string _lookupVariant = "active";
-    string _lookupSummary = "";
     bool _lookupBusy;
     bool _showMisses = true;
     bool _lookupFromElement = true;
@@ -313,12 +316,14 @@ public sealed class ResourcesViewModel : ObservableObject
     public bool ShowLookup => TabKey == "lookup";
     public string LookupKey { get => _lookupKey; set => Set(ref _lookupKey, value); }
     public string LookupVariant { get => _lookupVariant; set => Set(ref _lookupVariant, value); }
-    public string LookupSummary { get => _lookupSummary; private set { if (Set(ref _lookupSummary, value)) Raise(nameof(HasLookup)); } }
-    public bool HasLookup => !string.IsNullOrEmpty(_lookupSummary);
+    Func<string> _lookupSummary = () => "";
+    public string LookupSummary => _lookupSummary();
+    void SetSummary(Func<string> summary) { _lookupSummary = summary; Raise(nameof(LookupSummary)); Raise(nameof(HasLookup)); }
+    public bool HasLookup => LookupSummary.Length > 0;
     public bool LookupBusy { get => _lookupBusy; private set => Set(ref _lookupBusy, value); }
     public bool ShowMisses { get => _showMisses; set { if (Set(ref _showMisses, value)) FilterSteps(); } }
     public bool LookupFromElement { get => _lookupFromElement; set => Set(ref _lookupFromElement, value); }
-    public string LookupStart => _elements.SelectedNode is { } n ? $"Start at {n.Crumb}" : "Start at the application (no element selected)";
+    public string LookupStart => _elements.SelectedNode is { } n ? Loc.F("Resources.StartAt", n.Crumb) : Loc.T("Resources.StartAtApp");
     public bool CanStartAtElement => _elements.SelectedNode is not null;
 
     /// <summary>Called when the page opens: refresh what the lookup can start from.</summary>
@@ -340,15 +345,19 @@ public sealed class ResourcesViewModel : ObservableObject
             _steps = r.Chain.Select(s => new LookupStepViewModel(s)).ToList();
             var hits = r.Chain.Count(c => c.Hit);
             var winner = r.Chain.FirstOrDefault(c => c.Winner);
-            LookupSummary = r.Found
-                ? $"{key} → {r.Value?.Text} ({TypeName(r.Value)}) in the {r.Variant} theme" + (winner is not null ? $", defined in {winner.Path}" : "")
-                  + (hits > 1 ? $"; {hits - 1} more definition{(hits == 2 ? "" : "s")} hidden." : ".")
-                : $"{key} is not defined for the {r.Variant} theme from here.";
-            if (r.Note is { } note) LookupSummary += "  " + note;
-            if (r.Truncated) LookupSummary += "  (chain truncated)";
+            SetSummary(() =>
+            {
+                var s = r.Found
+                    ? Loc.F("Resources.Found", key, r.Value?.Text, TypeName(r.Value), r.Variant) + (winner is not null ? Loc.F("Resources.DefinedIn", winner.Path) : "")
+                      + (hits > 1 ? Loc.F(hits == 2 ? "Resources.MoreHiddenOne" : "Resources.MoreHiddenMany", hits - 1) : Loc.T("Resources.Period"))
+                    : Loc.F("Resources.NotDefined", key, r.Variant);
+                if (r.Note is { } note) s += "  " + note;
+                if (r.Truncated) s += "  " + Loc.T("Resources.ChainTruncated");
+                return s;
+            });
             FilterSteps();
         }
-        catch (Exception ex) { LookupSummary = ex.Message; _steps = []; FilterSteps(); }
+        catch (Exception ex) { var m = ex.Message; SetSummary(() => m); _steps = []; FilterSteps(); }
         finally { LookupBusy = false; }
     }
 
@@ -372,32 +381,32 @@ public sealed class ProviderNodeViewModel(ResourceProviderDto dto, ProviderNodeV
     public ObservableCollection<ProviderNodeViewModel> Children { get; } = new();
 
     /// <summary>Root nodes say what they are ("Application", "Element"); the rest show their own name.</summary>
-    public string Label { get; } = dto.Kind switch
+    public string Label => Dto.Kind switch
     {
-        "application" => "Application · " + dto.Name,
-        "element" => dto.Name,
-        _ => dto.Name,
+        "application" => Loc.T("Resources.Application") + " · " + Dto.Name,
+        "element" => Dto.Name,
+        _ => Dto.Name,
     };
-    public string KindText { get; } = dto.Kind switch
+    public string KindText => Dto.Kind switch
     {
-        "element" => "element",
-        "themeDictionary" => "theme",
-        "dictionary" => "merged",
-        "styles" => "styles",
-        "style" => "style",
+        "element" => Loc.T("Resources.KindElement"),
+        "themeDictionary" => Loc.T("Resources.KindTheme"),
+        "dictionary" => Loc.T("Resources.KindMerged"),
+        "styles" => Loc.T("Resources.KindStyles"),
+        "style" => Loc.T("Resources.KindStyle"),
         _ => "",
     };
     public string CountText { get; } = dto.KeyCount > 0 ? dto.KeyCount.ToString() : "";
     public string Tooltip { get; } = dto.Source is { } s ? $"{s.Uri}:{s.Line}" : dto.Name;
     /// <summary>Second line of the entries header: where it is declared, or what kind of provider it is.</summary>
-    public string SubText { get; } = dto.Source is { } s ? $"{s.Uri[(s.Uri.LastIndexOfAny(['/', '\\']) + 1)..]}:{s.Line}" : dto.Kind switch
+    public string SubText => Dto.Source is { } s ? $"{s.Uri[(s.Uri.LastIndexOfAny(['/', '\\']) + 1)..]}:{s.Line}" : Dto.Kind switch
     {
-        "themeDictionary" => $"theme dictionary · {dto.Variant}",
-        "dictionary" => "merged dictionary",
-        "styles" => "styles",
-        "style" => "style",
-        "element" => "element resources",
-        _ => "application resources",
+        "themeDictionary" => Loc.F("Resources.SubThemeDictionary", Dto.Variant),
+        "dictionary" => Loc.T("Resources.SubMerged"),
+        "styles" => Loc.T("Resources.KindStyles"),
+        "style" => Loc.T("Resources.KindStyle"),
+        "element" => Loc.T("Resources.SubElement"),
+        _ => Loc.T("Resources.SubApplication"),
     };
     public override string ToString() => Label;
 
@@ -474,7 +483,7 @@ public sealed class LookupStepViewModel(ResourceStepDto dto)
 {
     public bool Hit { get; } = dto.Hit;
     public string Path { get; } = dto.Path + (dto.Provider.Kind == "element" ? $" [e{dto.Provider.Id}]" : "");
-    public string StatusText { get; } = dto.Winner ? "used" : dto.Shadowed ? "hidden" : "miss";
+    public string StatusText => dto.Winner ? Loc.T("Resources.StepUsed") : dto.Shadowed ? Loc.T("Resources.StepHidden") : Loc.T("Resources.StepMiss");
     public TKCode.Arc.BadgeTone Tone { get; } = dto.Winner ? TKCode.Arc.BadgeTone.Success : dto.Shadowed ? TKCode.Arc.BadgeTone.Warning : TKCode.Arc.BadgeTone.Neutral;
     public string ValueText { get; } = dto.Hit ? $"{dto.Value?.Text}  ({ResourcesViewModel.TypeName(dto.Value)})" : "";
     public string SourceText { get; } = dto.Source is { } s ? $"{s.Uri[(s.Uri.LastIndexOfAny(['/', '\\']) + 1)..]}:{s.Line}" : "";

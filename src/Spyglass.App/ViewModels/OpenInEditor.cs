@@ -1,4 +1,5 @@
 using Spyglass.App.Core.Settings;
+using Spyglass.App.Localization;
 using Spyglass.Protocol.Messages;
 
 namespace Spyglass.App.ViewModels;
@@ -8,7 +9,7 @@ public static class OpenInEditor
 {
     public static string Open(SourceInfo? source)
     {
-        if (source is null) return "No XAML location (Release build, or the element was created in code).";
+        if (source is null) return Loc.T("Editor.NoLocation");
         return EditorLauncher.Open(source, SettingsService.Shared.Current) ?? "";
     }
 }

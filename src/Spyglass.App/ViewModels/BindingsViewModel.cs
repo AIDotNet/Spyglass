@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol.Messages;
 
 namespace Spyglass.App.ViewModels;
@@ -45,25 +46,40 @@ public sealed class BindingsViewModel : ObservableObject
     }
 }
 
-public sealed class BindingErrorRowViewModel(BindingErrorDto e, Action<int> showElement) : ObservableObject
+public sealed class BindingErrorRowViewModel : ObservableObject
 {
+    readonly BindingErrorDto e;
+
+    public BindingErrorRowViewModel(BindingErrorDto e, Action<int> showElement)
+    {
+        this.e = e;
+        CanOpen = e.Location is not null;
+        CanShow = e.TargetId is not null;
+        Key = e.Key;
+        Title = $"{e.TargetType}.{e.Property}  ·  {e.Path}";
+        Message = e.Message;
+        CountText = $"×{e.Count}";
+        ShowCommand = new(() => { if (e.TargetId is { } id) showElement(id); });
+        WatchLanguage();
+    }
+
     string _openError = "";
-    public bool CanOpen { get; } = e.Location is not null;
+    public bool CanOpen { get; }
     public string OpenError { get => _openError; private set { Set(ref _openError, value); Raise(nameof(HasOpenError)); } }
     public bool HasOpenError => _openError.Length > 0;
     public RelayCommand OpenCommand => _open ??= new RelayCommand(() => OpenError = OpenInEditor.Open(e.Location));
     RelayCommand? _open;
 
-    public string Key { get; } = e.Key;
-    public string Title { get; } = $"{e.TargetType}.{e.Property}  ·  {e.Path}";
-    public string Message { get; } = e.Message;
-    public string Meta { get; } = string.Join("  ·  ", new[]
+    public string Key { get; }
+    public string Title { get; }
+    public string Message { get; }
+    public string Meta => string.Join("  ·  ", new[]
     {
-        e.Location is { } l ? $"{Path.GetFileName(l.Uri)}:{l.Line}" : "no XAML location",
-        $"DataContext {e.DataContextType?.Split('.').Last() ?? "(null)"}",
-        $"last {e.LastTime:HH:mm:ss}",
+        e.Location is { } l ? $"{Path.GetFileName(l.Uri)}:{l.Line}" : Loc.T("Bindings.NoLocation"),
+        Loc.F("Bindings.DataContextType", e.DataContextType?.Split('.').Last() ?? "(null)"),
+        Loc.F("Bindings.LastTime", e.LastTime),
     });
-    public string CountText { get; } = $"×{e.Count}";
-    public bool CanShow { get; } = e.TargetId is not null;
-    public RelayCommand ShowCommand { get; } = new(() => { if (e.TargetId is { } id) showElement(id); });
+    public string CountText { get; }
+    public bool CanShow { get; }
+    public RelayCommand ShowCommand { get; }
 }

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 
@@ -32,6 +33,7 @@ public sealed class ElementsViewModel : ObservableObject
         session.PickSelected += p => Dispatcher.UIThread.Post(() => _ = OnPickedAsync(p));
         session.PickStarted += () => Dispatcher.UIThread.Post(() => IsPicking = true);
         session.TreeChanged += p => Dispatcher.UIThread.Post(() => ApplyChanges(p));
+        WatchLanguage();
     }
 
     public ObservableCollection<ElementNodeViewModel> Roots { get; } = new();
@@ -55,7 +57,9 @@ public sealed class ElementsViewModel : ObservableObject
         private set { if (Set(ref _isPicking, value)) { Raise(nameof(PickLabel)); Raise(nameof(PickVariant)); } }
     }
 
-    public string PickLabel => IsPicking ? "Picking… (Esc in app)" : "Pick element";
+    protected internal override void OnLanguageChanged() { Raise(nameof(PickLabel)); Raise(nameof(SearchStatus)); }
+
+    public string PickLabel => IsPicking ? Loc.T("Elements.Picking") : Loc.T("Elements.PickElement");
     public TKCode.Arc.ButtonVariant PickVariant => IsPicking ? TKCode.Arc.ButtonVariant.Primary : TKCode.Arc.ButtonVariant.Secondary;
 
     public string TreeKind
@@ -76,7 +80,8 @@ public sealed class ElementsViewModel : ObservableObject
         set { if (Set(ref _search, value)) _ = SearchAsync(value); }
     }
 
-    public string SearchStatus { get => _searchStatus; private set => Set(ref _searchStatus, value); }
+    bool _noMatches;
+    public string SearchStatus { get => _noMatches ? Loc.T("Common.NoMatches") : _searchStatus; private set => Set(ref _searchStatus, value); }
 
     public ElementNodeViewModel? SelectedNode
     {
@@ -116,7 +121,7 @@ public sealed class ElementsViewModel : ObservableObject
             if (selectedId is { } id && _byId.TryGetValue(id, out var again)) Select(again);
             else if (Roots.Count > 0 && _selected is null) SelectedNode = Roots[0];
         }
-        catch (Exception ex) { SearchStatus = ex.Message; }
+        catch (Exception ex) { _noMatches = false; SearchStatus = ex.Message; }
         finally { IsLoading = false; }
     }
 
@@ -234,7 +239,7 @@ public sealed class ElementsViewModel : ObservableObject
     {
         _searchCts?.Cancel();
         var cts = _searchCts = new CancellationTokenSource();
-        if (string.IsNullOrWhiteSpace(text)) { _matches = []; SearchStatus = ""; return; }
+        if (string.IsNullOrWhiteSpace(text)) { _matches = []; _noMatches = false; SearchStatus = ""; return; }
         try
         {
             await Task.Delay(250, cts.Token);
@@ -247,7 +252,9 @@ public sealed class ElementsViewModel : ObservableObject
             if (cts.IsCancellationRequested) return;
             _matches = r.Matches.Select(m => m.Id).Where(_byId.ContainsKey).ToList();
             _matchIndex = 0;
-            SearchStatus = _matches.Count == 0 ? "No matches" : $"1 / {_matches.Count}{(r.Truncated ? "+" : "")}";
+            _noMatches = _matches.Count == 0;
+            SearchStatus = _noMatches ? "" : $"1 / {_matches.Count}{(r.Truncated ? "+" : "")}";
+            Raise(nameof(SearchStatus));
             if (_matches.Count > 0) SelectById(_matches[0]);
         }
         catch (OperationCanceledException) { }
@@ -258,6 +265,7 @@ public sealed class ElementsViewModel : ObservableObject
     {
         if (_matches.Count == 0) return;
         _matchIndex = (_matchIndex + delta + _matches.Count) % _matches.Count;
+        _noMatches = false;
         SearchStatus = $"{_matchIndex + 1} / {_matches.Count}";
         SelectById(_matches[_matchIndex]);
     }

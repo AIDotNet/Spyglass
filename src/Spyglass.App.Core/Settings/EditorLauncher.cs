@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Spyglass.App.Core.Localization;
 using Spyglass.Protocol.Messages;
 
 namespace Spyglass.App.Core.Settings;
@@ -82,21 +83,21 @@ public static class EditorLauncher
     public static string? Open(SourceInfo source, AppSettings settings, Func<EditorCommand, bool>? start = null)
     {
         if (FilePath(source) is not { } file)
-            return $"Cannot open {source.Uri}: it is not a file on disk (the app was built without source paths, or it is an embedded resource).";
+            return Localizer.Shared.Format("Editor.NotAFile", source.Uri);
         if (!File.Exists(file) && start is null)
-            return $"File not found: {file}";
+            return Localizer.Shared.Format("Editor.FileNotFound", file);
         var candidates = Build(settings.Editor, settings.CustomEditorCommand, file, source.Line, Math.Max(1, source.Column), CurrentOs);
         if (candidates.Count == 0)
             return settings.Editor switch
             {
-                EditorKind.Custom => "No editor command is set. Enter one in Settings › Editor, e.g.  code --goto {file}:{line}:{column}",
-                EditorKind.VisualStudio => "Visual Studio can only be launched from Spyglass on Windows. Pick another editor in Settings.",
-                _ => "No editor is configured.",
+                EditorKind.Custom => Localizer.Shared.Get("Editor.NoCommand"),
+                EditorKind.VisualStudio => Localizer.Shared.Get("Editor.VsWindowsOnly"),
+                _ => Localizer.Shared.Get("Editor.NoneConfigured"),
             };
         start ??= TryStart;
         foreach (var c in candidates)
             if (start(c)) return null;
-        return $"Could not start {candidates[0].Program}. Is it installed and on PATH? You can change the editor in Settings › Editor.";
+        return Localizer.Shared.Format("Editor.CouldNotStart", candidates[0].Program);
     }
 
     static bool TryStart(EditorCommand c)

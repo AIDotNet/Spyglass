@@ -3,6 +3,7 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.EventsView"
              x:DataType="vm:EventsViewModel">
   <!-- Wireframe W3: event types | records | route of the selected record -->
@@ -42,18 +43,18 @@
 
   <arc:ResizablePanels x:Name="Split">
     <!-- Event types -->
-    <arc:ResizablePanel Id="types" Label="Event types" DefaultSize="22" MinSize="220">
+    <arc:ResizablePanel Id="types" Label="{loc:T Events.EventTypes}" DefaultSize="22" MinSize="220">
       <Border Classes="glass" Margin="0,0,5,0" Padding="12">
         <DockPanel>
           <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
-            <TextBlock Text="Event types" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" Margin="4,0,0,0" />
-            <arc:SearchField Label="Filter event types" IsLabelVisible="False" Placeholder="Filter event types" Text="{Binding TypeFilter}" />
+            <TextBlock Text="{loc:T Events.EventTypes}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" Margin="4,0,0,0" />
+            <arc:SearchField Label="{loc:T Events.FilterEventTypes}" IsLabelVisible="False" Placeholder="{loc:T Events.FilterEventTypes}" Text="{Binding TypeFilter}" />
           </StackPanel>
           <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
             <WrapPanel ItemSpacing="6" LineSpacing="6">
-              <arc:Button Variant="Secondary" Content="Defaults" Command="{Binding DefaultsCommand}" ToolTip.Tip="Click, key and pointer press/release" />
-              <arc:Button Variant="Ghost" Content="All" Command="{Binding AllCommand}" ToolTip.Tip="Check every listed (filtered) type" />
-              <arc:Button Variant="Ghost" Content="None" Command="{Binding NoneCommand}" />
+              <arc:Button Variant="Secondary" Content="{loc:T Events.Defaults}" Command="{Binding DefaultsCommand}" ToolTip.Tip="{loc:T Events.ClickKeyAndPointer}" />
+              <arc:Button Variant="Ghost" Content="{loc:T Events.All}" Command="{Binding AllCommand}" ToolTip.Tip="{loc:T Events.CheckEveryListedFiltered}" />
+              <arc:Button Variant="Ghost" Content="{loc:T Events.None}" Command="{Binding NoneCommand}" />
             </WrapPanel>
             <TextBlock Text="{Binding TypesSummary}" FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" Margin="4,0,0,0" />
           </StackPanel>
@@ -78,36 +79,36 @@
     </arc:ResizablePanel>
 
     <!-- Records -->
-    <arc:ResizablePanel Id="records" Label="Events" DefaultSize="48" MinSize="380">
+    <arc:ResizablePanel Id="records" Label="{loc:T Events.Events}" DefaultSize="48" MinSize="380">
       <Border Classes="glass" Margin="5,0,5,0" Padding="12">
         <DockPanel>
           <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="4,0,0,10">
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <arc:Button Variant="{Binding RecordVariant}" Command="{Binding RecordCommand}" AutomationProperties.Name="Record or pause">
+              <arc:Button Variant="{Binding RecordVariant}" Command="{Binding RecordCommand}" AutomationProperties.Name="{loc:T Events.RecordOrPause}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <lucide:LucideIcon Kind="Circle" Size="14" IsVisible="{Binding IsPaused}" />
                   <lucide:LucideIcon Kind="Pause" Size="14" IsVisible="{Binding IsRecording}" />
                   <TextBlock Text="{Binding RecordLabel}" VerticalAlignment="Center" />
                 </StackPanel>
               </arc:Button>
-              <arc:Button Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="Clear the list" AutomationProperties.Name="Clear">
+              <arc:Button Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="{loc:T Events.ClearTheList}" AutomationProperties.Name="{loc:T Events.Clear}">
                 <lucide:LucideIcon Kind="Trash2" Size="14" />
               </arc:Button>
-              <arc:Badge Tone="Success" Content="● Recording" Size="Small" VerticalAlignment="Center" IsVisible="{Binding IsRecording}" />
+              <arc:Badge Tone="Success" Content="{loc:T Events.Recording}" Size="Small" VerticalAlignment="Center" IsVisible="{Binding IsRecording}" />
             </StackPanel>
             <TextBlock Grid.Column="2" Text="{Binding CountText}" VerticalAlignment="Center"
                        FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
           </Grid>
           <Grid DockPanel.Dock="Top" ColumnDefinitions="92,140,*,60,*" Margin="8,0,8,4" IsVisible="{Binding HasRecords}">
-            <TextBlock Classes="head" Text="Time" />
-            <TextBlock Classes="head" Grid.Column="1" Text="Event" />
-            <TextBlock Classes="head" Grid.Column="2" Text="Source" />
-            <TextBlock Classes="head" Grid.Column="3" Text="Strategy" />
-            <TextBlock Classes="head" Grid.Column="4" Text="Handled by" />
+            <TextBlock Classes="head" Text="{loc:T Events.Time}" />
+            <TextBlock Classes="head" Grid.Column="1" Text="{loc:T Events.Event}" />
+            <TextBlock Classes="head" Grid.Column="2" Text="{loc:T Events.Source}" />
+            <TextBlock Classes="head" Grid.Column="3" Text="{loc:T Events.Strategy}" />
+            <TextBlock Classes="head" Grid.Column="4" Text="{loc:T Events.HandledBy}" />
           </Grid>
           <Panel>
             <arc:EmptyState IsVisible="{Binding IsEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Icon="{lucide:LucideGeometry Kind=Zap}" Title="No events yet" Description="{Binding EmptyDescription}" />
+                            Icon="{lucide:LucideGeometry Kind=Zap}" Title="{loc:T Events.NoEventsYet}" Description="{Binding EmptyDescription}" />
             <ScrollViewer IsVisible="{Binding HasRecords}">
               <ItemsControl x:Name="RecordList" ItemsSource="{Binding Records}">
                 <ItemsControl.ItemsPanel>
@@ -138,34 +139,34 @@
     </arc:ResizablePanel>
 
     <!-- Route of the selected record -->
-    <arc:ResizablePanel Id="route" Label="Route" DefaultSize="30" MinSize="260">
+    <arc:ResizablePanel Id="route" Label="{loc:T Events.Route}" DefaultSize="30" MinSize="260">
       <Border Classes="glass" Margin="5,0,0,0" Padding="12">
         <Panel>
           <arc:EmptyState IsVisible="{Binding NoSelection}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                          Icon="{lucide:LucideGeometry Kind=Route}" Title="No event selected"
-                          Description="Select an event to see the elements it travelled through and which one handled it." />
+                          Icon="{lucide:LucideGeometry Kind=Route}" Title="{loc:T Events.NoEventSelected}"
+                          Description="{loc:T Events.SelectAnEventTo}" />
           <DockPanel IsVisible="{Binding HasSelection}">
             <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="4,0,4,12" DataContext="{Binding Selected}" x:DataType="vm:EventRowViewModel">
               <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
               <Grid ColumnDefinitions="84,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
-                <TextBlock Classes="head" Text="Event" />
+                <TextBlock Classes="head" Text="{loc:T Events.Event}" />
                 <TextBlock Classes="cell" Grid.Column="1" Text="{Binding Title}" />
-                <TextBlock Classes="head" Grid.Row="1" Text="Source" />
+                <TextBlock Classes="head" Grid.Row="1" Text="{loc:T Events.Source}" />
                 <TextBlock Classes="cell" Grid.Row="1" Grid.Column="1" Text="{Binding Source}" Foreground="{arc:ArcDesignTokenResource Accent}" />
-                <TextBlock Classes="head" Grid.Row="2" Text="Strategy" />
+                <TextBlock Classes="head" Grid.Row="2" Text="{loc:T Events.Strategy}" />
                 <TextBlock Classes="cell" Grid.Row="2" Grid.Column="1" Text="{Binding Strategy}" />
-                <TextBlock Classes="head" Grid.Row="3" Text="Handled by" />
+                <TextBlock Classes="head" Grid.Row="3" Text="{loc:T Events.HandledBy}" />
                 <TextBlock Classes="cell" Grid.Row="3" Grid.Column="1" Text="{Binding HandledBy}" />
               </Grid>
               <arc:Button Variant="Secondary" HorizontalAlignment="Left" Margin="0,4,0,0"
                           Command="{Binding $parent[UserControl].((vm:EventsViewModel)DataContext).ShowSourceCommand, FallbackValue={x:Null}}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <lucide:LucideIcon Kind="LocateFixed" Size="14" />
-                  <TextBlock Text="Show element" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T Events.ShowElement}" VerticalAlignment="Center" />
                 </StackPanel>
               </arc:Button>
             </StackPanel>
-            <TextBlock DockPanel.Dock="Top" Classes="head" Text="Route" Margin="4,0,0,6" />
+            <TextBlock DockPanel.Dock="Top" Classes="head" Text="{loc:T Events.Route}" Margin="4,0,0,6" />
             <ScrollViewer>
               <ItemsControl ItemsSource="{Binding Selected.Route, FallbackValue={x:Null}}">
                 <ItemsControl.ItemTemplate>
@@ -187,10 +188,10 @@
                           </Panel>
                           <TextBlock Grid.Column="1" Classes="cell" Margin="6,0,0,0" Text="{Binding Label}" />
                           <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                            <arc:Badge Content="source" Size="Small" IsVisible="{Binding IsSource}" />
-                            <arc:Badge Tone="Success" Content="handled" Size="Small" IsVisible="{Binding IsHandler}" />
+                            <arc:Badge Content="{loc:T Events.Source2}" Size="Small" IsVisible="{Binding IsSource}" />
+                            <arc:Badge Tone="Success" Content="{loc:T Events.Handled}" Size="Small" IsVisible="{Binding IsHandler}" />
                             <arc:Button Variant="Ghost" Padding="4,0" MinHeight="22" Command="{Binding ShowCommand}"
-                                        ToolTip.Tip="Show in Elements" AutomationProperties.Name="Show in Elements">
+                                        ToolTip.Tip="{loc:T Events.ShowInElements}" AutomationProperties.Name="{loc:T Events.ShowInElements}">
                               <lucide:LucideIcon Kind="LocateFixed" Size="12" />
                             </arc:Button>
                           </StackPanel>

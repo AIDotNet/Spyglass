@@ -3,6 +3,7 @@
         xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
         xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
         xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
         xmlns:views="clr-namespace:Spyglass.App.Views"
         x:Class="Spyglass.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
@@ -58,17 +59,17 @@
         <Border DockPanel.Dock="Left" Classes="glass chrome" Margin="0,0,10,0" Padding="0,6">
           <arc:Sidebar x:Name="Nav" IsCollapsed="True" Background="Transparent" SelectedKey="{Binding Page, Mode=TwoWay}">
             <arc:SidebarSection>
-              <arc:SidebarItem Key="elements" Label="Elements" Icon="{lucide:LucideGeometry Kind=ListTree}" />
-              <arc:SidebarItem Key="events" Label="Events" Icon="{lucide:LucideGeometry Kind=Zap}" />
-              <arc:SidebarItem Key="network" Label="Network" Icon="{lucide:LucideGeometry Kind=Network}" />
-              <arc:SidebarItem Key="resources" Label="Resources" Icon="{lucide:LucideGeometry Kind=Package}" />
-              <arc:SidebarItem Key="bindings" Label="Bindings" Icon="{lucide:LucideGeometry Kind=Link}" />
-              <arc:SidebarItem Key="logs" Label="Logs" Icon="{lucide:LucideGeometry Kind=ScrollText}" />
-              <arc:SidebarItem Key="performance" Label="Performance" Icon="{lucide:LucideGeometry Kind=Activity}" />
+              <arc:SidebarItem Key="elements" Label="{loc:T MainWindow.Elements}" Icon="{lucide:LucideGeometry Kind=ListTree}" />
+              <arc:SidebarItem Key="events" Label="{loc:T MainWindow.Events}" Icon="{lucide:LucideGeometry Kind=Zap}" />
+              <arc:SidebarItem Key="network" Label="{loc:T MainWindow.Network}" Icon="{lucide:LucideGeometry Kind=Network}" />
+              <arc:SidebarItem Key="resources" Label="{loc:T MainWindow.Resources}" Icon="{lucide:LucideGeometry Kind=Package}" />
+              <arc:SidebarItem Key="bindings" Label="{loc:T MainWindow.Bindings}" Icon="{lucide:LucideGeometry Kind=Link}" />
+              <arc:SidebarItem Key="logs" Label="{loc:T MainWindow.Logs}" Icon="{lucide:LucideGeometry Kind=ScrollText}" />
+              <arc:SidebarItem Key="performance" Label="{loc:T MainWindow.Performance}" Icon="{lucide:LucideGeometry Kind=Activity}" />
             </arc:SidebarSection>
-            <arc:SidebarSection Header="App">
-              <arc:SidebarItem Key="connections" Label="Connections" Icon="{lucide:LucideGeometry Kind=Plug}" />
-              <arc:SidebarItem Key="settings" Label="Settings" Icon="{lucide:LucideGeometry Kind=Settings}" />
+            <arc:SidebarSection Header="{loc:T MainWindow.App}">
+              <arc:SidebarItem Key="connections" Label="{loc:T MainWindow.Connections}" Icon="{lucide:LucideGeometry Kind=Plug}" />
+              <arc:SidebarItem Key="settings" Label="{loc:T MainWindow.Settings}" Icon="{lucide:LucideGeometry Kind=Settings}" />
             </arc:SidebarSection>
           </arc:Sidebar>
         </Border>

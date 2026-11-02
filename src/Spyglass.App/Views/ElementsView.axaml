@@ -3,17 +3,18 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.ElementsView"
              x:DataType="vm:ElementsViewModel">
   <!-- Wireframe W2 (design/ux/02-wireframes.md). -->
   <DockPanel>
     <arc:ResizablePanels x:Name="Split">
       <!-- Element tree -->
-      <arc:ResizablePanel Id="tree" Label="Element tree" DefaultSize="42" MinSize="260">
+      <arc:ResizablePanel Id="tree" Label="{loc:T Elements.ElementTree}" DefaultSize="42" MinSize="260">
         <Border Classes="glass" Margin="0,0,5,0" Padding="10">
         <DockPanel>
           <!-- Ancestor path (Chrome-style), Arc Breadcrumb -->
-          <arc:Breadcrumb x:Name="Crumbs" DockPanel.Dock="Bottom" Margin="0,8,0,0" Label="Element path" MaxVisibleItems="6"
+          <arc:Breadcrumb x:Name="Crumbs" DockPanel.Dock="Bottom" Margin="0,8,0,0" Label="{loc:T Elements.ElementPath}" MaxVisibleItems="6"
                           ItemsSource="{Binding Breadcrumb}">
             <arc:Breadcrumb.ItemTemplate>
               <DataTemplate x:DataType="vm:ElementNodeViewModel">
@@ -24,24 +25,24 @@
           <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,6">
             <WrapPanel ItemSpacing="6" LineSpacing="6">
               <arc:SegmentedControl SelectedValue="{Binding TreeKind}">
-                <arc:SegmentedOption Value="visual" Label="Visual" />
-                <arc:SegmentedOption Value="logical" Label="Logical" />
+                <arc:SegmentedOption Value="visual" Label="{loc:T Elements.Visual}" />
+                <arc:SegmentedOption Value="logical" Label="{loc:T Elements.Logical}" />
               </arc:SegmentedControl>
-              <arc:Checkbox Content="Template parts" IsChecked="{Binding ShowTemplateParts}" VerticalAlignment="Center" />
+              <arc:Checkbox Content="{loc:T Elements.TemplateParts}" IsChecked="{Binding ShowTemplateParts}" VerticalAlignment="Center" />
               <arc:Button Variant="{Binding PickVariant}" Command="{Binding PickCommand}"
-                          ToolTip.Tip="Pick an element in the app (Ctrl+Shift+C / ⌘⇧C)" AutomationProperties.Name="Pick element">
+                          ToolTip.Tip="{loc:T Elements.PickAnElementIn}" AutomationProperties.Name="{loc:T Elements.PickElement}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <lucide:LucideIcon Kind="Crosshair" Size="14" />
                   <TextBlock Text="{Binding PickLabel}" VerticalAlignment="Center" />
                 </StackPanel>
               </arc:Button>
-              <arc:Button Variant="Ghost" Command="{Binding RefreshCommand}" ToolTip.Tip="Reload the tree" AutomationProperties.Name="Refresh">
+              <arc:Button Variant="Ghost" Command="{Binding RefreshCommand}" ToolTip.Tip="{loc:T Elements.ReloadTheTree}" AutomationProperties.Name="{loc:T Elements.Refresh}">
                 <lucide:LucideIcon Kind="RefreshCw" Size="14" />
               </arc:Button>
             </WrapPanel>
             <Grid ColumnDefinitions="*,Auto">
-              <arc:SearchField x:Name="Search" Label="Search elements" IsLabelVisible="False"
-                               Placeholder="Type, #Name, .class, or text" Text="{Binding SearchText}" />
+              <arc:SearchField x:Name="Search" Label="{loc:T Elements.SearchElements}" IsLabelVisible="False"
+                               Placeholder="{loc:T Elements.TypeNameClassOr}" Text="{Binding SearchText}" />
               <TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding SearchStatus}"
                          FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
             </Grid>
@@ -65,7 +66,7 @@
       </arc:ResizablePanel>
 
       <!-- Details -->
-      <arc:ResizablePanel Id="details" Label="Details" DefaultSize="58" MinSize="360">
+      <arc:ResizablePanel Id="details" Label="{loc:T Elements.Details}" DefaultSize="58" MinSize="360">
         <Border Classes="glass" Margin="5,0,0,0" Padding="12">
         <DockPanel DataContext="{Binding Details}" x:DataType="vm:ElementDetailsViewModel">
           <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="4,0,4,6">
@@ -77,10 +78,10 @@
                 <Run Text="{Binding DataContext}" />
               </TextBlock>
               <arc:Button Variant="Ghost" Padding="6,0" MinHeight="20" IsVisible="{Binding HasSource}" Command="{Binding OpenSourceCommand}"
-                          ToolTip.Tip="Open the XAML in your editor (Settings › Editor)" AutomationProperties.Name="Open in editor">
+                          ToolTip.Tip="{loc:T Elements.OpenTheXamlIn}" AutomationProperties.Name="{loc:T Elements.OpenInEditor}">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                   <lucide:LucideIcon Kind="ExternalLink" Size="12" />
-                  <TextBlock Text="Open" FontSize="{arc:ArcDesignTokenResource TypeXS}" VerticalAlignment="Center" />
+                  <TextBlock Text="{loc:T Elements.Open}" FontSize="{arc:ArcDesignTokenResource TypeXS}" VerticalAlignment="Center" />
                 </StackPanel>
               </arc:Button>
             </StackPanel>
@@ -88,11 +89,11 @@
                        FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource Danger}" />
           </StackPanel>
           <arc:Tabs SelectedIndex="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).DetailsTab, FallbackValue=0}">
-            <arc:TabItem Header="Properties">
+            <arc:TabItem Header="{loc:T Elements.Properties}">
               <DockPanel>
                 <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
-                  <arc:SearchField Label="Filter properties" IsLabelVisible="False" Placeholder="Filter properties" Text="{Binding Filter}" />
-                  <arc:Checkbox Grid.Column="1" Margin="8,0,0,0" Content="Only set" IsChecked="{Binding OnlySet}" VerticalAlignment="Center" />
+                  <arc:SearchField Label="{loc:T Elements.FilterProperties}" IsLabelVisible="False" Placeholder="{loc:T Elements.FilterProperties}" Text="{Binding Filter}" />
+                  <arc:Checkbox Grid.Column="1" Margin="8,0,0,0" Content="{loc:T Elements.OnlySet}" IsChecked="{Binding OnlySet}" VerticalAlignment="Center" />
                 </Grid>
                 <ScrollViewer>
                   <ItemsControl x:Name="PropertyList" ItemsSource="{Binding Properties}">
@@ -111,7 +112,7 @@
                                      FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
                           <arc:Badge Grid.Column="2" Margin="6,0,0,0" HorizontalAlignment="Right" Content="{Binding Priority}" Tone="{Binding PriorityTone}" Size="Small" VerticalAlignment="Center" />
                           <arc:Button Grid.Column="3" Margin="4,0,0,0" Variant="Ghost" Content="↺" IsVisible="{Binding IsModified}"
-                                      Command="{Binding ResetCommand}" ToolTip.Tip="Restore the original value" Padding="6,0" MinHeight="22" />
+                                      Command="{Binding ResetCommand}" ToolTip.Tip="{loc:T Elements.RestoreTheOriginalValue}" Padding="6,0" MinHeight="22" />
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -120,7 +121,7 @@
               </DockPanel>
             </arc:TabItem>
 
-            <arc:TabItem Header="Layout">
+            <arc:TabItem Header="{loc:T Elements.Layout}">
               <ScrollViewer>
                 <StackPanel Spacing="12" Margin="4">
                   <!-- Box model (W2-a) -->
@@ -143,28 +144,28 @@
                     </StackPanel>
                   </Border>
                   <Grid ColumnDefinitions="110,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
-                    <TextBlock Text="Bounds" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Text="{loc:T Elements.Bounds}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                     <TextBlock Grid.Column="1" Text="{Binding BoundsText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
-                    <TextBlock Grid.Row="1" Text="Desired size" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="1" Text="{loc:T Elements.DesiredSize}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DesiredText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
-                    <TextBlock Grid.Row="2" Text="Constraints" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="2" Text="{loc:T Elements.Constraints}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                     <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ConstraintsText}" TextWrapping="Wrap" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
-                    <TextBlock Grid.Row="3" Text="Alignment" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="3" Text="{loc:T Elements.Alignment}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AlignmentText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
                   </Grid>
                 </StackPanel>
               </ScrollViewer>
             </arc:TabItem>
 
-            <arc:TabItem Header="Styles">
+            <arc:TabItem Header="{loc:T Elements.Styles}">
               <ScrollViewer>
                 <StackPanel Spacing="12" Margin="4">
-                  <TextBlock Text="Classes" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                  <TextBlock Text="{loc:T Elements.Classes}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                   <ItemsControl ItemsSource="{Binding Classes}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><arc:Badge Content="{Binding}" /></DataTemplate></ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <TextBlock Text="Pseudo-classes (force state)" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                  <TextBlock Text="{loc:T Elements.PseudoClassesForceState}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                   <ItemsControl ItemsSource="{Binding PseudoClasses}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="12" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -173,8 +174,8 @@
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                  <TextBlock Text="Applied styles (cascade)" Foreground="{arc:ArcDesignTokenResource TextSecondary}" IsVisible="{Binding HasValueFrames}" />
-                  <arc:Alert Tone="Info" Title="Style sources need the advanced agent: use UseSpyglassAdvanced()" IsOpen="True" IsVisible="{Binding NoValueFrames}" />
+                  <TextBlock Text="{loc:T Elements.AppliedStylesCascade}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" IsVisible="{Binding HasValueFrames}" />
+                  <arc:Alert Tone="Info" Title="{loc:T Elements.StyleSourcesNeedThe}" IsOpen="True" IsVisible="{Binding NoValueFrames}" />
                   <ItemsControl ItemsSource="{Binding Frames}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>

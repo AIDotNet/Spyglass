@@ -111,6 +111,7 @@ internal static class DebugSelfShot
                         foreach (var kv in changes.Split(',').Select(x => x.Split('=')))
                         {
                             if (kv[0] == "Accent") st.Accent = kv[1];
+                            if (kv[0] == "Language") st.Language = kv[1];
                             if (kv[0] == "Appearance") st.Appearance = Enum.Parse<Core.Settings.AppearanceMode>(kv[1]);
                             if (kv[0] == "Motion") st.Motion = Enum.Parse<Core.Settings.MotionMode>(kv[1]);
                         }

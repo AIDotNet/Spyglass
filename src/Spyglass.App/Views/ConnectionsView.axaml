@@ -3,6 +3,7 @@
              xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
              xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
              xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:loc="clr-namespace:Spyglass.App.Localization"
              x:Class="Spyglass.App.Views.ConnectionsView"
              x:DataType="vm:ConnectionsViewModel">
   <!-- Wireframe W1 on glass -->
@@ -10,14 +11,14 @@
     <ScrollViewer>
       <StackPanel MaxWidth="680" Margin="24,36" Spacing="16" HorizontalAlignment="Center">
         <StackPanel Spacing="16" IsVisible="{Binding NoSessions}">
-          <arc:EmptyState Title="Waiting for an app to connect"
-                          Description="Add the Spyglass agent to your Avalonia app. It connects automatically; press Ctrl+Shift+I (⌘⌥I) in the app to bring Spyglass forward."
+          <arc:EmptyState Title="{loc:T Connections.WaitingForAnApp}"
+                          Description="{loc:T Connections.AddTheSpyglassAgent}"
                           Icon="{lucide:LucideGeometry Kind=Telescope}" />
           <arc:CodeBlock FileName="Program.cs" Language="cs" Code="{Binding AgentSnippet}" />
         </StackPanel>
 
         <StackPanel Spacing="10" IsVisible="{Binding HasSessions}">
-          <TextBlock Text="Connected apps" FontWeight="SemiBold" />
+          <TextBlock Text="{loc:T Connections.ConnectedApps}" FontWeight="SemiBold" />
           <ItemsControl ItemsSource="{Binding Main.Sessions}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate>
@@ -66,7 +67,7 @@
           </Border>
         </StackPanel>
 
-        <TextBlock Text="Use with AI coding agents (MCP)" FontWeight="SemiBold" Margin="0,12,0,0" />
+        <TextBlock Text="{loc:T Connections.UseWithAiCoding}" FontWeight="SemiBold" Margin="0,12,0,0" />
         <arc:CodeBlock FileName="MCP" Language="bash" Code="{Binding McpSnippet}" />
       </StackPanel>
     </ScrollViewer>

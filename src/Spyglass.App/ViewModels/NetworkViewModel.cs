@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.App.Core.Network;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
@@ -52,22 +53,34 @@ public sealed class NetworkViewModel : ObservableObject
         _settings = _store.Load();
         _visible = _settings.VisibleColumns;
         Details = new NetworkDetailsViewModel(session, text => CopyRequested?.Invoke(text)) { ImportedBody = (id, part) => _importedBodies.GetValueOrDefault((id, part)) };
-        NameColumn = new ColumnViewModel(NetworkColumn.Name, "Name", 0);
+        NameColumn = new ColumnViewModel(NetworkColumn.Name, "Net.Col.Name", 0);
         RebuildColumns();
         ToggleRecordCommand = new RelayCommand(ToggleRecordingAsync);
         ClearCommand = new RelayCommand(ClearAsync);
         Types = new ObservableCollection<TypeToggleViewModel>(
             new (string Label, ResourceType? Type)[]
             {
-                ("All", null), ("Fetch/XHR", ResourceType.FetchXhr), ("Doc", ResourceType.Doc), ("CSS", ResourceType.Css),
+                ("Net.TypeAll", null), ("Fetch/XHR", ResourceType.FetchXhr), ("Doc", ResourceType.Doc), ("CSS", ResourceType.Css),
                 ("JS", ResourceType.Js), ("Font", ResourceType.Font), ("Img", ResourceType.Img), ("Media", ResourceType.Media),
-                ("WS", ResourceType.WS), ("Wasm", ResourceType.Wasm), ("Other", ResourceType.Other),
+                ("WS", ResourceType.WS), ("Wasm", ResourceType.Wasm), ("Net.TypeOther", ResourceType.Other),
             }.Select(t => new TypeToggleViewModel(t.Label, t.Type, this)));
         Types[0].IsOn = true;
         session.Network.Changed += updates => Dispatcher.UIThread.Post(() => Apply(updates));
         foreach (var r in session.Network.Requests) Upsert(r);
         Refilter();
+        WatchLanguage();
     }
+
+    /// <summary>Column titles, the summary line and the empty-state texts are rebuilt in the new language.</summary>
+    protected internal override void OnLanguageChanged()
+    {
+        RebuildColumns();
+        Refilter();
+        foreach (var n in new[] { nameof(RecordTip), nameof(EmptyTitle), nameof(EmptyDescription) }) Raise(n);
+    }
+
+    /// <summary>Texts that are string-table keys start with "Net." (column titles, type buttons); anything else (header names) is shown as is.</summary>
+    internal static string Tr(string s) => s.StartsWith("Net.", StringComparison.Ordinal) ? Loc.T(s) : s;
 
     public ObservableCollection<NetworkRowViewModel> Rows { get; } = new();
     public ObservableCollection<TypeToggleViewModel> Types { get; }
@@ -85,11 +98,11 @@ public sealed class NetworkViewModel : ObservableObject
     }
 
     static string RecordKeys => ShortcutBridge.Current.Get(Spyglass.App.Core.Settings.ShortcutRegistry.NetworkToggleRecord)?.ToDisplay(OperatingSystem.IsMacOS()) is { } k ? $" ({k})" : "";
-    public string RecordTip => IsRecording ? $"Stop recording network log{RecordKeys}" : $"Record network log{RecordKeys}";
-    public string EmptyTitle => IsRecording ? "Recording network activity…" : "Recording is stopped";
+    public string RecordTip => (IsRecording ? Loc.T("Net.RecordStop") : Loc.T("Net.RecordStart")) + RecordKeys;
+    public string EmptyTitle => IsRecording ? Loc.T("Net.RecordingTitle") : Loc.T("Net.StoppedTitle");
     public string EmptyDescription => IsRecording
-        ? "Perform a request in the app to see it here. You can also drop a .har file here."
-        : $"{(RecordKeys.Length > 0 ? $"Press {RecordKeys.Trim(' ', '(', ')')}" : "Press the record button")} to start recording. Requests are only intercepted while recording. You can also drop a .har file here.";
+        ? Loc.T("Net.EmptyRecording")
+        : RecordKeys.Length > 0 ? Loc.F("Net.EmptyStopped", RecordKeys.Trim(' ', '(', ')')) : Loc.T("Net.EmptyStoppedNoKey");
 
     public bool PreserveLog { get => _preserveLog; set => Set(ref _preserveLog, value); }
     public bool Invert { get => _invert; set { if (Set(ref _invert, value)) Refilter(); } }
@@ -153,16 +166,16 @@ public sealed class NetworkViewModel : ObservableObject
 
     static readonly (NetworkColumn Column, string Title, double Width)[] FixedColumns =
     [
-        (NetworkColumn.Id, "#", 50), (NetworkColumn.Method, "Method", 60), (NetworkColumn.Status, "Status", 150), (NetworkColumn.Type, "Type", 74),
-        (NetworkColumn.Protocol, "Protocol", 70), (NetworkColumn.Scheme, "Scheme", 64), (NetworkColumn.Domain, "Domain", 150),
-        (NetworkColumn.Remote, "Remote address", 130), (NetworkColumn.Connection, "Connection ID", 100), (NetworkColumn.Initiator, "Initiator", 150),
-        (NetworkColumn.Cookies, "Cookies", 66), (NetworkColumn.SetCookies, "Set cookies", 84), (NetworkColumn.Size, "Size", 70), (NetworkColumn.Time, "Time", 70),
+        (NetworkColumn.Id, "#", 50), (NetworkColumn.Method, "Net.Col.Method", 60), (NetworkColumn.Status, "Net.Col.Status", 150), (NetworkColumn.Type, "Net.Col.Type", 74),
+        (NetworkColumn.Protocol, "Net.Col.Protocol", 70), (NetworkColumn.Scheme, "Net.Col.Scheme", 64), (NetworkColumn.Domain, "Net.Col.Domain", 150),
+        (NetworkColumn.Remote, "Net.Col.Remote", 130), (NetworkColumn.Connection, "Net.Col.Connection", 100), (NetworkColumn.Initiator, "Net.Col.Initiator", 150),
+        (NetworkColumn.Cookies, "Net.Col.Cookies", 66), (NetworkColumn.SetCookies, "Net.Col.SetCookies", 84), (NetworkColumn.Size, "Net.Col.Size", 70), (NetworkColumn.Time, "Net.Col.Time", 70),
     ];
 
     public static string TitleOf(NetworkColumn c) => c switch
     {
-        NetworkColumn.Name => "Name", NetworkColumn.Waterfall => "Waterfall",
-        _ => FixedColumns.First(f => f.Column == c).Title,
+        NetworkColumn.Name => Loc.T("Net.Col.Name"), NetworkColumn.Waterfall => Loc.T("Net.Col.Waterfall"),
+        _ => Loc.T(FixedColumns.First(f => f.Column == c).Title),
     };
 
     /// <summary>Optional columns offered in the header menu, in Chrome's order.</summary>
@@ -178,7 +191,7 @@ public sealed class NetworkViewModel : ObservableObject
         foreach (var f in FixedColumns.Where(f => f.Column is NetworkColumn.Size or NetworkColumn.Time))
             Columns.Add(new ColumnViewModel(f.Column, f.Title, f.Width) { IsVisible = IsVisible(f.Column) });
         foreach (var h in _settings.CustomHeaders) Columns.Add(new ColumnViewModel(null, h, 120) { Custom = h, IsVisible = true });
-        Columns.Add(new ColumnViewModel(NetworkColumn.Waterfall, "Waterfall", 150) { IsVisible = IsVisible(NetworkColumn.Waterfall) });
+        Columns.Add(new ColumnViewModel(NetworkColumn.Waterfall, "Net.Col.Waterfall", 150) { IsVisible = IsVisible(NetworkColumn.Waterfall) });
         NameColumn.IsVisible = true;
         foreach (var c in Columns.Append(NameColumn)) c.ApplySort(_sort);
         foreach (var r in _rows.Values) r.SetCustomColumns(_settings.CustomHeaders);
@@ -303,7 +316,7 @@ public sealed class NetworkViewModel : ObservableObject
         catch (Exception ex) { SearchStatus = ex.Message; return; }
         _hits = Rows.Where(r => ids.Contains(r.Id)).Select(r => r.Id).ToList();
         MarkHits();
-        SearchStatus = ids.Count == 0 ? "No matches" : $"{ids.Count} request{(ids.Count == 1 ? "" : "s")}" + (_hits.Count < ids.Count ? $" ({_hits.Count} listed)" : "");
+        SearchStatus = ids.Count == 0 ? Loc.T("Common.NoMatches") : Loc.F(ids.Count == 1 ? "Net.RequestOne" : "Net.RequestMany", ids.Count) + (_hits.Count < ids.Count ? " " + Loc.F("Net.Listed", _hits.Count) : "");
         if (_hits.Count > 0) SelectHit(0);
     }
 
@@ -453,12 +466,12 @@ public sealed class NetworkViewModel : ObservableObject
     void UpdateSummary(List<NetworkRowViewModel> visible)
     {
         var all = _rows.Values.ToList();
-        string Count(int shown, int total) => shown == total ? $"{total} requests" : $"{shown} / {total} requests";
+        string Count(int shown, int total) => shown == total ? Loc.F("Net.SumRequests", total) : Loc.F("Net.SumRequestsOf", shown, total);
         var resources = visible.Sum(r => r.Request.ResponseSize ?? 0);
         var finish = visible.Count == 0 ? "" :
-            $"  │  Finish: {NetworkCopy.Duration(((visible.Max(r => r.Request.EndTime ?? r.Request.StartTime)) - visible.Min(r => r.Request.StartTime)).TotalMilliseconds)}";
-        var imported = all.Count(r => r.IsImported) is > 0 and var n ? $"  │  {n} imported" : "";
-        Summary = $"{Count(visible.Count, all.Count)}  │  {NetworkCopy.Size(resources)} resources{finish}{imported}";
+            "  │  " + Loc.F("Net.SumFinish", NetworkCopy.Duration(((visible.Max(r => r.Request.EndTime ?? r.Request.StartTime)) - visible.Min(r => r.Request.StartTime)).TotalMilliseconds));
+        var imported = all.Count(r => r.IsImported) is > 0 and var n ? "  │  " + Loc.F("Net.SumImported", n) : "";
+        Summary = $"{Count(visible.Count, all.Count)}  │  {Loc.F("Net.SumResources", NetworkCopy.Size(resources))}{finish}{imported}";
     }
 
     public void Copy(string what)
@@ -504,7 +517,7 @@ public sealed class NetworkViewModel : ObservableObject
     {
         HarImport import;
         try { import = HarConverter.Parse(json); }
-        catch (FormatException ex) { Notice = "Import failed: " + ex.Message; return 0; }
+        catch (FormatException ex) { Notice = Loc.F("Net.ImportFailed", ex.Message); return 0; }
         Notice = null;
         var map = import.Requests.ToDictionary(r => r.Id, _ => --_importSeq);
         foreach (var r in import.Requests)
@@ -527,7 +540,7 @@ public sealed class ColumnViewModel(NetworkColumn? column, string title, double 
     bool _visible = true, _asc, _desc;
     public NetworkColumn? Column { get; } = column;
     public string? Custom { get; init; }
-    public string Title { get; } = title;
+    public string Title => NetworkViewModel.Tr(title);
     public double Width { get; } = width;
     /// <summary>Row cells carry an 8 px right margin outside their width; the Waterfall cell is last and has none.</summary>
     public double OuterWidth => IsFlexible ? double.NaN : Column == NetworkColumn.Waterfall ? Width : Width + 8;
@@ -548,7 +561,7 @@ public sealed class ColumnViewModel(NetworkColumn? column, string title, double 
 public sealed class TypeToggleViewModel(string label, ResourceType? type, NetworkViewModel owner) : ObservableObject
 {
     bool _on;
-    public string Label { get; } = label;
+    public string Label => NetworkViewModel.Tr(label);
     public ResourceType? Type { get; } = type;
     public bool IsOn { get => _on; set { if (Set(ref _on, value)) Raise(nameof(Variant)); } }
     public TKCode.Arc.ButtonVariant Variant => IsOn ? TKCode.Arc.ButtonVariant.Primary : TKCode.Arc.ButtonVariant.Ghost;
@@ -597,8 +610,8 @@ public sealed class NetworkRowViewModel : ObservableObject
     }
     public string InitiatorTip => Request.Initiator is { } i ? string.Join("\n", i.Stack.Take(12)) : "";
     public string Size => Request.IsUpgrade ? "—" : NetworkCopy.Size(Request.ResponseSize);
-    public string SizeTip => "Resource size (decoded). HttpClient decompresses before Spyglass sees the body, so the transferred size is not available.";
-    public string Time => IsPending ? "(pending)" : NetworkCopy.Duration(Request.Timing?.Total ?? -1);
+    public string SizeTip => Loc.T("Net.SizeTip");
+    public string Time => IsPending ? Loc.T("Net.Pending") : NetworkCopy.Duration(Request.Timing?.Total ?? -1);
     public bool IsSelected { get => _selected; set => Set(ref _selected, value); }
 
     // Waterfall bar (pixels): lighter part = waiting, darker part = downloading (Chrome).
@@ -665,9 +678,9 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
     public Bitmap? Image => _image;
     public bool IsImage => _image is not null;
     public bool IsTextPreview => !IsJson && !IsImage;
-    public string InitiatorFrame => _r?.Initiator?.Frame ?? "Other (framework code)";
-    public string TimingTotal => _r?.Timing is { } t ? $"Total  {NetworkCopy.Duration(t.Total)}" : "";
-    public string Remote => _r?.RemoteAddress is { } a ? $"{a}{(_r.ConnectionId is { } c ? $"  ·  connection {c}" : "")}" : "—";
+    public string InitiatorFrame => _r?.Initiator?.Frame ?? Loc.T("Net.OtherFramework");
+    public string TimingTotal => _r?.Timing is { } t ? Loc.F("Net.TimingTotal", NetworkCopy.Duration(t.Total)) : "";
+    public string Remote => _r?.RemoteAddress is { } a ? $"{a}{(_r.ConnectionId is { } c ? "  ·  " + Loc.F("Net.Connection", c) : "")}" : "—";
     public bool HasCookies => Cookies.Count > 0;
 
     public async Task LoadAsync(NetworkRequestDto? r)
@@ -679,13 +692,13 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
         _image = null;
         if (r is not null)
         {
-            General.Add(new("Request URL", r.Url));
-            General.Add(new("Request Method", r.Method));
-            General.Add(new("Status Code", r.Status is { } s ? $"{s} {r.StatusText}" : NetworkCopy.Status(r)));
-            General.Add(new("Remote Address", r.RemoteAddress ?? "—"));
-            if (r.HttpVersion is { } v) General.Add(new("Protocol", v));
-            if (r.RedirectedFromId is { } from) General.Add(new("Redirected from", $"#{from}"));
-            if (r.ErrorDetail is { } ed) General.Add(new("Error", ed));
+            General.Add(new(Loc.T("Net.RequestUrl"), r.Url));
+            General.Add(new(Loc.T("Net.RequestMethod"), r.Method));
+            General.Add(new(Loc.T("Net.StatusCode"), r.Status is { } s ? $"{s} {r.StatusText}" : NetworkCopy.Status(r)));
+            General.Add(new(Loc.T("Net.RemoteAddress"), r.RemoteAddress ?? "—"));
+            if (r.HttpVersion is { } v) General.Add(new(Loc.T("Net.Col.Protocol"), v));
+            if (r.RedirectedFromId is { } from) General.Add(new(Loc.T("Net.RedirectedFrom"), $"#{from}"));
+            if (r.ErrorDetail is { } ed) General.Add(new(Loc.T("Net.Error"), ed));
             foreach (var h in r.ResponseHeaders.OrderBy(h => h.Name, StringComparer.OrdinalIgnoreCase)) ResponseHeaders.Add(new HeaderRowViewModel(h));
             foreach (var h in r.RequestHeaders.OrderBy(h => h.Name, StringComparer.OrdinalIgnoreCase)) RequestHeaders.Add(new HeaderRowViewModel(h));
             if (Uri.TryCreate(r.Url, UriKind.Absolute, out var u) && u.Query.Length > 1)
@@ -698,8 +711,8 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
             {
                 var max = Math.Max(1, t.Total);
                 void Phase(string name, double ms) { if (ms >= 0) Timing.Add(new TimingRowViewModel(name, ms, ms / max * 220)); }
-                Phase("Queueing", t.Queueing); Phase("DNS Lookup", t.Dns); Phase("Initial connection", t.Connect); Phase("SSL", t.Ssl);
-                Phase("Request sent", t.Send); Phase("Waiting for server response", t.Wait); Phase("Content Download", t.Download);
+                Phase(Loc.T("Net.PhaseQueueing"), t.Queueing); Phase(Loc.T("Net.PhaseDns"), t.Dns); Phase(Loc.T("Net.PhaseConnect"), t.Connect); Phase("SSL", t.Ssl);
+                Phase(Loc.T("Net.PhaseSend"), t.Send); Phase(Loc.T("Net.PhaseWait"), t.Wait); Phase(Loc.T("Net.PhaseDownload"), t.Download);
             }
             foreach (var f in r.Initiator?.Stack ?? []) Stack.Add(f);
             foreach (var c in NetworkFilter.RequestCookies(r)) Cookies.Add(new($"→ {c.Name}", c.Value));
@@ -718,8 +731,8 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
                         using var ms = new MemoryStream(Convert.FromBase64String(body.Content));
                         try { _image = new Bitmap(ms); } catch { /* not decodable */ }
                     }
-                    _responseText = body.Encoding == "text" ? body.Content : $"(binary, {NetworkCopy.Size(body.TotalBytes)})";
-                    if (body.Truncated) _responseText += $"\n\n… truncated by the agent ({NetworkCopy.Size(body.TotalBytes)} total)";
+                    _responseText = body.Encoding == "text" ? body.Content : Loc.F("Net.Binary", NetworkCopy.Size(body.TotalBytes));
+                    if (body.Truncated) _responseText += "\n\n" + Loc.F("Net.Truncated", NetworkCopy.Size(body.TotalBytes));
                     var trimmed = body.Encoding == "text" ? body.Content.TrimStart() : "";
                     if (r.MimeType?.Contains("json") == true || trimmed.StartsWith('{') || trimmed.StartsWith('[')) _json = body.Content;
                     _responseLanguage = r.MimeType switch
@@ -739,7 +752,7 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
         Raise(string.Empty);
     }
 
-    static string Text(NetworkBodyResult b) => b.Encoding == "text" ? b.Content : $"(binary, {NetworkCopy.Size(b.TotalBytes)})";
+    static string Text(NetworkBodyResult b) => b.Encoding == "text" ? b.Content : Loc.F("Net.Binary", NetworkCopy.Size(b.TotalBytes));
 
     public async Task CopyAsync(string what)
     {
@@ -771,9 +784,9 @@ public sealed class HeaderRowViewModel : ObservableObject
     public HeaderRowViewModel(HeaderDto h) { _h = h; RevealCommand = new RelayCommand(() => { _revealed = !_revealed; Raise(nameof(Value)); Raise(nameof(RevealText)); }); }
     public string Name => _h.Name;
     /// <summary>Credentials are masked until revealed (design/network §4).</summary>
-    public string Value => _h.IsSensitive && !_revealed ? $"•••••• (length {_h.Value.Length})" : _h.Value;
+    public string Value => _h.IsSensitive && !_revealed ? Loc.F("Net.Masked", _h.Value.Length) : _h.Value;
     public bool IsSensitive => _h.IsSensitive;
-    public string RevealText => _revealed ? "Hide" : "Show";
+    public string RevealText => _revealed ? Loc.T("Net.Hide") : Loc.T("Net.Show");
     public RelayCommand RevealCommand { get; }
 }
 

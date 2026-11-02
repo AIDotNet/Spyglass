@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol.Messages;
 using TKCode.Arc;
 
@@ -30,12 +31,25 @@ public sealed class LogsViewModel : ObservableObject
         _showElement = showElement;
         session.LogEntries += p => Dispatcher.UIThread.Post(() => Merge(p.Entries));
         ClearCommand = new RelayCommand(Clear);
-        AreaOptions.Add(AllAreas);
+        _allAreas = AllAreas;
+        AreaOptions.Add(_allAreas);
+        WatchLanguage();
+    }
+
+    string _allAreas;
+
+    protected internal override void OnLanguageChanged()
+    {
+        // "All areas" is both the first list item and the "no filter" value: swap its text without losing the selection.
+        var old = _allAreas;
+        _allAreas = AllAreas;
+        if (old != _allAreas && AreaOptions.Count > 0 && AreaOptions[0] == old) AreaOptions[0] = _allAreas;
+        base.OnLanguageChanged();
     }
 
     /// <summary>Newest first, filtered.</summary>
     public ObservableCollection<LogRowViewModel> Entries { get; } = new();
-    public const string AllAreas = "All areas";
+    public static string AllAreas => Loc.T("Logs.AllAreas");
     /// <summary>"All areas" followed by every area seen so far, sorted.</summary>
     public ObservableCollection<string> AreaOptions { get; } = new();
     public RelayCommand ClearCommand { get; }
@@ -56,10 +70,10 @@ public sealed class LogsViewModel : ObservableObject
     /// <summary>Selected area option (<see cref="AllAreas"/> = no filter).</summary>
     public string Area
     {
-        get => _area ?? AllAreas;
+        get => _area ?? _allAreas;
         set
         {
-            var area = string.IsNullOrEmpty(value) || value == AllAreas ? null : value;
+            var area = string.IsNullOrEmpty(value) || value == _allAreas ? null : value;
             if (Set(ref _area, area)) Refilter();
         }
     }
@@ -76,14 +90,14 @@ public sealed class LogsViewModel : ObservableObject
     }
 
     public int Count => Entries.Count;
-    public string CountText => Entries.Count == _all.Count ? $"{Count}" : $"{Count} of {_all.Count}";
+    public string CountText => Entries.Count == _all.Count ? $"{Count}" : Loc.F("Logs.CountOf", Count, _all.Count);
     public bool IsEmpty => Entries.Count == 0;
     public bool HasEntries => !IsEmpty;
-    public string EmptyTitle => _all.Count == 0 ? "No log entries" : "No matching entries";
+    public string EmptyTitle => _all.Count == 0 ? Loc.T("Logs.NoEntries") : Loc.T("Logs.NoMatching");
     public string EmptyDescription => _all.Count == 0
-        ? $"Avalonia warnings and errors (layout, rendering, properties, bindings…) appear here as they happen. Recording {LevelLabel(_minLevel)} and above."
-        : "Change the level, area or search filter to see more.";
-    public string RecordingText => $"Recording {LevelLabel(_minLevel)} and above";
+        ? Loc.F("Logs.EmptyDescription", LevelLabel(_minLevel))
+        : Loc.T("Logs.ChangeFilter");
+    public string RecordingText => Loc.F("Logs.Recording", LevelLabel(_minLevel));
 
     /// <summary>Warnings and errors received (for the sidebar badge).</summary>
     public int ProblemCount { get; private set; }
@@ -198,6 +212,6 @@ public sealed class LogRowViewModel(LogEntryDto e, Action<int> showElement)
     public string? SourceText { get; } = e.SourceType;
     public bool HasSource => SourceText is not null;
     public bool CanShow { get; } = e.SourceId is not null;
-    public string ShowTip => CanShow ? "Show this element in Elements" : "This object is not in the element tree (or no longer exists)";
+    public string ShowTip => CanShow ? Loc.T("Logs.ShowTipOk") : Loc.T("Logs.ShowTipGone");
     public RelayCommand ShowCommand { get; } = new(() => { if (e.SourceId is { } id) showElement(id); });
 }

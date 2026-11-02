@@ -1,4 +1,5 @@
 using Spyglass.App.Core.Settings;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 
 namespace Spyglass.App.ViewModels;
@@ -14,6 +15,7 @@ public sealed class SettingsViewModel : ObservableObject
         _service = service;
         _listeningPort = listeningPort;
         service.Changed += _ => RaiseAll();
+        WatchLanguage();
         ResetCommand = new RelayCommand(() => _service.Reset());
     }
 
@@ -26,20 +28,29 @@ public sealed class SettingsViewModel : ObservableObject
     // ---- appearance ----
     public string AppearanceKey { get => S.Appearance.ToString(); set => Apply(s => s.Appearance = Parse(value, AppearanceMode.System)); }
     public string MotionKey { get => S.Motion.ToString(); set => Apply(s => s.Motion = Parse(value, MotionMode.Full)); }
+    /// <summary>Language choices; each shows in its own language ("System" is bilingual so the list never has to change).</summary>
+    public IReadOnlyList<string> LanguageOptions { get; } = [SystemLanguageLabel, "English", "简体中文", "繁體中文"];
+    const string SystemLanguageLabel = "System · 跟随系统";
+    static readonly string[] LanguageValues = ["System", "English", "ChineseSimplified", "ChineseTraditional"];
+    public string LanguageLabel
+    {
+        get => LanguageOptions[Math.Max(0, Array.IndexOf(LanguageValues, S.Language))];
+        set { var i = LanguageOptions.ToList().IndexOf(value ?? ""); if (i >= 0) Apply(s => s.Language = LanguageValues[i]); }
+    }
     public IReadOnlyList<string> Accents { get; } = Theme.SpyglassTheme.AccentNames;
     public string Accent { get => S.Accent; set { if (!string.IsNullOrEmpty(value)) Apply(s => s.Accent = value); } }
 
     // ---- connection ----
     public double Port { get => S.Port ?? SpyglassProtocol.DefaultPort; set => Apply(s => s.Port = (int)value == SpyglassProtocol.DefaultPort ? null : (int)value); }
-    public string ListeningText => $"Listening on {(Lan?.IsActive == true ? "0.0.0.0" : "127.0.0.1")}:{_listeningPort()}";
+    public string ListeningText => Loc.F("Settings.ListeningOn", Lan?.IsActive == true ? "0.0.0.0" : "127.0.0.1", _listeningPort());
     public bool PortOverriddenByEnvironment => SettingsService.EnvironmentPort is not null;
     /// <summary>Set by MainViewModel; the LAN settings live in <see cref="LanViewModel"/>, shared with the Connections page.</summary>
     public LanViewModel? Lan { get; set; }
     public string PortNote => PortOverriddenByEnvironment
-        ? $"SPYGLASS_PORT={SettingsService.EnvironmentPort} overrides this setting."
+        ? Loc.F("Settings.PortOverridden", SettingsService.EnvironmentPort)
         : _listeningPort() == _service.EffectivePort
-            ? "Debugged apps connect to this port. Changing it takes effect the next time Spyglass starts; apps must use the same port (UseSpyglass(o => o.Port = …) or SPYGLASS_PORT)."
-            : $"Saved: apps connect to {_service.EffectivePort} after the next start of Spyglass (currently listening on {_listeningPort()}).";
+            ? Loc.T("Settings.PortNote")
+            : Loc.F("Settings.PortSaved", _service.EffectivePort, _listeningPort());
 
     // ---- elements ----
     public bool ShowTemplateParts { get => S.ShowTemplateParts; set => Apply(s => s.ShowTemplateParts = value); }
@@ -60,18 +71,18 @@ public sealed class SettingsViewModel : ObservableObject
     public string CustomEditorCommand { get => S.CustomEditorCommand; set => Apply(s => s.CustomEditorCommand = value ?? ""); }
     public string EditorHint => S.Editor switch
     {
-        EditorKind.VsCode => "Runs  code --goto file:line:column  (on macOS also tries `open -b com.microsoft.VSCode`).",
-        EditorKind.Rider => "Runs  rider --line N --column N file  (on macOS also tries `open -b com.jetbrains.rider`).",
-        EditorKind.VisualStudio => OperatingSystem.IsWindows() ? "Runs  devenv /Edit file  (opens the file, not the line)." : "Visual Studio can only be started from Windows.",
-        EditorKind.System => "Opens the file with the system's default application (no line number).",
-        _ => "Placeholders: {file}  {line}  {column}. Use double quotes around arguments with spaces.",
+        EditorKind.VsCode => Loc.T("Settings.HintVsCode"),
+        EditorKind.Rider => Loc.T("Settings.HintRider"),
+        EditorKind.VisualStudio => OperatingSystem.IsWindows() ? Loc.T("Settings.HintVs") : Loc.T("Settings.HintVsWindowsOnly"),
+        EditorKind.System => Loc.T("Settings.HintSystem"),
+        _ => Loc.T("Settings.HintCustom"),
     };
 
     // ---- about ----
     public string Version { get; } = typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3) ?? "0.1.0";
-    public string ProtocolText { get; } = $"Protocol {SpyglassProtocol.Version}";
+    public string ProtocolText => Loc.F("Settings.Protocol", SpyglassProtocol.Version);
     public string FilePath => _service.FilePath;
-    public string SaveStatus => _service.LastSaveFailed ? $"Could not write {_service.FilePath}: settings apply now but will not be remembered." : "Changes are saved automatically.";
+    public string SaveStatus => _service.LastSaveFailed ? Loc.F("Settings.SaveFailed", _service.FilePath) : Loc.T("Settings.SavedAuto");
     public bool SaveFailed => _service.LastSaveFailed;
 
     /// <summary>Editable client shortcuts (one recorder per registry action).</summary>
@@ -91,17 +102,17 @@ public sealed class SettingsViewModel : ObservableObject
     RelayCommand? _resetShortcuts;
 
     /// <summary>Read-only reference rows: the in-app hotkeys are agent options in code, and text editing keys are fixed.</summary>
-    public IReadOnlyList<ShortcutRow> Shortcuts { get; } = BuildShortcuts();
+    public IReadOnlyList<ShortcutRow> Shortcuts => BuildShortcuts();
 
     static IReadOnlyList<ShortcutRow> BuildShortcuts()
     {
         var mac = OperatingSystem.IsMacOS();
         return
         [
-            new("In your app", mac ? "⌘ ⌥ I" : "Ctrl Shift I", "Bring Spyglass forward (starts it if it is not running)"),
-            new("In your app", mac ? "⌘ ⇧ C" : "Ctrl Shift C", "Pick an element; Spyglass selects it. Esc cancels"),
-            new("Elements", "Enter", "Commit an edited property value"),
-            new("Elements", "Esc", "Revert the value being edited"),
+            new(Loc.T("Settings.AreaInApp"), mac ? "⌘ ⌥ I" : "Ctrl Shift I", Loc.T("Settings.KeyBringForward")),
+            new(Loc.T("Settings.AreaInApp"), mac ? "⌘ ⇧ C" : "Ctrl Shift C", Loc.T("Settings.KeyPick")),
+            new(Loc.T("Settings.Elements"), "Enter", Loc.T("Settings.KeyCommit")),
+            new(Loc.T("Settings.Elements"), "Esc", Loc.T("Settings.KeyRevert")),
         ];
     }
 

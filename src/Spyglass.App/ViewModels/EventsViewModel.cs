@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using Spyglass.App.Core;
+using Spyglass.App.Localization;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 
@@ -44,6 +45,12 @@ public sealed class EventsViewModel : ObservableObject
         NoneCommand = new RelayCommand(() => SetChecked(_ => false));
         ShowSourceCommand = new RelayCommand(() => { if (Selected is { } s) _showElement(s.Record.SourceId); });
         session.EventsRaised += p => Dispatcher.UIThread.Post(() => Add(p));
+        WatchLanguage();
+    }
+
+    protected internal override void OnLanguageChanged()
+    {
+        foreach (var n in new[] { nameof(TypesSummary), nameof(CountText), nameof(EmptyDescription), nameof(RecordLabel) }) Raise(n);
     }
 
     public bool IsSupported => _session.Has(Capabilities.Events);
@@ -58,7 +65,7 @@ public sealed class EventsViewModel : ObservableObject
         set { if (Set(ref _typeFilter, value)) ApplyTypeFilter(); }
     }
 
-    public string TypesSummary => $"{_allTypes.Count(t => t.IsChecked)} of {_allTypes.Count} traced";
+    public string TypesSummary => Loc.F("Events.TypesSummary", _allTypes.Count(t => t.IsChecked), _allTypes.Count);
 
     public RelayCommand DefaultsCommand { get; }
     public RelayCommand AllCommand { get; }
@@ -95,10 +102,10 @@ public sealed class EventsViewModel : ObservableObject
     public ObservableCollection<EventRowViewModel> Records { get; } = new();
     public bool HasRecords => Records.Count > 0;
     public bool IsEmpty => Records.Count == 0;
-    public string CountText => $"{Records.Count:N0} events (max {MaxRows:N0}){(_dropped > 0 ? $" · {_dropped:N0} dropped" : "")}";
+    public string CountText => Loc.F("Events.CountText", Records.Count, MaxRows) + (_dropped > 0 ? " · " + Loc.F("Events.Dropped", _dropped) : "");
     public string EmptyDescription => !IsSupported
-        ? "This app's agent cannot trace events. Update Spyglass.Agent."
-        : _error ?? (IsRecording ? "Interact with the app: clicks, key presses and the other checked events appear here." : "Recording is paused. Press Record to capture events.");
+        ? Loc.T("Events.NotSupported")
+        : _error ?? (IsRecording ? Loc.T("Events.EmptyRecording") : Loc.T("Events.EmptyPaused"));
 
     public bool IsRecording
     {
@@ -114,7 +121,7 @@ public sealed class EventsViewModel : ObservableObject
     }
 
     public bool IsPaused => !IsRecording;
-    public string RecordLabel => IsRecording ? "Pause" : "Record";
+    public string RecordLabel => IsRecording ? Loc.T("Events.Pause") : Loc.T("Events.Record");
     public TKCode.Arc.ButtonVariant RecordVariant => IsRecording ? TKCode.Arc.ButtonVariant.Secondary : TKCode.Arc.ButtonVariant.Primary;
 
     public RelayCommand RecordCommand { get; }
@@ -213,7 +220,7 @@ public sealed class EventsViewModel : ObservableObject
 
     void SetError(Exception? ex)
     {
-        _error = ex is null ? null : $"Could not configure tracing: {ex.Message}";
+        _error = ex is null ? null : Loc.F("Events.ConfigureFailed", ex.Message);
         Raise(nameof(EmptyDescription));
     }
 }
@@ -261,7 +268,7 @@ public sealed class EventRowViewModel : ObservableObject
         Source = Label(r.SourceType, r.SourceName);
         Strategy = r.Strategy.ToString().ToLowerInvariant();
         var handler = r.Route.FirstOrDefault(s => s.Handled);
-        HandledBy = handler is not null ? Label(handler.Type, handler.Name) : r.Handled ? "handled" : "not handled";
+        HandledBy = handler is not null ? Label(handler.Type, handler.Name) : r.Handled ? Loc.T("Events.Handled") : Loc.T("Events.NotHandled");
         SelectCommand = new RelayCommand(() => owner.Selected = this);
     }
 
@@ -274,7 +281,7 @@ public sealed class EventRowViewModel : ObservableObject
     public bool Handled => Record.Handled;
     public string HandledBy { get; }
     public string Title => $"{Owner}.{Name}";
-    public string Summary => $"{Strategy} · source {Source} · {HandledBy}";
+    public string Summary => Loc.F("Events.Summary", Strategy, Source, HandledBy);
     public RelayCommand SelectCommand { get; }
 
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
