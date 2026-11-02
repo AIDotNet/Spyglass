@@ -17,6 +17,9 @@
     <Project Path="tests/Spyglass.Avalonia11.Tests/Spyglass.Avalonia11.Tests.csproj" />
     <Project Path="tests/Spyglass.StartupHook.Tests/Spyglass.StartupHook.Tests.csproj" />
     <Project Path="tests/Spyglass.StartupHook.TestApp/Spyglass.StartupHook.TestApp.csproj" />
+    <Project Path="tests/Spyglass.StartupHook.TestApp11/Spyglass.StartupHook.TestApp11.csproj" />
+    <Project Path="tests/Spyglass.StartupHook.TestAppSelf/Spyglass.StartupHook.TestAppSelf.csproj" />
+    <Project Path="tests/Spyglass.StartupHook.TestAppOld/Spyglass.StartupHook.TestAppOld.csproj" />
     <Project Path="tests/Spyglass.IntegrationTests/Spyglass.IntegrationTests.csproj" />
   </Folder>
 </Solution>
