@@ -100,6 +100,12 @@ internal sealed class XamlReloader
         if (type is null)
             return Result(false, 0, [Error($"Type {doc.Class} is not in {doc.Assembly.GetName().Name}; rebuild the app.")]);
 
+        // Property-style x:Name returns null once its element is gone: code-behind still using it would crash the app.
+        if (!typeof(Application).IsAssignableFrom(type) && NameUsage.RemovedButUsed(type, xaml) is { Count: > 0 } used)
+            return Result(false, 0, used.Select(u => Error(
+                $"x:Name \"{u.Name}\" is still used by {u.UsedIn}; without the element it would be null there and crash the app. " +
+                "Remove that use from the code-behind first, or keep the element.")).ToList());
+
         var instances = LiveInstances(type);
         var diagnostics = new List<XamlDiagnostic>();
         var config = Config(doc, diagnostics);
@@ -109,6 +115,7 @@ internal sealed class XamlReloader
         foreach (var instance in instances)
         {
             var state = instance is StyledElement se ? StateKeeper.Capture(se) : null;
+            var code = instance is StyledElement se2 ? CaptureCode(se2, last.Text, doc) : null;
             try
             {
                 Populate(instance, doc, xaml, last.Text, config);
@@ -119,6 +126,7 @@ internal sealed class XamlReloader
                 // Compile errors throw before anything new is applied, but Populate already cleared the instance:
                 // put the last good XAML back (also covers runtime errors half-way through, spike H14).
                 var rolledBack = TryRestore(instance, doc, last.Text, xaml);
+                if (rolledBack && instance is StyledElement back && code is not null) CodeBehindState.Restore(back, code, last.Text);
                 if (applied == 0 && rolledBack)
                     return Result(false, 0, diagnostics, rolledBack: false);   // nothing changed anywhere: a plain compile/load error
                 return Result(false, applied, diagnostics, rolledBack: rolledBack, restart: !rolledBack);
@@ -126,6 +134,7 @@ internal sealed class XamlReloader
             if (instance is StyledElement el)
             {
                 RefreshNamedFields(el);
+                if (code is not null) CodeBehindState.Restore(el, code, xaml);   // before the hooks: they may re-wire on top
                 InvokeHooks(el);
                 StateKeeper.Restore(el, state!);   // logical tree is ready now; scroll offsets wait for layout inside
             }
@@ -437,6 +446,12 @@ internal sealed class XamlReloader
                 if (!f.IsInitOnly && f.GetCustomAttribute<System.CodeDom.Compiler.GeneratedCodeAttribute>()?.Tool?.StartsWith("Avalonia.Generators", StringComparison.Ordinal) == true
                     && scope.Find(f.Name) is { } c && f.FieldType.IsInstanceOfType(c))
                     f.SetValue(instance, c);
+    }
+
+    static CodeBehindState.Snapshot? CaptureCode(StyledElement instance, string previous, RegisteredDocument doc)
+    {
+        try { return CodeBehindState.Capture(instance, previous, doc.Assembly); }
+        catch (Exception ex) { Debug.WriteLine($"[Spyglass] hot reload: code-behind state not captured: {ex.Message}"); return null; }
     }
 
     static void InvokeHooks(StyledElement instance)

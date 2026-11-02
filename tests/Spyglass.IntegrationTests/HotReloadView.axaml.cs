@@ -7,7 +7,14 @@ namespace Spyglass.IntegrationTests;
 public partial class HotReloadView : UserControl
 {
     public int Clicks;
-    public HotReloadView() => InitializeComponent();
+    public int GoClicks;
+
+    public HotReloadView()
+    {
+        InitializeComponent();
+        Go.Click += (_, _) => GoClicks++;   // code-behind wiring a named control: hot reload must carry it over (CodeBehindState)
+    }
+
     void OnAnyClick(object? sender, RoutedEventArgs e) => Clicks++;
 }
 

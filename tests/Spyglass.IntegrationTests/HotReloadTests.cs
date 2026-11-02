@@ -138,6 +138,55 @@ public class HotReloadTests(AppFixture app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Removing_a_name_the_code_behind_uses_is_rejected_and_changes_nothing()
+    {
+        var r = await app.Session.ApplyXamlAsync(Uri, Edit("""<Button x:Name="Go" Content="Go" />""", ""));
+
+        Assert.False(r.Ok);
+        Assert.False(r.RestartRequired);
+        var d = Assert.Single(r.Diagnostics, d => d.Severity == XamlDiagnosticSeverity.Error);
+        Assert.Contains("\"Go\"", d.Message);
+        Assert.Contains("HotReloadView.ctor", d.Message);
+        Assert.NotNull(await app.OnUi(() => _view.FindControl<Button>("Go")));
+
+        // Names the code does not use can still go.
+        Assert.True((await app.Session.ApplyXamlAsync(Uri, Edit("""<TextBox x:Name="Input" />""", ""))).Ok);
+    }
+
+    [Fact]
+    public async Task Values_and_handlers_set_by_code_behind_survive_a_reload()
+    {
+        var oldGo = await app.OnUi(() =>
+        {
+            _view.FindControl<TextBlock>("Styled")!.IsVisible = false;          // not in the XAML
+            _view.FindControl<Button>("Go")!.Content = "Changed";               // overrides the XAML literal
+            ToolTip.SetTip(_view.FindControl<Button>("Go")!, "tip");            // attached
+            return _view.FindControl<Button>("Go")!;
+        });
+
+        Assert.True((await app.Session.ApplyXamlAsync(Uri, WithSubtitle)).Ok);
+
+        var (newGo, visible, content, tip, goClicks, clicks) = await app.OnUi(() =>
+        {
+            var go = _view.FindControl<Button>("Go")!;
+            _view.GoClicks = 0;
+            _view.Clicks = 0;
+            go.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            return (go, _view.FindControl<TextBlock>("Styled")!.IsVisible, go.Content, ToolTip.GetTip(go), _view.GoClicks, _view.Clicks);
+        });
+        Assert.NotSame(oldGo, newGo);
+        Assert.False(visible);
+        Assert.Equal("Changed", content);
+        Assert.Equal("tip", tip);
+        Assert.Equal(1, goClicks);   // the constructor's Click subscription, once
+        Assert.Equal(1, clicks);     // the root's XAML handler, not duplicated
+
+        // An edit of that attribute wins over the code-set value.
+        Assert.True((await app.Session.ApplyXamlAsync(Uri, Edit("""Content="Go" """, """Content="Run" """))).Ok);
+        Assert.Equal("Run", await app.OnUi(() => _view.FindControl<Button>("Go")!.Content));
+    }
+
+    [Fact]
     public async Task New_instances_get_the_new_xaml_and_reverting_restores_compiled()
     {
         Assert.True((await app.Session.ApplyXamlAsync(Uri, WithSubtitle)).Ok);
