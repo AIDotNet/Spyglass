@@ -129,6 +129,12 @@ public class LanPairingTests
         return hub;
     }
 
+    static async Task WaitForSessionCountAsync(SpyglassHub hub, int count)
+    {
+        for (var i = 0; i < 100 && hub.Sessions.Count != count; i++) await Task.Delay(50);
+        Assert.Equal(count, hub.Sessions.Count);
+    }
+
     static string? LanAddress() => LanAddresses.Get().FirstOrDefault()?.Address;
 
     static HelloParams Hello(string? code) => new(SpyglassProtocol.Version, new AgentInfo("test", "0", AgentFlavor.Basic),
@@ -229,7 +235,7 @@ public class LanPairingTests
         var next = hub.Lan.Guard.Regenerate();
         await remote.Closed.Task.WaitAsync(Timeout);
         Assert.False(local.Closed.Task.IsCompleted);
-        Assert.Single(hub.Sessions);
+        await WaitForSessionCountAsync(hub, 1);   // the hub removes the session a moment after the client sees the close
         Assert.Equal(ErrorCodes.Unauthorized, await HelloStatus(lan, hub.Port, "424242"));     // old code is dead
         Assert.Equal(0, await HelloStatus(lan, hub.Port, next));
     }

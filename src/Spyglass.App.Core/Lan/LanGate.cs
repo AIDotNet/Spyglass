@@ -13,6 +13,7 @@ namespace Spyglass.App.Core.Lan;
 public sealed class LanGate
 {
     static readonly TimeSpan HelloTimeout = TimeSpan.FromSeconds(15);
+    static readonly TimeSpan FlushGrace = TimeSpan.FromSeconds(2);
     readonly object _lock = new();
     readonly HashSet<Admission> _remote = [];
 
@@ -84,8 +85,9 @@ public sealed class LanGate
             if (_remote is null) return;
             var result = _gate.Guard.Check(_remote, presented);
             if (result == PairingResult.Accepted) { _cts.CancelAfter(Timeout.InfiniteTimeSpan); return; }
-            // Let the error response flush, then drop the connection.
-            _ = Task.Delay(300).ContinueWith(_ => Close(), TaskScheduler.Default);
+            // Let the error response flush (a loaded machine needs more than a few hundred ms), then drop the connection.
+            // Nothing else is possible meanwhile: the peer has no session and the hello timeout still applies.
+            _ = Task.Delay(FlushGrace).ContinueWith(_ => Close(), TaskScheduler.Default);
             throw new SpyglassProtocolException(ErrorCodes.Unauthorized, result == PairingResult.Blocked
                 ? "Too many wrong pairing codes from this address; try again later."
                 : "Pairing code missing or wrong. Use the code shown in Spyglass (o.PairingCode or SPYGLASS_PAIRING_CODE).");
