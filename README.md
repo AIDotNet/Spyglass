@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # Spyglass
 
 Open-source, out-of-process debugging tool for Avalonia UI apps (like browser DevTools), with a free MCP server for AI coding agents. Product design lives in [`design/`](design/README.md).
@@ -16,6 +18,53 @@ Open-source, out-of-process debugging tool for Avalonia UI apps (like browser De
 | ![Resources](docs/images/resources.png) | ![Performance](docs/images/performance.png) |
 
 The screenshots are of the bundled `samples/Spyglass.Sample` app (it has a deliberate binding typo and some HTTP traffic).
+
+## Getting started: attach Spyglass to your app
+
+Spyglass runs as its own window and your app connects to it over a local WebSocket (`127.0.0.1:29500`). Pick the case that matches your app.
+
+**1. Your own Avalonia 12 app (recommended)**
+
+1. Install the client once: `dotnet tool install -g TKCode.Spyglass` (gives the `spyglass` command; see [Install as a tool](#install-as-a-tool)).
+2. Reference the agent from the app project (Debug only) and enable it:
+   ```xml
+   <PackageReference Include="TKCode.Spyglass.Agent" Version="..." Condition="'$(Configuration)' == 'Debug'" />
+   ```
+   ```csharp
+   using Avalonia;
+   using Spyglass.Agent;   // UseSpyglass()
+
+   AppBuilder.Configure<App>().UsePlatformDetect()
+   #if DEBUG
+       .UseSpyglass()
+   #endif
+   ;
+   ```
+3. Run the app and press **Ctrl+Shift+I** (macOS **Cmd+Option+I**). Spyglass opens (it is started if needed) and the app appears under the connection list. Use **Ctrl+Shift+C** to pick an element.
+
+**2. An Avalonia 11.2+ app**: use the `TKCode.Spyglass.Agent.Avalonia11` package instead (same `UseSpyglass()` call, no XAML source locations).
+
+**3. No code changes**: start the app through the startup hook, `spyglass run dotnet MyApp.dll` (or `spyglass run ./MyApp`). Works with Avalonia 11.2+ and 12.
+
+**4. An app on another machine, a VM or a phone**
+
+1. On the machine running Spyglass: **Settings › Connection**, turn on *Other devices*, and note the 6-digit pairing code. Only the agent endpoint is exposed; MCP stays local, and the connection is not encrypted, so use trusted networks only.
+2. On the app side, point the agent at that machine and give it the code, either with environment variables
+   ```bash
+   SPYGLASS_HOST=192.168.1.20 SPYGLASS_PORT=29500 SPYGLASS_PAIRING_CODE=123456 ./MyApp
+   ```
+   or in code:
+   ```csharp
+   .UseSpyglass(o => { o.Host = "192.168.1.20"; o.PairingCode = "123456"; })
+   ```
+   (From an Android emulator the host machine is usually `10.0.2.2`.) Open the firewall for the port if the connection is refused.
+
+**5. Let your AI coding agent use it**: `claude mcp add spyglass -- spyglass mcp` (see [Install as a tool](#install-as-a-tool)).
+
+**Troubleshooting**
+- *Nothing shows up in the connection list*: the app must run a Debug build with `.UseSpyglass()` (or `spyglass run`), and Spyglass must listen on the same port (`SPYGLASS_PORT` / Settings › Port).
+- *Hotkey does nothing*: another handler may use the same keys; change them with `o.OpenGesture` / `o.InspectGesture`.
+- *Remote app is rejected*: *Other devices* is off, or the pairing code is wrong or has changed.
 
 ## Projects
 
@@ -65,6 +114,9 @@ spyglass mcp --http --port 29500                 # or serve MCP over HTTP (CI / 
 ## Debug your own app
 
 ```csharp
+using Avalonia;
+using Spyglass.Agent;
+
 AppBuilder.Configure<App>()
     .UsePlatformDetect()
 #if DEBUG
@@ -78,6 +130,9 @@ In the running app, **Ctrl+Shift+I** (macOS **Cmd+Option+I**) brings Spyglass to
 `spyglass` command on PATH or set `SPYGLASS_CLIENT` (e.g. to `src/Spyglass.App/bin/Debug/net10.0/Spyglass`).
 
 ```csharp
+using Avalonia.Input;   // KeyGesture, Key
+using Spyglass.Agent;
+
 .UseSpyglass(o =>
 {
     o.OpenGesture = new KeyGesture(Key.F12);   // or null to disable
