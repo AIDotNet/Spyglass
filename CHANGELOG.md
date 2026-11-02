@@ -3,7 +3,7 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
-## Unreleased
+## 0.2.1
 
 ### Fixed
 - **IDE preview error bar** (VS Code, Rider, Visual Studio): errors raised while the XAML is loaded (for example an invalid
