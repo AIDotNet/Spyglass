@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Spyglass.App.ViewModels;
 using ArcTreeView = TKCode.Arc.TreeView;
 
@@ -27,9 +28,29 @@ public partial class ElementsView : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        if (_vm is not null) _vm.RevealRequested -= Reveal;
+        if (_vm is not null) { _vm.RevealRequested -= Reveal; _vm.ScreenshotCaptured -= SaveScreenshot; }
         _vm = DataContext as ElementsViewModel;
-        if (_vm is not null) _vm.RevealRequested += Reveal;
+        if (_vm is not null) { _vm.RevealRequested += Reveal; _vm.ScreenshotCaptured += SaveScreenshot; }
+    }
+
+    static readonly FilePickerFileType PngType = new("PNG image") { Patterns = ["*.png"], MimeTypes = ["image/png"] };
+
+    async void SaveScreenshot(ElementScreenshot shot)
+    {
+        if (_vm is null || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage) return;
+        try
+        {
+            var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = Spyglass.App.Localization.Loc.T("Elements.ScreenshotTitle"),
+                SuggestedFileName = shot.FileName, DefaultExtension = "png", FileTypeChoices = [PngType],
+            });
+            if (file is null) return;
+            await using var stream = await file.OpenWriteAsync();
+            stream.SetLength(0);
+            await stream.WriteAsync(shot.Png);
+        }
+        catch (Exception ex) { _vm.Details.ReportError(Spyglass.App.Localization.Loc.F("Elements.ScreenshotSaveFailed", ex.Message)); }
     }
 
     void Reveal(ElementNodeViewModel node)

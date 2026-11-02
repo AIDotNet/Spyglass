@@ -38,6 +38,10 @@ public sealed class PaletteController(MainViewModel main, SettingsService settin
                 main.Page = "elements";
                 session.Elements.PickCommand.Execute(null);
                 break;
+            case ["act", "screenshot"] when session is not null:
+                main.Page = "elements";
+                session.Elements.ScreenshotCommand.Execute(null);
+                break;
             case ["act", "refresh"] when session is not null:
                 main.Page = "elements";
                 session.Elements.RefreshCommand.Execute(null);

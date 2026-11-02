@@ -30,7 +30,7 @@ public class PaletteTests
     {
         var all = Build(session: true);
         Assert.Equal(9, all.Count(e => e.Id.StartsWith("nav:")));
-        Assert.Equal(5, all.Count(e => e.Id.StartsWith("act:")));
+        Assert.Equal(6, all.Count(e => e.Id.StartsWith("act:")));
         Assert.Equal(["el:7", "el:9"], all.Where(e => e.Id.StartsWith("el:")).Select(e => e.Id));
         Assert.Equal("Button #SaveButton", all.Single(e => e.Id == "el:7").Label);
         Assert.Equal(all.Count, all.Select(e => e.Id).Distinct().Count());

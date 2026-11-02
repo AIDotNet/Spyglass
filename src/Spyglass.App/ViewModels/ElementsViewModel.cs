@@ -43,6 +43,24 @@ public sealed class ElementsViewModel : ObservableObject
     public RelayCommand PickCommand { get; }
     public RelayCommand NextMatchCommand { get; }
 
+    /// <summary>"Screenshot" of the selected element (button, palette): captures a PNG and hands it to the view, which asks where to save it.</summary>
+    public RelayCommand ScreenshotCommand => _screenshot ??= new RelayCommand(CaptureScreenshotAsync);
+    RelayCommand? _screenshot;
+    public event Action<ElementScreenshot>? ScreenshotCaptured;
+
+    async Task CaptureScreenshotAsync()
+    {
+        if (_selected is not { } node) { Details.ReportError(Loc.T("Elements.ScreenshotNoSelection")); return; }
+        try
+        {
+            var shot = await _session.ScreenshotAsync(node.Id, 2);   // 2x: crisp on high-DPI screens
+            Details.ReportError("");
+            var name = new string((node.Crumb + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss")).Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_').ToArray());
+            ScreenshotCaptured?.Invoke(new ElementScreenshot(Convert.FromBase64String(shot.Base64), name + ".png"));
+        }
+        catch (Exception ex) { Details.ReportError(ex.Message); }
+    }
+
     /// <summary>Asks the view to expand to and scroll to a node.</summary>
     public event Action<ElementNodeViewModel>? RevealRequested;
 
@@ -303,3 +321,6 @@ public sealed class ElementNodeViewModel(NodeDto dto, ElementNodeViewModel? pare
         Raise(nameof(NameText)); Raise(nameof(ClassText)); Raise(nameof(IsVisible)); Raise(nameof(Opacity)); Raise(nameof(Crumb));
     }
 }
+
+/// <summary>A captured element image waiting to be saved.</summary>
+public sealed record ElementScreenshot(byte[] Png, string FileName);

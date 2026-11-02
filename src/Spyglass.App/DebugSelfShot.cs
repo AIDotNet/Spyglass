@@ -36,6 +36,13 @@ internal static class DebugSelfShot
                 await Dispatcher.UIThread.InvokeAsync(() => s.Elements.SearchText = select);
                 await Task.Delay(1500);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-2-selected.png"));
+                // The "Screenshot" command (button / palette): captures the selected element and writes the PNG next to the other shots.
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    s.Elements.ScreenshotCaptured += shot => { File.WriteAllBytes(prefix + "-2-element.png", shot.Png); Console.WriteLine($"[selfshot] {prefix}-2-element.png ({shot.FileName})"); };
+                    s.Elements.ScreenshotCommand.Execute(null);
+                });
+                await Task.Delay(1500);
                 await Dispatcher.UIThread.InvokeAsync(() => s.Elements.DetailsTab = 1);
                 await Task.Delay(1000);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-3-layout.png"));

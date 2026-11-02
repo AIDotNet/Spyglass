@@ -46,5 +46,9 @@
     <Style Selector="Border.glass.pill">
       <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusPill}" />
     </Style>
+    <!-- macOS overlay scrollbars auto-hide and were invisible in long lists; keep them always visible. -->
+    <Style Selector="ScrollViewer">
+      <Setter Property="AllowAutoHide" Value="False" />
+    </Style>
   </Application.Styles>
 </Application>

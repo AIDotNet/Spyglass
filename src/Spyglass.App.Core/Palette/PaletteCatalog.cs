@@ -19,7 +19,7 @@ public static class PaletteCatalog
 
     public const string Navigation = "Palette.Group.Navigation", Actions = "Palette.Group.Actions", SettingsGroup = "Palette.Group.Settings", Elements = "Palette.Group.Elements";
 
-    public const string Pick = "act:pick", Refresh = "act:refresh", ToggleTree = "act:toggleTree", RecordNetwork = "act:network.toggle", ClearNetwork = "act:network.clear";
+    public const string Screenshot = "act:screenshot", Pick = "act:pick", Refresh = "act:refresh", ToggleTree = "act:toggleTree", RecordNetwork = "act:network.toggle", ClearNetwork = "act:network.clear";
     public static string Page(string page) => "nav:" + page;
     public static string Theme(AppearanceMode m) => "set:theme:" + m;
     public static string LanguageId(string setting) => "set:lang:" + setting;
@@ -42,6 +42,7 @@ public static class PaletteCatalog
         if (hasSession)
         {
             list.Add(E(Pick, Actions, "Palette.Act.Pick", keywords: "inspect select cursor"));
+            list.Add(E(Screenshot, Actions, "Palette.Act.Screenshot", keywords: "png image capture"));
             list.Add(E(Refresh, Actions, "Palette.Act.Refresh", keywords: "reload tree"));
             list.Add(E(ToggleTree, Actions, "Palette.Act.ToggleTree", keywords: "visual logical"));
             list.Add(E(RecordNetwork, Actions, "Palette.Act.RecordNetwork", Hint(ShortcutRegistry.NetworkToggleRecord), keywords: "http request"));

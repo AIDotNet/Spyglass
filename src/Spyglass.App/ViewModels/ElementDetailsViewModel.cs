@@ -35,6 +35,9 @@ public sealed class ElementDetailsViewModel(AgentSession session) : ObservableOb
     public bool HasSource => _sourceLocation is not null;
     public string SourceError { get => _sourceError; private set { Set(ref _sourceError, value); Raise(nameof(HasSourceError)); } }
     public bool HasSourceError => _sourceError.Length > 0;
+    /// <summary>Shows a problem under the header (same place as source errors); empty clears it.</summary>
+    public void ReportError(string message) => SourceError = message;
+
     public RelayCommand OpenSourceCommand => _openSource ??= new RelayCommand(() => SourceError = OpenInEditor.Open(_sourceLocation));
     RelayCommand? _openSource;
     public string DataContext { get => _dataContext; private set => Set(ref _dataContext, value); }

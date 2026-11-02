@@ -84,6 +84,13 @@
                   <TextBlock Text="{loc:T Elements.Open}" FontSize="{arc:ArcDesignTokenResource TypeXS}" VerticalAlignment="Center" />
                 </StackPanel>
               </arc:Button>
+              <arc:Button Variant="Ghost" Padding="6,0" MinHeight="20" Command="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).ScreenshotCommand}"
+                          ToolTip.Tip="{loc:T Elements.ScreenshotTip}" AutomationProperties.Name="{loc:T Elements.Screenshot}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <lucide:LucideIcon Kind="Camera" Size="12" />
+                  <TextBlock Text="{loc:T Elements.Screenshot}" FontSize="{arc:ArcDesignTokenResource TypeXS}" VerticalAlignment="Center" />
+                </StackPanel>
+              </arc:Button>
             </StackPanel>
             <TextBlock Text="{Binding SourceError}" IsVisible="{Binding HasSourceError}" TextWrapping="Wrap"
                        FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource Danger}" />
