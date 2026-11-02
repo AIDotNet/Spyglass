@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Spyglass.App.Core.Network;
+using Spyglass.App.Core.Settings;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Spyglass.App.ViewModels;
@@ -76,16 +77,17 @@ public partial class NetworkView : UserControl
     {
         _lastModifiers = e.KeyModifiers;
         if (_vm is null) return;
-        var cmd = e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
-        if (cmd && e.Key == Key.E) { _vm.ToggleRecordCommand.Execute(null); e.Handled = true; }
-        else if (cmd && e.Key == Key.F) { OpenSearch(); e.Handled = true; }
-        else if (e.Key == Key.Escape && _vm.SearchOpen) { _vm.SearchOpen = false; Focus(); e.Handled = true; }
+        // Keys come from Settings (ShortcutRegistry); Enter in the search box stays fixed.
+        var action = ShortcutBridge.FromEvent(e) is { } pressed ? ShortcutBridge.Current.Find(pressed)?.Id : null;
+        if (action == ShortcutRegistry.NetworkToggleRecord) { _vm.ToggleRecordCommand.Execute(null); e.Handled = true; }
+        else if (action == ShortcutRegistry.NetworkSearch) { OpenSearch(); e.Handled = true; }
+        else if (action == ShortcutRegistry.NetworkClose && _vm.SearchOpen) { _vm.SearchOpen = false; Focus(); e.Handled = true; }
         else if (e.Key == Key.Enter && _vm.SearchOpen && SearchBox.IsKeyboardFocusWithin) { _ = SearchOrNext(); e.Handled = true; }
-        else if (e.Key == Key.Escape && _vm.Selected is not null) { _vm.Selected = null; e.Handled = true; }
-        else if (e.Key is Key.Down or Key.Up && _vm.Rows.Count > 0 && e.Source is not TextBox)
+        else if (action == ShortcutRegistry.NetworkClose && _vm.Selected is not null) { _vm.Selected = null; e.Handled = true; }
+        else if (action is ShortcutRegistry.NetworkNext or ShortcutRegistry.NetworkPrevious && _vm.Rows.Count > 0 && e.Source is not TextBox)
         {
             var i = _vm.Selected is null ? -1 : _vm.Rows.IndexOf(_vm.Selected);
-            _vm.Selected = _vm.Rows[Math.Clamp(i + (e.Key == Key.Down ? 1 : -1), 0, _vm.Rows.Count - 1)];
+            _vm.Selected = _vm.Rows[Math.Clamp(i + (action == ShortcutRegistry.NetworkNext ? 1 : -1), 0, _vm.Rows.Count - 1)];
             e.Handled = true;
         }
     }

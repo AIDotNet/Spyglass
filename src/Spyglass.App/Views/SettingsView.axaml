@@ -182,6 +182,28 @@
         <TextBlock Classes="section" Text="Keyboard shortcuts" />
         <Border Classes="card">
           <StackPanel Spacing="8">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Classes="hint" VerticalAlignment="Center" Text="Click a field and press the new keys. Esc cancels, Backspace removes the shortcut; the arrow button restores the default. Changes apply immediately." />
+              <arc:Button Grid.Column="1" Variant="Secondary" Content="Reset all shortcuts" Command="{Binding ResetShortcutsCommand}" IsEnabled="{Binding HasCustomShortcuts}" Margin="12,0,0,0" />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding ClientShortcuts}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ShortcutItemViewModel">
+                  <StackPanel Spacing="4" Margin="0,3">
+                    <Grid ColumnDefinitions="90,*,230">
+                      <TextBlock Text="{Binding Area}" Classes="hint" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                      <arc:ShortcutRecorder Grid.Column="2" Value="{Binding Value, Mode=TwoWay}" ResetValue="{Binding DefaultValue}"
+                                            IsLabelVisible="False" Label="{Binding Title}" IsModifierRequired="False" IsReservedWarningEnabled="False" />
+                    </Grid>
+                    <Border IsVisible="{Binding HasConflict}" Background="{arc:ArcDesignTokenResource WarningSubtle}" CornerRadius="6" Padding="10,4">
+                      <TextBlock Classes="hint" Text="{Binding ConflictText}" />
+                    </Border>
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Border Height="1" Background="{arc:ArcDesignTokenResource BorderSubtle}" Margin="0,4" />
             <ItemsControl ItemsSource="{Binding Shortcuts}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ShortcutRow">

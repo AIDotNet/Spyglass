@@ -47,6 +47,7 @@ public sealed class NetworkViewModel : ObservableObject
     public NetworkViewModel(AgentSession session, NetworkSettingsStore? store = null)
     {
         _session = session;
+        Spyglass.App.Core.Settings.SettingsService.Shared.Changed += _ => { Raise(nameof(RecordTip)); Raise(nameof(EmptyDescription)); };   // shortcut text follows Settings
         _store = store ?? new NetworkSettingsStore();
         _settings = _store.Load();
         _visible = _settings.VisibleColumns;
@@ -83,11 +84,12 @@ public sealed class NetworkViewModel : ObservableObject
         private set { if (Set(ref _recording, value)) { Raise(nameof(RecordTip)); Raise(nameof(EmptyTitle)); Raise(nameof(EmptyDescription)); } }
     }
 
-    public string RecordTip => IsRecording ? "Stop recording network log (Ctrl+E)" : "Record network log (Ctrl+E)";
+    static string RecordKeys => ShortcutBridge.Current.Get(Spyglass.App.Core.Settings.ShortcutRegistry.NetworkToggleRecord)?.ToDisplay(OperatingSystem.IsMacOS()) is { } k ? $" ({k})" : "";
+    public string RecordTip => IsRecording ? $"Stop recording network log{RecordKeys}" : $"Record network log{RecordKeys}";
     public string EmptyTitle => IsRecording ? "Recording network activity…" : "Recording is stopped";
     public string EmptyDescription => IsRecording
         ? "Perform a request in the app to see it here. You can also drop a .har file here."
-        : "Press Ctrl+E (⌘E) to start recording. Requests are only intercepted while recording. You can also drop a .har file here.";
+        : $"{(RecordKeys.Length > 0 ? $"Press {RecordKeys.Trim(' ', '(', ')')}" : "Press the record button")} to start recording. Requests are only intercepted while recording. You can also drop a .har file here.";
 
     public bool PreserveLog { get => _preserveLog; set => Set(ref _preserveLog, value); }
     public bool Invert { get => _invert; set { if (Set(ref _invert, value)) Refilter(); } }

@@ -42,6 +42,10 @@ public sealed class AppSettings
     /// <summary>Command template for <see cref="EditorKind.Custom"/>: <c>{file}</c>, <c>{line}</c>, <c>{column}</c>; quotes group arguments.</summary>
     public string CustomEditorCommand { get; set; } = "";
 
+    // ---- shortcuts ----
+    /// <summary>User overrides of the client shortcuts: action id to gesture ("Ctrl+E", "None" = unbound). Absent = default; see <see cref="ShortcutRegistry"/>.</summary>
+    [JsonConverter(typeof(TolerantStringMapConverter))] public Dictionary<string, string> Shortcuts { get; set; } = new();
+
     public AppSettings Clone() => JsonSerializer.Deserialize<AppSettings>(JsonSerializer.Serialize(this)) ?? new();
 
     /// <summary>Clamps hand-edited values to what the app can handle.</summary>
@@ -51,6 +55,7 @@ public sealed class AppSettings
         BodyLimitKb = Math.Clamp(BodyLimitKb, 1, 10 * 1024);
         EventBufferLimit = Math.Clamp(EventBufferLimit, 100, 100_000);
         if (string.IsNullOrWhiteSpace(Accent)) Accent = "Blue";
+        Shortcuts = ShortcutRegistry.Sanitize(Shortcuts, OperatingSystem.IsMacOS());
         return this;
     }
 }
@@ -116,6 +121,7 @@ public sealed class SettingsService(AppSettingsStore? store = null)
         s.ShowTemplateParts = d.ShowTemplateParts; s.KeepHighlight = d.KeepHighlight; s.EventBufferLimit = d.EventBufferLimit;
         s.AutoRecordNetwork = d.AutoRecordNetwork; s.CaptureBodies = d.CaptureBodies; s.BodyLimitKb = d.BodyLimitKb; s.CaptureInitiator = d.CaptureInitiator;
         s.Editor = d.Editor; s.CustomEditorCommand = d.CustomEditorCommand;
+        s.Shortcuts = new();
     });
 
     /// <summary>The port in effect: SPYGLASS_PORT, then the saved setting, then 29500.</summary>

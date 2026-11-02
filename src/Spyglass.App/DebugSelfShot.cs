@@ -92,6 +92,17 @@ internal static class DebugSelfShot
                 await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "settings");
                 await Task.Delay(1000);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-settings.png"));
+                if (Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT_SCROLL") is { Length: > 0 } offset)
+                {
+                    // SPYGLASS_SELFSHOT_SCROLL=<pixels>: also shoot the Settings page scrolled down (the page is longer than the window).
+                    await Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        if (Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(window).OfType<Avalonia.Controls.ScrollViewer>().FirstOrDefault(x => x.Name == "Scroller") is { } sv)
+                            sv.Offset = new Avalonia.Vector(0, double.Parse(offset));
+                    });
+                    await Task.Delay(800);
+                    await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-settings-scrolled.png"));
+                }
                 if (Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT_SETTINGS") is { Length: > 0 } changes)
                 {
                     // Same path as the settings page: SettingsService.Update → SettingsApplier → ArcTheme.Apply. e.g. "Accent=Rose,Appearance=Light"

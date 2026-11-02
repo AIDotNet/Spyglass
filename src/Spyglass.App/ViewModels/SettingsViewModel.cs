@@ -72,21 +72,32 @@ public sealed class SettingsViewModel : ObservableObject
     public string SaveStatus => _service.LastSaveFailed ? $"Could not write {_service.FilePath}: settings apply now but will not be remembered." : "Changes are saved automatically.";
     public bool SaveFailed => _service.LastSaveFailed;
 
-    /// <summary>In-app and client shortcuts (cheat sheet; the in-app ones are agent options in code).</summary>
+    /// <summary>Editable client shortcuts (one recorder per registry action).</summary>
+    public IReadOnlyList<ShortcutItemViewModel> ClientShortcuts => _clientShortcuts ??= CreateShortcutItems();
+    IReadOnlyList<ShortcutItemViewModel>? _clientShortcuts;
+
+    IReadOnlyList<ShortcutItemViewModel> CreateShortcutItems()
+    {
+        var items = ShortcutRegistry.Actions.Select(a => new ShortcutItemViewModel(a, _service)).ToList();
+        _service.Changed += _ => { foreach (var i in items) i.Refresh(); Raise(nameof(HasShortcutConflict)); Raise(nameof(HasCustomShortcuts)); };
+        return items;
+    }
+
+    public bool HasShortcutConflict => ClientShortcuts.Any(i => i.HasConflict);
+    public bool HasCustomShortcuts => S.Shortcuts.Count > 0;
+    public RelayCommand ResetShortcutsCommand => _resetShortcuts ??= new RelayCommand(() => _service.Update(s => s.Shortcuts = new()));
+    RelayCommand? _resetShortcuts;
+
+    /// <summary>Read-only reference rows: the in-app hotkeys are agent options in code, and text editing keys are fixed.</summary>
     public IReadOnlyList<ShortcutRow> Shortcuts { get; } = BuildShortcuts();
 
     static IReadOnlyList<ShortcutRow> BuildShortcuts()
     {
         var mac = OperatingSystem.IsMacOS();
-        string Cmd(string key) => mac ? $"⌘ {key}" : $"Ctrl {key}";
         return
         [
             new("In your app", mac ? "⌘ ⌥ I" : "Ctrl Shift I", "Bring Spyglass forward (starts it if it is not running)"),
             new("In your app", mac ? "⌘ ⇧ C" : "Ctrl Shift C", "Pick an element; Spyglass selects it. Esc cancels"),
-            new("Network", Cmd("E"), "Start / stop recording"),
-            new("Network", Cmd("F"), "Search headers, payloads and responses"),
-            new("Network", "Esc", "Close the request details"),
-            new("Network", "↑  ↓", "Move through requests"),
             new("Elements", "Enter", "Commit an edited property value"),
             new("Elements", "Esc", "Revert the value being edited"),
         ];
