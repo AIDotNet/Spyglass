@@ -95,8 +95,14 @@
             <TextBlock Text="{Binding SourceError}" IsVisible="{Binding HasSourceError}" TextWrapping="Wrap"
                        FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource Danger}" />
           </StackPanel>
-          <arc:Tabs SelectedIndex="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).DetailsTab, FallbackValue=0}">
-            <arc:TabItem Header="{loc:T Elements.Properties}">
+          <!-- Header-only tabs + switched panels: arc:Tabs gives its content unbounded height, so the lists would not scroll. -->
+          <arc:Tabs DockPanel.Dock="Top" SelectedIndex="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).DetailsTab, FallbackValue=0}">
+            <arc:TabItem Header="{loc:T Elements.Properties}" />
+            <arc:TabItem Header="{loc:T Elements.Layout}" />
+            <arc:TabItem Header="{loc:T Elements.Styles}" />
+          </arc:Tabs>
+          <Panel>
+            <Panel IsVisible="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).ShowPropertiesTab}">
               <DockPanel>
                 <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
                   <arc:SearchField Label="{loc:T Elements.FilterProperties}" IsLabelVisible="False" Placeholder="{loc:T Elements.FilterProperties}" Text="{Binding Filter}" />
@@ -126,9 +132,9 @@
                   </ItemsControl>
                 </ScrollViewer>
               </DockPanel>
-            </arc:TabItem>
+            </Panel>
 
-            <arc:TabItem Header="{loc:T Elements.Layout}">
+            <Panel IsVisible="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).ShowLayoutTab}">
               <ScrollViewer>
                 <StackPanel Spacing="12" Margin="4">
                   <!-- Box model (W2-a) -->
@@ -162,9 +168,9 @@
                   </Grid>
                 </StackPanel>
               </ScrollViewer>
-            </arc:TabItem>
+            </Panel>
 
-            <arc:TabItem Header="{loc:T Elements.Styles}">
+            <Panel IsVisible="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).ShowStylesTab}">
               <ScrollViewer>
                 <StackPanel Spacing="12" Margin="4">
                   <TextBlock Text="{loc:T Elements.Classes}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
@@ -211,8 +217,8 @@
                   </ItemsControl>
                 </StackPanel>
               </ScrollViewer>
-            </arc:TabItem>
-          </arc:Tabs>
+            </Panel>
+          </Panel>
         </DockPanel>
         </Border>
       </arc:ResizablePanel>

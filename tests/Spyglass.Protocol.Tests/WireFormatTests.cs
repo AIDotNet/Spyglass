@@ -12,6 +12,22 @@ public class WireFormatTests
     static JsonElement Wire(JsonRpcMessage m) => JsonDocument.Parse(SpyglassJson.Serialize(m)).RootElement;
 
     [Fact]
+    public void Deep_tree_round_trips_past_default_json_depth()
+    {
+        // 150 tree levels = ~300 JSON levels, well past System.Text.Json's default MaxDepth of 64.
+        NodeDto node = new() { Id = 150, Type = "Leaf" };
+        for (var i = 149; i >= 0; i--) node = new() { Id = i, Type = "Border", ChildCount = 1, Children = [node] };
+
+        var bytes = SpyglassJson.Serialize(SpyglassJson.Response(1, new GetChildrenResult(node)));
+        var back = SpyglassJson.Read<GetChildrenResult>(SpyglassJson.Deserialize(bytes).Result).Node;
+
+        var depth = 0;
+        while (back.Children is [var c]) { back = c; depth++; }
+        Assert.Equal(150, depth);
+        Assert.Equal("Leaf", back.Type);
+    }
+
+    [Fact]
     public void Hello_request_uses_camelCase_and_string_enums()
     {
         var hello = new HelloParams(

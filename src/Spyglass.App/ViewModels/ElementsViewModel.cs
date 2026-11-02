@@ -68,7 +68,14 @@ public sealed class ElementsViewModel : ObservableObject
 
     int _detailsTab;
     /// <summary>Selected details tab (0 Properties, 1 Layout, 2 Styles).</summary>
-    public int DetailsTab { get => _detailsTab; set => Set(ref _detailsTab, value); }
+    public int DetailsTab
+    {
+        get => _detailsTab;
+        set { if (Set(ref _detailsTab, value)) { Raise(nameof(ShowPropertiesTab)); Raise(nameof(ShowLayoutTab)); Raise(nameof(ShowStylesTab)); } }
+    }
+    public bool ShowPropertiesTab => DetailsTab == 0;
+    public bool ShowLayoutTab => DetailsTab == 1;
+    public bool ShowStylesTab => DetailsTab == 2;
     public bool IsPicking
     {
         get => _isPicking;

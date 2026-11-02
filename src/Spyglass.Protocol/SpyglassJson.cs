@@ -6,7 +6,10 @@ using Spyglass.Protocol.Messages;
 namespace Spyglass.Protocol;
 
 /// <summary>Source-generated (trimming/AOT-safe) serializer metadata for every wire type.</summary>
+// MaxDepth: tree/getChildren with Depth=-1 nests NodeDto.Children recursively (2 JSON levels per tree level),
+// so real visual trees blow past the default limit of 64 ("CurrentDepth (64) is equal to or larger than the maximum allowed depth").
 [JsonSourceGenerationOptions(
+    MaxDepth = 1024,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     UseStringEnumConverter = true)]
