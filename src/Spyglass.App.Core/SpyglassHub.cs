@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Spyglass.App.Core.Lan;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
 
@@ -20,6 +21,8 @@ public sealed class SpyglassHubOptions
     public Action<IServiceCollection>? ConfigureServices { get; set; }
     /// <summary>Extra endpoints, e.g. <c>app.MapMcp("/mcp")</c>.</summary>
     public Action<WebApplication>? ConfigureApp { get; set; }
+    /// <summary>LAN policy (design/protocol §6). Default: loopback only. <c>new LanGate(true)</c> accepts paired agents from other machines on /agent.</summary>
+    public LanGate Lan { get; set; } = new();
 }
 
 /// <summary>
@@ -35,6 +38,7 @@ public sealed class SpyglassHub : IAsyncDisposable
     public SpyglassHub(SpyglassHubOptions? options = null) => _options = options ?? new SpyglassHubOptions();
 
     public int Port { get; private set; }
+    public LanGate Lan => _options.Lan;
     public Uri BaseUri => new($"http://{_options.Address}:{Port}/");
 
     public IReadOnlyList<AgentSession> Sessions => _sessions.Values.OrderBy(s => s.ConnectedAt).ToList();
@@ -49,11 +53,12 @@ public sealed class SpyglassHub : IAsyncDisposable
     {
         var builder = WebApplication.CreateSlimBuilder();
         builder.Logging.ClearProviders();
-        builder.WebHost.UseKestrel(k => k.Listen(_options.Address, _options.Port));
+        builder.WebHost.UseKestrel(k => k.Listen(_options.Lan.AllowLan ? IPAddress.Any : _options.Address, _options.Port));
         builder.Services.AddSingleton(this);
         _options.ConfigureServices?.Invoke(builder.Services);
 
         var app = builder.Build();
+        _options.Lan.Install(app);
         app.UseWebSockets();
         app.Map(SpyglassProtocol.AgentPath, HandleAgentAsync);
         _options.ConfigureApp?.Invoke(app);
@@ -88,12 +93,15 @@ public sealed class SpyglassHub : IAsyncDisposable
             return;
         }
 
+        using var admission = _options.Lan.Admit(ctx.Connection.RemoteIpAddress, ctx.RequestAborted);
+        if (admission.Refusal is { } refused) { ctx.Response.StatusCode = refused; return; }
         using var ws = await ctx.WebSockets.AcceptWebSocketAsync();
         await using var peer = new JsonRpcPeer(ws);
         AgentSession? session = null;
 
         peer.Handle<HelloParams, HelloResult>(Methods.SessionHello, (hello, _) =>
         {
+            admission.Authorize(hello.PairingCode);
             if (!SpyglassProtocol.IsCompatible(hello.ProtocolVersion))
                 throw new SpyglassProtocolException(ErrorCodes.VersionMismatch,
                     $"Agent speaks protocol {hello.ProtocolVersion}; this Spyglass supports {SpyglassProtocol.Version}. Update the older side.");
@@ -116,7 +124,7 @@ public sealed class SpyglassHub : IAsyncDisposable
 
         try
         {
-            await peer.RunAsync(ctx.RequestAborted);
+            await peer.RunAsync(admission.Token);
         }
         finally
         {

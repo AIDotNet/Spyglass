@@ -20,6 +20,8 @@ public sealed class AppSettings
     // ---- connection ----
     /// <summary>Port debugged apps connect to. Null = default (29500). SPYGLASS_PORT overrides; takes effect at next start.</summary>
     public int? Port { get; set; }
+    /// <summary>Accept paired agents from other machines (plain ws://, see design/protocol §6). Off by default; takes effect at next start.</summary>
+    public bool AllowLan { get; set; }
 
     // ---- elements ----
     public bool ShowTemplateParts { get; set; }
@@ -117,7 +119,7 @@ public sealed class SettingsService(AppSettingsStore? store = null)
     public void Reset() => Update(s =>
     {
         var d = new AppSettings();
-        s.Appearance = d.Appearance; s.Accent = d.Accent; s.Motion = d.Motion; s.Port = d.Port;
+        s.Appearance = d.Appearance; s.Accent = d.Accent; s.Motion = d.Motion; s.Port = d.Port; s.AllowLan = d.AllowLan;
         s.ShowTemplateParts = d.ShowTemplateParts; s.KeepHighlight = d.KeepHighlight; s.EventBufferLimit = d.EventBufferLimit;
         s.AutoRecordNetwork = d.AutoRecordNetwork; s.CaptureBodies = d.CaptureBodies; s.BodyLimitKb = d.BodyLimitKb; s.CaptureInitiator = d.CaptureInitiator;
         s.Editor = d.Editor; s.CustomEditorCommand = d.CustomEditorCommand;

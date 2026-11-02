@@ -21,6 +21,8 @@ public sealed class MainViewModel : ObservableObject
         _hub = hub;
         Connections = new ConnectionsViewModel(this);
         Settings = new SettingsViewModel(Spyglass.App.Core.Settings.SettingsService.Shared, () => Port);
+        Lan = new LanViewModel(hub.Lan, Spyglass.App.Core.Settings.SettingsService.Shared, () => Port);
+        Settings.Lan = Lan;
         _pageContent = Connections;
         hub.SessionConnected += s => Dispatcher.UIThread.Post(() => OnConnected(s));
         hub.SessionDisconnected += s => Dispatcher.UIThread.Post(() => OnDisconnected(s));
@@ -30,6 +32,9 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>Client settings (not tied to a connected app).</summary>
     public SettingsViewModel Settings { get; private set; } = null!;
+
+    /// <summary>LAN connections: setting, pairing code, addresses (Settings and Connections pages).</summary>
+    public LanViewModel Lan { get; }
 
     /// <summary>The window should come to the front (hotkey pressed or element picked in the app).</summary>
     public event Action? BringToFrontRequested;
@@ -204,7 +209,8 @@ public sealed class ConnectionsViewModel(MainViewModel main) : ObservableObject
     public MainViewModel Main { get; } = main;
     public bool HasSessions => Main.Sessions.Count > 0;
     public bool NoSessions => !HasSessions;
-    public string ListenText => Main.HubError ?? $"Listening on 127.0.0.1:{Main.Port} · protocol {SpyglassProtocol.Version}";
+    public LanViewModel Lan => Main.Lan;
+    public string ListenText => Main.HubError ?? $"Listening on {(Main.Lan.IsActive ? "0.0.0.0" : "127.0.0.1")}:{Main.Port} · protocol {SpyglassProtocol.Version}";
 
     public string AgentSnippet => """
         dotnet add package Spyglass.Agent

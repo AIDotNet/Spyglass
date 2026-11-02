@@ -31,8 +31,10 @@ public sealed class SettingsViewModel : ObservableObject
 
     // ---- connection ----
     public double Port { get => S.Port ?? SpyglassProtocol.DefaultPort; set => Apply(s => s.Port = (int)value == SpyglassProtocol.DefaultPort ? null : (int)value); }
-    public string ListeningText => $"Listening on 127.0.0.1:{_listeningPort()}";
+    public string ListeningText => $"Listening on {(Lan?.IsActive == true ? "0.0.0.0" : "127.0.0.1")}:{_listeningPort()}";
     public bool PortOverriddenByEnvironment => SettingsService.EnvironmentPort is not null;
+    /// <summary>Set by MainViewModel; the LAN settings live in <see cref="LanViewModel"/>, shared with the Connections page.</summary>
+    public LanViewModel? Lan { get; set; }
     public string PortNote => PortOverriddenByEnvironment
         ? $"SPYGLASS_PORT={SettingsService.EnvironmentPort} overrides this setting."
         : _listeningPort() == _service.EffectivePort

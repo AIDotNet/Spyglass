@@ -22,7 +22,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             SettingsApplier.Attach(SettingsService.Shared);
-            _hub = new SpyglassHub(new SpyglassHubOptions { Port = SettingsService.Shared.EffectivePort }.WithMcp());
+            _hub = new SpyglassHub(new SpyglassHubOptions { Port = SettingsService.Shared.EffectivePort, Lan = new Core.Lan.LanGate(SettingsService.Shared.Current.AllowLan) }.WithMcp());
             var vm = new MainViewModel(_hub);
             var window = new MainWindow { DataContext = vm };
             desktop.MainWindow = window;

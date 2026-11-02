@@ -5,8 +5,8 @@ namespace Spyglass.Agent;
 
 public sealed class SpyglassAgentOptions
 {
-    /// <summary>Host where the Spyglass client listens. Loopback by default (design/protocol §6).</summary>
-    public string Host { get; set; } = "127.0.0.1";
+    /// <summary>Host where the Spyglass client listens. Default: SPYGLASS_HOST, else loopback. A LAN host also needs <see cref="PairingCode"/> (design/protocol §6).</summary>
+    public string Host { get; set; } = Environment.GetEnvironmentVariable("SPYGLASS_HOST") is { Length: > 0 } host ? host : "127.0.0.1";
 
     /// <summary>Default: SPYGLASS_PORT, else 29500.</summary>
     public int Port { get; set; } = SpyglassProtocol.Port;

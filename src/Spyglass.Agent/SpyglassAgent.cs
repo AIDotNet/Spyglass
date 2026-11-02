@@ -80,6 +80,7 @@ public sealed class SpyglassAgent
     async Task ConnectLoopAsync(CancellationToken ct)
     {
         var delay = TimeSpan.FromSeconds(2);
+        var unauthorized = false;
         while (!ct.IsCancellationRequested)
         {
             try
@@ -96,6 +97,13 @@ public sealed class SpyglassAgent
                 await loop.ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
+            catch (SpyglassProtocolException ex) when (ex.Code == ErrorCodes.Unauthorized)
+            {
+                // Retrying cannot help (the code is fixed in this process) and would feed the client's throttle:
+                // say so once, then only try again when the user presses the open hotkey.
+                Debug.WriteLine($"[Spyglass] {Endpoint} rejected the pairing code: {ex.Message} Not retrying; restart the app with the right PairingCode / SPYGLASS_PAIRING_CODE.");
+                unauthorized = true;
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[Spyglass] connection to {Endpoint} failed: {ex.Message}");
@@ -107,7 +115,8 @@ public sealed class SpyglassAgent
             }
 
             // Retry quickly right after a hotkey started the client; otherwise back off. A hotkey also wakes us up.
-            var wait = DateTime.UtcNow < _fastRetryUntil ? TimeSpan.FromMilliseconds(500) : delay;
+            var wait = unauthorized ? Timeout.InfiniteTimeSpan : DateTime.UtcNow < _fastRetryUntil ? TimeSpan.FromMilliseconds(500) : delay;
+            unauthorized = false;
             try { await _wake.WaitAsync(wait, ct).ConfigureAwait(false); } catch (OperationCanceledException) { break; }
             delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 10));
         }
