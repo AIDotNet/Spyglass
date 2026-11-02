@@ -20,12 +20,16 @@ public sealed class MainViewModel : ObservableObject
     {
         _hub = hub;
         Connections = new ConnectionsViewModel(this);
+        Settings = new SettingsViewModel(Spyglass.App.Core.Settings.SettingsService.Shared, () => Port);
         _pageContent = Connections;
         hub.SessionConnected += s => Dispatcher.UIThread.Post(() => OnConnected(s));
         hub.SessionDisconnected += s => Dispatcher.UIThread.Post(() => OnDisconnected(s));
     }
 
     public ObservableCollection<SessionViewModel> Sessions { get; } = new();
+
+    /// <summary>Client settings (not tied to a connected app).</summary>
+    public SettingsViewModel Settings { get; private set; } = null!;
 
     /// <summary>The window should come to the front (hotkey pressed or element picked in the app).</summary>
     public event Action? BringToFrontRequested;
@@ -69,6 +73,7 @@ public sealed class MainViewModel : ObservableObject
             PageContent = value switch
             {
                 "connections" => Connections,
+                "settings" => Settings,
                 "elements" when Current is not null => Current.Elements,
                 "bindings" when Current is not null => Current.Bindings,
                 "network" when Current is not null => Current.Network,

@@ -23,8 +23,10 @@ public partial class MainWindow : Window
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) BeginMoveDrag(e);
         };
         TitleBar.DoubleTapped += (_, _) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        // The switcher toggles light/dark; the choice is remembered (Settings › Appearance shows it).
         ThemeSwitch.ThemeChangeRequested += (_, e) =>
-            ArcTheme.Apply(t => SpyglassTheme.Glass(t.Appearance(e.Next == ThemeSwitcherAppearance.Dark ? ArcAppearance.Dark : ArcAppearance.Light)));
+            Spyglass.App.Core.Settings.SettingsService.Shared.Update(s =>
+                s.Appearance = e.Next == ThemeSwitcherAppearance.Dark ? Spyglass.App.Core.Settings.AppearanceMode.Dark : Spyglass.App.Core.Settings.AppearanceMode.Light);
 
 #if DEBUG
         if (Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT") is not null)

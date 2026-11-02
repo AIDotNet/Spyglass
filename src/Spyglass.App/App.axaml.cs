@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Spyglass.App.Core;
+using Spyglass.App.Core.Settings;
+using Spyglass.App.Theme;
 using Spyglass.App.ViewModels;
 using Spyglass.App.Views;
 using Spyglass.Mcp;
@@ -19,7 +21,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            _hub = new SpyglassHub(new SpyglassHubOptions { Port = SpyglassProtocol.Port }.WithMcp());
+            SettingsApplier.Attach(SettingsService.Shared);
+            _hub = new SpyglassHub(new SpyglassHubOptions { Port = SettingsService.Shared.EffectivePort }.WithMcp());
             var vm = new MainViewModel(_hub);
             var window = new MainWindow { DataContext = vm };
             desktop.MainWindow = window;
@@ -54,7 +57,7 @@ public partial class App : Application
         {
             // Typically: port 29500 already used by another Spyglass (or `spyglass mcp`) instance.
             Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                vm.HubError = $"Cannot listen on 127.0.0.1:{SpyglassProtocol.Port}: {ex.GetBaseException().Message}. Is another Spyglass running?");
+                vm.HubError = $"Cannot listen on 127.0.0.1:{SettingsService.Shared.EffectivePort}: {ex.GetBaseException().Message}. Is another Spyglass running?");
         }
     }
 }

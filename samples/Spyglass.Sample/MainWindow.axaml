@@ -13,6 +13,8 @@
       <Button x:Name="SaveButton" Classes="primary" Content="Save" />
       <Button x:Name="CancelButton" Content="Cancel" />
     </StackPanel>
+    <!-- Continuous animation: gives the Performance page real frames to measure (an idle Avalonia app renders nothing). -->
+    <ProgressBar x:Name="Busy" IsIndeterminate="True" Width="180" HorizontalAlignment="Left" />
     <ComboBox x:Name="Choice" SelectedIndex="0" Width="180">
       <ComboBoxItem>One</ComboBoxItem>
       <ComboBoxItem>Two</ComboBoxItem>

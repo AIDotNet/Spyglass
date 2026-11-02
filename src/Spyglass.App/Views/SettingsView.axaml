@@ -1,0 +1,206 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <!-- Settings (wireframe W7): every change is applied and saved immediately. -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.section">
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeLG}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Margin" Value="2,14,0,2" />
+    </Style>
+    <Style Selector="TextBlock.label"><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.hint">
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource TextMuted}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="Border.keycap">
+      <Setter Property="Background" Value="{arc:ArcDesignTokenResource SurfaceMuted}" />
+      <Setter Property="BorderBrush" Value="{arc:ArcDesignTokenResource BorderSubtle}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="8,2" />
+    </Style>
+  </UserControl.Styles>
+
+  <Border Classes="glass">
+    <ScrollViewer x:Name="Scroller">
+      <StackPanel x:Name="Page" MaxWidth="760" Margin="28,12,28,32" Spacing="10">
+        <TextBlock Text="Settings" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeXL}" Margin="2,10,0,0" />
+        <TextBlock Classes="hint" Margin="2,0,0,0" Text="{Binding SaveStatus}" />
+        <arc:Alert Tone="Danger" Title="Settings could not be saved" IsOpen="True" IsVisible="{Binding SaveFailed}" />
+
+        <!-- Appearance -->
+        <TextBlock Classes="section" Text="Appearance" />
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Theme" />
+                <TextBlock Classes="hint" Text="System follows the operating system." />
+              </StackPanel>
+              <arc:SegmentedControl Grid.Column="1" SelectedValue="{Binding AppearanceKey}">
+                <arc:SegmentedOption Value="System" Label="System" />
+                <arc:SegmentedOption Value="Light" Label="Light" />
+                <arc:SegmentedOption Value="Dark" Label="Dark" />
+              </arc:SegmentedControl>
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Accent colour" />
+                <TextBlock Classes="hint" Text="Selection, focus and primary buttons." />
+              </StackPanel>
+              <arc:ChipGroup Grid.Column="1" ItemsSource="{Binding Accents}" SelectedItem="{Binding Accent}" Label="Accent colour" MaxWidth="380" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Animations" />
+                <TextBlock Classes="hint" Text="Reduced keeps fades but drops movement; Off disables all animation." />
+              </StackPanel>
+              <arc:SegmentedControl Grid.Column="1" SelectedValue="{Binding MotionKey}">
+                <arc:SegmentedOption Value="Full" Label="Full" />
+                <arc:SegmentedOption Value="Reduced" Label="Reduced" />
+                <arc:SegmentedOption Value="Off" Label="Off" />
+              </arc:SegmentedControl>
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Connection -->
+        <TextBlock Classes="section" Text="Connection" />
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Listening port" />
+                <TextBlock Classes="hint" Text="{Binding ListeningText}" />
+              </StackPanel>
+              <arc:NumberField Grid.Column="1" Width="150" Label="Listening port" IsLabelVisible="False" Minimum="1" Maximum="65535" Value="{Binding Port}" IsEnabled="{Binding !PortOverriddenByEnvironment}" />
+            </Grid>
+            <TextBlock Classes="hint" Text="{Binding PortNote}" />
+            <TextBlock Classes="hint" Text="Spyglass only listens on this machine (127.0.0.1). Connections from other machines are not supported yet." />
+          </StackPanel>
+        </Border>
+
+        <!-- Elements -->
+        <TextBlock Classes="section" Text="Elements" />
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Show template parts by default" />
+                <TextBlock Classes="hint" Text="Include the insides of control templates in the element tree." />
+              </StackPanel>
+              <arc:Switch Grid.Column="1" IsChecked="{Binding ShowTemplateParts}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Keep the highlight in the app" />
+                <TextBlock Classes="hint" Text="Otherwise the blue box around the selected element fades after 1.5 seconds." />
+              </StackPanel>
+              <arc:Switch Grid.Column="1" IsChecked="{Binding KeepHighlight}" />
+            </Grid>
+          </StackPanel>
+        </Border>
+
+        <!-- Network -->
+        <TextBlock Classes="section" Text="Network" />
+        <Border Classes="card">
+          <StackPanel Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Start recording when the Network page opens" />
+                <TextBlock Classes="hint" Text="Requests are only intercepted while recording. Turn off to start by hand (Ctrl/⌘ E)." />
+              </StackPanel>
+              <arc:Switch Grid.Column="1" IsChecked="{Binding AutoRecordNetwork}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Capture request and response bodies" />
+                <TextBlock Classes="hint" Text="Off keeps only headers and timings (less memory, nothing sensitive stored)." />
+              </StackPanel>
+              <arc:Switch Grid.Column="1" IsChecked="{Binding CaptureBodies}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto" IsEnabled="{Binding CaptureBodies}">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Body size limit (KB per body)" />
+                <TextBlock Classes="hint" Text="Larger bodies are counted but only the first part is kept." />
+              </StackPanel>
+              <arc:NumberField Grid.Column="1" Width="150" Label="Body size limit" IsLabelVisible="False" Minimum="1" Maximum="10240" Value="{Binding BodyLimitKb}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Record where each request was sent from" />
+                <TextBlock Classes="hint" Text="Captures the call stack for the Initiator column. Slightly more work per request." />
+              </StackPanel>
+              <arc:Switch Grid.Column="1" IsChecked="{Binding CaptureInitiator}" />
+            </Grid>
+            <TextBlock Classes="hint" Text="Applies the next time recording starts." />
+          </StackPanel>
+        </Border>
+
+        <!-- Editor -->
+        <TextBlock Classes="section" Text="Editor" />
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label" Text="Open XAML in" />
+                <TextBlock Classes="hint" Text="Used by the 'Open in editor' buttons next to XAML locations (Debug builds of your app)." />
+              </StackPanel>
+              <arc:SegmentedControl Grid.Column="1" SelectedValue="{Binding EditorKey}">
+                <arc:SegmentedOption Value="VsCode" Label="VS Code" />
+                <arc:SegmentedOption Value="Rider" Label="Rider" />
+                <arc:SegmentedOption Value="VisualStudio" Label="Visual Studio" />
+                <arc:SegmentedOption Value="System" Label="System" />
+                <arc:SegmentedOption Value="Custom" Label="Custom" />
+              </arc:SegmentedControl>
+            </Grid>
+            <arc:Input Label="Custom command" Placeholder="code --goto {file}:{line}:{column}" Text="{Binding CustomEditorCommand}" IsVisible="{Binding IsCustomEditor}"
+                       FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+            <TextBlock Classes="hint" Text="{Binding EditorHint}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Shortcuts -->
+        <TextBlock Classes="section" Text="Keyboard shortcuts" />
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <ItemsControl ItemsSource="{Binding Shortcuts}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ShortcutRow">
+                  <Grid ColumnDefinitions="110,150,*" Margin="0,3">
+                    <TextBlock Text="{Binding Area}" Classes="hint" VerticalAlignment="Center" />
+                    <Border Grid.Column="1" Classes="keycap" HorizontalAlignment="Left">
+                      <TextBlock Text="{Binding Keys}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                    </Border>
+                    <TextBlock Grid.Column="2" Text="{Binding Action}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Classes="hint" Text="The in-app shortcuts are options of the agent: UseSpyglass(o => { o.OpenGesture = …; o.InspectGesture = …; }). Set them to null to disable." />
+          </StackPanel>
+        </Border>
+
+        <!-- About -->
+        <TextBlock Classes="section" Text="About" />
+        <Border Classes="card">
+          <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="label"><Run Text="Spyglass " /><Run Text="{Binding Version}" /></TextBlock>
+                <TextBlock Classes="hint"><Run Text="{Binding ProtocolText}" /><Run Text="   ·   settings file  " /><Run Text="{Binding FilePath}" /></TextBlock>
+              </StackPanel>
+              <arc:Button Grid.Column="1" Variant="Secondary" Content="Reset to defaults" Command="{Binding ResetCommand}" VerticalAlignment="Top" />
+            </Grid>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Border>
+</UserControl>

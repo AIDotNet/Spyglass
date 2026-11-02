@@ -21,6 +21,7 @@
     <DataTemplate DataType="vm:LogsViewModel"><views:LogsView /></DataTemplate>
     <DataTemplate DataType="vm:EventsViewModel"><views:EventsView /></DataTemplate>
     <DataTemplate DataType="vm:ResourcesViewModel"><views:ResourcesView /></DataTemplate>
+    <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView /></DataTemplate>
     <DataTemplate DataType="vm:PerformanceViewModel"><views:PerformanceView /></DataTemplate>
     <DataTemplate DataType="vm:PlaceholderViewModel">
       <Border Classes="glass">

@@ -27,5 +27,9 @@ internal static class Program
                 .UseArcControls()
                 .UseArcBlocks()      // Sidebar + CommandPaletteDialog only (D4)
                 .UseArcCorners()
-                .WithTheme(t => SpyglassTheme.Glass(t.Appearance(ArcAppearance.System))));
+                .WithTheme(t =>
+                {
+                    var s = Spyglass.App.Core.Settings.SettingsService.Shared.Current;
+                    SpyglassTheme.Glass(t.Appearance(SettingsApplier.Map(s.Appearance)), s);
+                }));
 }

@@ -86,6 +86,27 @@ internal static class DebugSelfShot
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-6-logs.png"));
                 await ShootEventsAsync(window, vm, s, select, prefix + "-6-events.png");
                 await ShootPerformanceAsync(window, vm, s, prefix + "-7-performance.png");
+                await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "settings");
+                await Task.Delay(1000);
+                await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-settings.png"));
+                if (Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT_SETTINGS") is { Length: > 0 } changes)
+                {
+                    // Same path as the settings page: SettingsService.Update → SettingsApplier → ArcTheme.Apply. e.g. "Accent=Rose,Appearance=Light"
+                    await Dispatcher.UIThread.InvokeAsync(() => Core.Settings.SettingsService.Shared.Update(st =>
+                    {
+                        foreach (var kv in changes.Split(',').Select(x => x.Split('=')))
+                        {
+                            if (kv[0] == "Accent") st.Accent = kv[1];
+                            if (kv[0] == "Appearance") st.Appearance = Enum.Parse<Core.Settings.AppearanceMode>(kv[1]);
+                            if (kv[0] == "Motion") st.Motion = Enum.Parse<Core.Settings.MotionMode>(kv[1]);
+                        }
+                    }));
+                    await Task.Delay(1500);
+                    await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-settings-changed.png"));
+                    await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "elements");
+                    await Task.Delay(1000);
+                    await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-8-elements-changed.png"));
+                }
                 await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "connections");
                 await Task.Delay(800);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-3-connections.png"));
@@ -121,7 +142,8 @@ internal static class DebugSelfShot
         await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "performance");
         await Task.Delay(1500);
         await Dispatcher.UIThread.InvokeAsync(() => { foreach (var o in s.Performance.Overlays.Take(1)) o.IsOn = true; });
-        await Task.Delay(6000);
+        // SPYGLASS_SELFSHOT_QUIET=1: wait until the 10 s rolling window has emptied, to see how a quiet app is shown.
+        await Task.Delay(Environment.GetEnvironmentVariable("SPYGLASS_SELFSHOT_QUIET") == "1" ? 16000 : 6000);
         await Dispatcher.UIThread.InvokeAsync(() => Save(window, path));
         await Dispatcher.UIThread.InvokeAsync(() => vm.Page = "connections");   // leaving the page stops profiling
     }

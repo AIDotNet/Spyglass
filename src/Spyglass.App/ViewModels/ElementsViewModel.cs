@@ -13,7 +13,7 @@ public sealed class ElementsViewModel : ObservableObject
     readonly Dictionary<int, ElementNodeViewModel> _byId = new();
     ElementNodeViewModel? _selected;
     string _treeKind = "visual";
-    bool _showTemplateParts;
+    bool _showTemplateParts = Spyglass.App.Core.Settings.SettingsService.Shared.Current.ShowTemplateParts;
     string _search = "";
     string _searchStatus = "";
     bool _isPicking;
@@ -89,7 +89,7 @@ public sealed class ElementsViewModel : ObservableObject
             if (value is not null)
             {
                 _ = Details.LoadAsync(value.Id);
-                _ = Safe(() => _session.HighlightAsync(value.Id));
+                _ = Safe(() => _session.HighlightAsync(value.Id, durationMs: Spyglass.App.Core.Settings.SettingsService.Shared.Current.KeepHighlight ? 0 : 1500));
             }
         }
     }

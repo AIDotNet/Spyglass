@@ -25,12 +25,15 @@
                         Description="Samples arrive once a second while this page is open. Profiling stops when you leave it." />
         <ScrollViewer IsVisible="{Binding HasData}">
           <StackPanel Spacing="12" Margin="0,0,10,0">
+            <!-- an app with nothing changing renders nothing: explain, instead of showing zeros -->
+            <arc:Alert Tone="Info" IsOpen="True" IsVisible="{Binding IsIdle}" Title="The app is idle: there is nothing to measure right now"
+                       Content="Avalonia only renders and lays out when something changes. Move the mouse over the app, type, scroll, resize its window or start an animation, and the numbers below fill in." />
             <!-- metric cards -->
             <UniformGrid Columns="4">
               <Border Classes="card" Margin="0,0,10,0">
                 <StackPanel Spacing="2">
                   <TextBlock Classes="cardmeta" Text="Frames per second" />
-                  <TextBlock Text="{Binding Fps, StringFormat={}{0:0} fps}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
+                  <TextBlock Text="{Binding FpsText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding FpsContext}" />
                 </StackPanel>
               </Border>
@@ -44,14 +47,14 @@
               <Border Classes="card" Margin="0,0,10,0">
                 <StackPanel Spacing="2">
                   <TextBlock Classes="cardmeta" Text="Layout per pass" />
-                  <TextBlock Text="{Binding LayoutMs, StringFormat={}{0:0.00} ms}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
+                  <TextBlock Text="{Binding LayoutText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding LayoutContext}" />
                 </StackPanel>
               </Border>
               <Border Classes="card" >
                 <StackPanel Spacing="2">
                   <TextBlock Classes="cardmeta" Text="Render per frame" />
-                  <TextBlock Text="{Binding RenderMs, StringFormat={}{0:0.00} ms}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
+                  <TextBlock Text="{Binding RenderText}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
                   <TextBlock Classes="cardmeta" Text="{Binding RenderContext}" />
                 </StackPanel>
               </Border>
@@ -121,6 +124,8 @@
                     <TextBlock Classes="cardmeta" Grid.Column="5" Text="Max" />
                     <TextBlock Classes="cardmeta" Grid.Column="6" Text="Count" />
                   </Grid>
+                  <TextBlock Classes="cardmeta" IsVisible="{Binding NoPercentiles}" Margin="0,6,0,0"
+                             Text="No frames or layout passes in the last 10 seconds. The table fills in as soon as the app does something." />
                   <ItemsControl ItemsSource="{Binding Percentiles}">
                     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>

@@ -45,8 +45,15 @@ public sealed class BindingsViewModel : ObservableObject
     }
 }
 
-public sealed class BindingErrorRowViewModel(BindingErrorDto e, Action<int> showElement)
+public sealed class BindingErrorRowViewModel(BindingErrorDto e, Action<int> showElement) : ObservableObject
 {
+    string _openError = "";
+    public bool CanOpen { get; } = e.Location is not null;
+    public string OpenError { get => _openError; private set { Set(ref _openError, value); Raise(nameof(HasOpenError)); } }
+    public bool HasOpenError => _openError.Length > 0;
+    public RelayCommand OpenCommand => _open ??= new RelayCommand(() => OpenError = OpenInEditor.Open(e.Location));
+    RelayCommand? _open;
+
     public string Key { get; } = e.Key;
     public string Title { get; } = $"{e.TargetType}.{e.Property}  ·  {e.Path}";
     public string Message { get; } = e.Message;

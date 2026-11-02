@@ -343,6 +343,8 @@ public sealed class NetworkViewModel : ObservableObject
         if (_activated) return;
         _activated = true;
         if (!_session.Has(Capabilities.Network)) return;
+        // Settings › Network: Chrome records while DevTools is open; turn this off to start recording by hand (Ctrl/Cmd+E).
+        if (!Spyglass.App.Core.Settings.SettingsService.Shared.Current.AutoRecordNetwork) return;
         await SetRecordingAsync(true);
     }
 
@@ -352,7 +354,10 @@ public sealed class NetworkViewModel : ObservableObject
     {
         try
         {
-            var status = on ? await _session.EnableNetworkAsync() : await _session.DisableNetworkAsync();
+            var st = Spyglass.App.Core.Settings.SettingsService.Shared.Current;
+            var status = on
+                ? await _session.EnableNetworkAsync(new NetworkEnableParams(st.CaptureBodies, st.BodyLimitKb * 1024, st.CaptureInitiator))
+                : await _session.DisableNetworkAsync();
             IsRecording = status.Enabled;
         }
         catch (Exception ex) { Summary = ex.Message; }

@@ -29,6 +29,13 @@ public sealed class ElementDetailsViewModel(AgentSession session) : ObservableOb
 
     public string Header { get => _header; private set => Set(ref _header, value); }
     public string Source { get => _source; private set => Set(ref _source, value); }
+    SourceInfo? _sourceLocation;
+    string _sourceError = "";
+    public bool HasSource => _sourceLocation is not null;
+    public string SourceError { get => _sourceError; private set { Set(ref _sourceError, value); Raise(nameof(HasSourceError)); } }
+    public bool HasSourceError => _sourceError.Length > 0;
+    public RelayCommand OpenSourceCommand => _openSource ??= new RelayCommand(() => SourceError = OpenInEditor.Open(_sourceLocation));
+    RelayCommand? _openSource;
     public string DataContext { get => _dataContext; private set => Set(ref _dataContext, value); }
 
     public string Filter { get => _filter; set { if (Set(ref _filter, value)) ApplyFilter(); } }
@@ -62,6 +69,9 @@ public sealed class ElementDetailsViewModel(AgentSession session) : ObservableOb
 
             Header = describe.Selector.Split(" > ").Last();
             Source = describe.Source is { } s ? $"{Path.GetFileName(s.Uri)}:{s.Line}" : "";
+            _sourceLocation = describe.Source;
+            SourceError = "";
+            Raise(nameof(HasSource));
             DataContext = describe.DataContextType ?? "";
             _all = props.Select(p => new PropertyRowViewModel(p, this)).ToList();
             ApplyFilter();

@@ -25,6 +25,11 @@ public sealed class PerformanceViewModel : ObservableObject
     double _fps, _layoutMs, _renderMs;
     int _visuals;
     string _fpsContext = "", _layoutContext = "", _renderContext = "";
+    string _fpsText = "–", _layoutText = "–", _renderText = "–";
+    bool _idle;
+    double _peakFps;
+    (DateTime At, double Fps)? _lastActive;
+    (DateTime At, double Ms)? _lastLayout, _lastRender;
     string _status = "";
 
     public PerformanceViewModel(AgentSession session, Action<int> showElement)
@@ -62,6 +67,16 @@ public sealed class PerformanceViewModel : ObservableObject
     public bool NoFindings => Findings.Count == 0;
     public bool HasHotSpots => HotSpots.Count > 0;
     public bool NoHotSpots => HotSpots.Count == 0;
+
+    /// <summary>
+    /// What the cards show. A quiet app renders nothing (Avalonia draws only when something changes), which is
+    /// not "no data": say so, and remember when it was last active instead of showing a row of zeros.
+    /// </summary>
+    public string FpsText { get => _fpsText; private set => Set(ref _fpsText, value); }
+    public string LayoutText { get => _layoutText; private set => Set(ref _layoutText, value); }
+    public string RenderText { get => _renderText; private set => Set(ref _renderText, value); }
+    public bool IsIdle { get => _idle; private set => Set(ref _idle, value); }
+    public bool NoPercentiles => Percentiles.Count == 0;
 
     public double Fps { get => _fps; private set => Set(ref _fps, value); }
     public double LayoutMs { get => _layoutMs; private set => Set(ref _layoutMs, value); }
@@ -106,14 +121,14 @@ public sealed class PerformanceViewModel : ObservableObject
     void Reset()
     {
         History.Clear(); Percentiles.Clear(); HotSpots.Clear(); Findings.Clear();
-        _hasSample = false;
+        _hasSample = false; _peakFps = 0; _lastActive = null; _lastLayout = _lastRender = null; IsIdle = false;
         RaiseState();
     }
 
     void RaiseState()
     {
         Raise(nameof(Waiting)); Raise(nameof(HasData));
-        Raise(nameof(HasFindings)); Raise(nameof(NoFindings));
+        Raise(nameof(HasFindings)); Raise(nameof(NoFindings)); Raise(nameof(NoPercentiles));
         Raise(nameof(HasHotSpots)); Raise(nameof(NoHotSpots));
     }
 
@@ -144,9 +159,34 @@ public sealed class PerformanceViewModel : ObservableObject
         Visuals = p.VisualCount ?? 0;
         LayoutMs = Math.Round(layout, 2);
         RenderMs = Math.Round(render, 2);
-        FpsContext = p.Frames == 0 ? "idle: Avalonia renders only on change" : $"{p.Frames} frames last second";
-        LayoutContext = p.Histograms.TryGetValue("avalonia.ui.measure.time", out var m) ? $"measure P95 {Ms(m.P95)}" : "no layout last second";
-        RenderContext = p.Histograms.TryGetValue("avalonia.ui.render.time", out var r) ? $"P95 {Ms(r.P95)}" : "no render last second";
+        var now = DateTime.Now;
+        var hasLayout = p.Histograms.ContainsKey("avalonia.ui.measure.time") || p.Histograms.ContainsKey("avalonia.ui.arrange.time");
+        var hasRender = p.Histograms.ContainsKey("avalonia.ui.render.time");
+
+        if (p.Frames > 0)
+        {
+            _peakFps = Math.Max(_peakFps, Fps);
+            _lastActive = (now, Fps);
+            FpsText = $"{Fps:0} fps";
+            FpsContext = $"{p.Frames} frames last second · peak {_peakFps:0}";
+        }
+        else
+        {
+            FpsText = "Idle";
+            FpsContext = _lastActive is { } la ? $"no frames this second · last active {Ago(now - la.At)}: {la.Fps:0} fps" : "no frames yet: nothing has changed in the app";
+        }
+
+        if (hasLayout) _lastLayout = (now, layout);
+        LayoutText = hasLayout ? $"{LayoutMs:0.00} ms" : "–";
+        LayoutContext = p.Histograms.TryGetValue("avalonia.ui.measure.time", out var m) ? $"measure P95 {Ms(m.P95)}"
+            : _lastLayout is { } ll ? $"no layout this second · last {Ms(ll.Ms)}, {Ago(now - ll.At)}" : "no layout pass yet";
+
+        if (hasRender) _lastRender = (now, render);
+        RenderText = hasRender ? $"{RenderMs:0.00} ms" : "–";
+        RenderContext = p.Histograms.TryGetValue("avalonia.ui.render.time", out var r) ? $"P95 {Ms(r.P95)}"
+            : _lastRender is { } lr ? $"no render this second · last {Ms(lr.Ms)}, {Ago(now - lr.At)}" : "no render yet";
+
+        IsIdle = p.Frames == 0 && !hasLayout && !hasRender;
 
         History.Add(new PerfPoint(DateTime.Now.ToString("HH:mm:ss", Inv), Math.Round(Fps, 1), Math.Round(layout, 2), Math.Round(render, 2)));
         while (History.Count > HistoryLength) History.RemoveAt(0);
@@ -169,6 +209,8 @@ public sealed class PerformanceViewModel : ObservableObject
             Findings.Add(new FindingRow(f.Message, f.Severity == "warning" ? TKCode.Arc.AlertTone.Warning : TKCode.Arc.AlertTone.Info, f.ElementId, _showElement));
         RaiseState();
     }
+
+    static string Ago(TimeSpan t) => t.TotalSeconds < 60 ? $"{Math.Max(1, (int)t.TotalSeconds)} s ago" : $"{(int)t.TotalMinutes} min ago";
 
     static string Ms(double v) => (v < 10 ? Math.Round(v, 2).ToString("0.##", Inv) : Math.Round(v, 1).ToString("0.#", Inv)) + " ms";
 

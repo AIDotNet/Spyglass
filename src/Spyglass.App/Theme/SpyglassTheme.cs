@@ -1,3 +1,4 @@
+using Spyglass.App.Core.Settings;
 using TKCode.Arc;
 using TKCode.Arc.DesignTokens;
 using TKCode.Arc.Motion;
@@ -13,10 +14,16 @@ public static class SpyglassTheme
 {
     public const double TreeRowHeight = 26;
 
-    public static ArcThemeBuilder Glass(ArcThemeBuilder t) => t
-        .Accent(ArcAccentPreset.Blue)
+    public static readonly string[] AccentNames = Enum.GetNames<ArcAccentPreset>();
+
+    /// <summary>Default look (blue accent, full motion). Appearance (light/dark/system) is set by the caller.</summary>
+    public static ArcThemeBuilder Glass(ArcThemeBuilder t) => Glass(t, new AppSettings());
+
+    /// <summary>The glass look with the user's accent and motion preferences (Settings › Appearance).</summary>
+    public static ArcThemeBuilder Glass(ArcThemeBuilder t, AppSettings s) => t
+        .Accent(Enum.TryParse<ArcAccentPreset>(s.Accent, out var accent) ? accent : ArcAccentPreset.Blue)
         .Corners(ArcCornerStyle.Default)
-        .MotionLevel(ArcMotionLevel.Full)          // Arc animations; Arc still honours the OS "reduce motion" setting
+        .MotionLevel(s.Motion switch { MotionMode.Off => ArcMotionLevel.Off, MotionMode.Reduced => ArcMotionLevel.Reduced, _ => ArcMotionLevel.Full })   // Arc also honours the OS "reduce motion" setting
         .Token(nameof(ArcDesignTokenKind.ControlSizeSM), "30")
         .Token(nameof(ArcDesignTokenKind.ControlSizeMD), "34")
         .Token(nameof(ArcDesignTokenKind.ControlSizeLG), "40")

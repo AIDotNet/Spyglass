@@ -29,9 +29,15 @@
                       <TextBlock Classes="cardtitle" Text="{Binding Title}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
                       <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeSM}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
                       <TextBlock Classes="cardmeta" Text="{Binding Meta}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                      <TextBlock Text="{Binding OpenError}" IsVisible="{Binding HasOpenError}" TextWrapping="Wrap"
+                                 FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource Danger}" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Margin="12,0,0,0">
                       <arc:Badge Tone="Danger" Content="{Binding CountText}" Size="Small" VerticalAlignment="Center" />
+                      <arc:Button Variant="Ghost" Size="Small" Command="{Binding OpenCommand}" IsEnabled="{Binding CanOpen}"
+                                  ToolTip.Tip="Open the XAML in your editor (Settings › Editor)" AutomationProperties.Name="Open in editor">
+                        <lucide:LucideIcon Kind="ExternalLink" Size="14" />
+                      </arc:Button>
                       <arc:Button Variant="Secondary" Size="Small" Content="Show element" Command="{Binding ShowCommand}" IsEnabled="{Binding CanShow}" />
                     </StackPanel>
                   </Grid>
