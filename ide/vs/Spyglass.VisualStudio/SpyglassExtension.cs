@@ -13,9 +13,9 @@ internal sealed class SpyglassExtension : Extension
     public override ExtensionConfiguration ExtensionConfiguration => new()
     {
         Metadata = new(
-            id: "Spyglass.VisualStudio.7d3f2c1e-5a8b-4c6d-9e0f-1a2b3c4d5e6f",
+            id: "AIDotNet.Spyglass.bb67bdd2-3341-4592-8f74-a09c107e98b4",   // permanent: the Marketplace identity of the extension
             version: ExtensionAssemblyVersion,
-            publisherName: "Spyglass contributors",
+            publisherName: "AIDotNet",
             displayName: "Spyglass for Avalonia",
             description: "XAML hot reload for running Avalonia apps: edit .axaml and the app updates as you type. Free and open source.")
         {

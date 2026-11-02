@@ -46,6 +46,14 @@ intellijPlatform {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
             untilBuild = provider { null }
         }
+        changeNotes = providers.gradleProperty("pluginVersion").map { v ->
+            "<p>$v: see <a href=\"https://github.com/AIDotNet/Spyglass/releases\">the release notes</a>.</p>"
+        }
+    }
+    // JetBrains Marketplace. The first version must be uploaded by hand on plugins.jetbrains.com (it is reviewed);
+    // later ones: PUBLISH_TOKEN=… ./gradlew publishPlugin -PpluginVersion=x.y.z (release.yml does this on v* tags).
+    publishing {
+        token = providers.environmentVariable("PUBLISH_TOKEN")
     }
     buildSearchableOptions = false
 }

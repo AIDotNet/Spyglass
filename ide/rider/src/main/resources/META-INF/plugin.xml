@@ -1,7 +1,7 @@
 <idea-plugin>
-  <id>dev.spyglass.rider</id>
+  <id>com.aidotnet.spyglass</id>
   <name>Spyglass for Avalonia</name>
-  <vendor url="https://github.com/spyglass-dev/spyglass">Spyglass</vendor>
+  <vendor url="https://github.com/AIDotNet/Spyglass">AIDotNet</vendor>
   <description><![CDATA[
     <p>XAML hot reload for running <a href="https://avaloniaui.net">Avalonia</a> apps, free and open source.</p>
     <ul>
@@ -17,6 +17,8 @@
   ]]></description>
 
   <depends>com.intellij.modules.platform</depends>
+  <!-- Rider only: without this the Marketplace lists the plugin as compatible with every JetBrains IDE. -->
+  <depends>com.intellij.modules.rider</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="dev.spyglass.rider.SpyglassStartupActivity"/>

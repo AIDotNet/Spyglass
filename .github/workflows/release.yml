@@ -1,7 +1,13 @@
-# Publishes every package to nuget.org when a version tag is pushed (git tag v0.1.0 && git push --tags).
+# On a version tag (git tag v0.1.0 && git push --tags):
+#   publish: every NuGet package to nuget.org;
+#   rider:   the Rider plugin (ide/rider) to the JetBrains Marketplace;
+#   vscode:  the VS Code extension (ide/vscode) to the Visual Studio Marketplace, and to Open VSX when OVSX_PAT is set;
+#   vs:      the Visual Studio extension (ide/vs) to the Visual Studio Marketplace.
+# The jobs are independent: one failing does not stop the others.
 # Uses NuGet Trusted Publishing (GitHub OIDC): no long-lived API key is stored. One-time setup on nuget.org:
-#   Account > Trusted Publishing > add a policy (owner, this repository, workflow file `release.yml`),
+#   Account > Trusted Publishing > add a policy (owner, this repository, workflow file `release.yml`, environment `nuget`),
 #   then set the repository secret NUGET_USER to the nuget.org *username* (not the email).
+#   The policy's environment must match `environment:` below; ci.yml never publishes and needs no policy.
 name: release
 on:
   push:
@@ -13,6 +19,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Must equal the Environment in the nuget.org Trusted Publishing policy. GitHub creates it on first use; add
+    # protection rules there (Settings > Environments > nuget), e.g. required reviewers or "v*" tags only.
+    environment: nuget
     permissions:
       id-token: write   # lets NuGet/login exchange the GitHub OIDC token for a short-lived API key
     steps:
@@ -43,3 +52,104 @@ jobs:
           --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+  rider:
+    # JetBrains Marketplace. One-time: upload the first version by hand on plugins.jetbrains.com (it is reviewed; vendor
+    # AIDotNet), then add a Permanent Token (avatar > My Tokens) as the secret JETBRAINS_PUBLISH_TOKEN, either in the
+    # repository or in this environment.
+    runs-on: ubuntu-latest
+    environment: jetbrains
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Publish to JetBrains Marketplace
+        working-directory: ide/rider
+        env:
+          PUBLISH_TOKEN: ${{ secrets.JETBRAINS_PUBLISH_TOKEN }}
+        # Downloads the Rider SDK from JetBrains' Maven repository (~3.5 GB) to compile against.
+        run: ./gradlew publishPlugin -PpluginVersion=${GITHUB_REF_NAME#v}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rider-plugin
+          path: ide/rider/build/distributions/*.zip
+
+  vscode:
+    # Visual Studio Marketplace publisher `AIDotNet` (marketplace.visualstudio.com/manage; must equal "publisher" in
+    # ide/vscode/package.json). Secrets, in the repository or in this environment:
+    #   VSCE_PAT  Azure DevOps personal access token, organization "All accessible organizations", scope Marketplace > Manage
+    #   OVSX_PAT  optional, open-vsx.org access token for namespace `aidotnet` (Cursor, Windsurf, VSCodium users)
+    # No manual first upload needed: vsce creates the extension on first publish.
+    runs-on: ubuntu-latest
+    environment: marketplace
+    defaults:
+      run:
+        working-directory: ide/vscode
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ide/vscode/package-lock.json
+      - run: npm ci
+      - name: Version from tag
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+      - run: npm test
+      - name: Package
+        run: npx vsce package --out spyglass-avalonia.vsix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: ide/vscode/spyglass-avalonia.vsix
+      - name: Publish to the Visual Studio Marketplace
+        run: npx vsce publish --packagePath spyglass-avalonia.vsix --pat "$VSCE_PAT"
+      - name: Publish to Open VSX
+        if: env.OVSX_PAT != ''
+        run: npx --yes ovsx publish spyglass-avalonia.vsix --pat "$OVSX_PAT"
+
+  vs:
+    # Same Visual Studio Marketplace publisher and VSCE_PAT as the VS Code job. The .vsix can only be built on Windows
+    # (VsixUtil); windows-2022 has Visual Studio 2022 with the extension development workload (VsixPublisher.exe).
+    # Listing metadata: ide/vs/Spyglass.VisualStudio/publishManifest.json. VsixPublisher creates the extension on first
+    # publish. The extension uses preview VisualStudio.Extensibility APIs, so the Marketplace shows it as Preview.
+    runs-on: windows-2022
+    environment: marketplace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build the .vsix
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          msbuild ide/vs/Spyglass.VisualStudio/Spyglass.VisualStudio.csproj /restore /p:Configuration=Release `
+            /p:Version=$version /p:DeployExtension=false /v:minimal
+          $vsix = Get-ChildItem ide/vs/Spyglass.VisualStudio/bin/Release -Recurse -Filter *.vsix | Select-Object -First 1
+          if (-not $vsix) { throw "no .vsix produced" }
+          "VSIX=$($vsix.FullName)" >> $env:GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vs-extension
+          path: ${{ env.VSIX }}
+      - name: Publish to the Visual Studio Marketplace
+        shell: pwsh
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $publisher = Join-Path $vs 'VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe'
+          & $publisher publish -payload $env:VSIX `
+            -publishManifest ide/vs/Spyglass.VisualStudio/publishManifest.json `
+            -personalAccessToken $env:VSCE_PAT `
+            -ignoreWarnings "VSIXValidatorWarning01,VSIXValidatorWarning02"
+          if ($LASTEXITCODE -ne 0) { throw "VsixPublisher failed ($LASTEXITCODE)" }
