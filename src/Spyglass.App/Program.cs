@@ -18,6 +18,10 @@ internal static class Program
         if (args is ["serve", ..])
             return Spyglass.Mcp.ServeCli.RunAsync(args[1..]).GetAwaiter().GetResult();
 
+        // `spyglass run <command>`: starts your app with the startup hook attached (no code change in the app).
+        if (args is ["run", ..])
+            return Spyglass.Mcp.RunCli.RunAsync(args[1..]).GetAwaiter().GetResult();
+
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 

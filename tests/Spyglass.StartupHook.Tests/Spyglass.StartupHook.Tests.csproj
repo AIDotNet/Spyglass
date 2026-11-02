@@ -11,6 +11,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <ProjectReference Include="..\..\src\Spyglass.App.Core\Spyglass.App.Core.csproj" />
+    <ProjectReference Include="..\..\src\Spyglass.Mcp\Spyglass.Mcp.csproj" />
     <!-- Built, not referenced: the test starts them as separate processes. -->
     <ProjectReference Include="..\..\src\Spyglass.StartupHook\Spyglass.StartupHook.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Spyglass.StartupHook.TestApp\Spyglass.StartupHook.TestApp.csproj" ReferenceOutputAssembly="false" />

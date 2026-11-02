@@ -27,5 +27,23 @@
     <PackageReference Include="TKCode.Arc.Themes.Corners" />
     <ProjectReference Include="..\Spyglass.App.Core\Spyglass.App.Core.csproj" />
     <ProjectReference Include="..\Spyglass.Mcp\Spyglass.Mcp.csproj" />
+    <!-- `spyglass run` needs the startup hook next to the executable (hook/). Built for ordering, copied below. -->
+    <ProjectReference Include="..\Spyglass.StartupHook\Spyglass.StartupHook.csproj" ReferenceOutputAssembly="false" UndefineProperties="RuntimeIdentifier;SelfContained" />
   </ItemGroup>
+  <!-- hook/ next to the executable, in the build output and in the published tool package. -->
+  <PropertyGroup>
+    <_HookDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../Spyglass.StartupHook/bin/$(Configuration)/net8.0/'))</_HookDir>
+  </PropertyGroup>
+  <Target Name="CopyStartupHook" AfterTargets="Build">
+    <ItemGroup>
+      <_HookFile Include="$(_HookDir)**/*" Exclude="$(_HookDir)**/*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_HookFile)" DestinationFiles="@(_HookFile->'$(OutDir)hook/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="PublishStartupHook" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <_HookFile Include="$(_HookDir)**/*" Exclude="$(_HookDir)**/*.pdb" />
+      <ResolvedFileToPublish Include="@(_HookFile)" RelativePath="hook/%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
 </Project>

@@ -8,7 +8,7 @@ Open-source, out-of-process debugging tool for Avalonia UI apps (like browser De
 |---|---|
 | `src/Spyglass.Protocol` | Wire contract (JSON-RPC 2.0 over WebSocket), shared by agent and client |
 | `src/Spyglass.Agent` | In-app agent: `AppBuilder.UseSpyglass()` (public Avalonia APIs only) |
-| `src/Spyglass.StartupHook` | Attach without code changes: `DOTNET_STARTUP_HOOKS=…/Spyglass.StartupHook.dll dotnet MyApp.dll` (Avalonia 11.2+ and 12; `SPYGLASS_ATTACH=advanced` for the Advanced agent on 12.1.4) |
+| `src/Spyglass.StartupHook` (`spyglass run <command>`) | Attach without code changes: `DOTNET_STARTUP_HOOKS=…/Spyglass.StartupHook.dll dotnet MyApp.dll` (Avalonia 11.2+ and 12; `SPYGLASS_ATTACH=advanced` for the Advanced agent on 12.1.4) |
 | `src/Spyglass.Agent.Avalonia11` | The same agent built for Avalonia 11.2+ apps (`Spyglass.Agent.Avalonia11` package; same namespace, no XAML source locations) |
 | `src/Spyglass.Agent.HotReload` | XAML hot reload in the app (`Spyglass.HotReload` package, Debug only), with `src/Spyglass.HotReload.Generators` |
 | `src/Spyglass.Agent.Advanced` | Advanced agent features on Avalonia private APIs (`UseSpyglassAdvanced()`, pinned to Avalonia 12.1.4) |

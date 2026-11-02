@@ -134,4 +134,19 @@ public sealed class StartupHookTests
         Assert.Empty(hub.Sessions);
         Assert.False(app.HasExited);
     }
+
+    [Fact]
+    public async Task Spyglass_run_starts_the_app_with_the_hook_and_returns_its_exit_code()
+    {
+        await using var hub = await StartHub();
+        Environment.SetEnvironmentVariable("TESTAPP_SECONDS", "10");   // inherited by the app `run` starts: it exits by itself
+        try
+        {
+            var run = Spyglass.Mcp.RunCli.RunAsync(["--hook", Meta("HookDll"), "--port", hub.Port.ToString(), "dotnet", Meta("TestAppDll")]);
+            var session = await hub.WaitForSessionAsync(TimeSpan.FromSeconds(40));
+            Assert.Equal("Spyglass.StartupHook.TestApp", session.App.Name);
+            Assert.Equal(0, await run.WaitAsync(TimeSpan.FromSeconds(60)));
+        }
+        finally { Environment.SetEnvironmentVariable("TESTAPP_SECONDS", null); }
+    }
 }
