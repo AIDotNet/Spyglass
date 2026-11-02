@@ -66,8 +66,8 @@ In the running app, **Ctrl+Shift+I** (macOS **Cmd+Option+I**) brings Spyglass to
 ## Settings
 
 Theme, accent colour, animations, port, Network capture options and the editor used by "Open in editor" are in the
-**Settings** page. They apply immediately and are stored in `~/Library/Application Support/Spyglass/settings.json`
-(`%APPDATA%\Spyglass\settings.json` on Windows; override with `SPYGLASS_SETTINGS`).
+**Settings** page. They apply immediately and are stored in `~/.spyglass/settings.json`
+(`SPYGLASS_HOME` moves the whole folder, `SPYGLASS_SETTINGS` just this file; settings from the old OS app-data folder are copied over once).
 
 ## Test
 

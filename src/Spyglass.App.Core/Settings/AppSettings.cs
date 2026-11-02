@@ -60,13 +60,13 @@ public sealed class AppSettingsStore(string? path = null)
 {
     static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
-    public static string DefaultPath => Environment.GetEnvironmentVariable("SPYGLASS_SETTINGS") is { Length: > 0 } env ? env : Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spyglass", "settings.json");
+    public static string DefaultPath => Environment.GetEnvironmentVariable("SPYGLASS_SETTINGS") is { Length: > 0 } env ? env : SpyglassHome.File("settings.json");
 
     public string FilePath { get; } = path ?? DefaultPath;
 
     public AppSettings Load()
     {
+        if (FilePath == SpyglassHome.File("settings.json")) SpyglassHome.MigrateLegacy(FilePath, "settings.json");
         try { return (JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new()).Normalize(); }
         catch { return new(); }
     }

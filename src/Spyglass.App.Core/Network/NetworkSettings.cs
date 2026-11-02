@@ -36,13 +36,13 @@ public sealed class NetworkSettingsStore(string? path = null)
     static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 
     /// <summary>User app-data file; <c>SPYGLASS_NETWORK_SETTINGS</c> overrides it (screenshot runs, portable setups).</summary>
-    public static string DefaultPath => Environment.GetEnvironmentVariable("SPYGLASS_NETWORK_SETTINGS") is { Length: > 0 } env ? env : Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spyglass", "network-settings.json");
+    public static string DefaultPath => Environment.GetEnvironmentVariable("SPYGLASS_NETWORK_SETTINGS") is { Length: > 0 } env ? env : SpyglassHome.File("network-settings.json");
 
     public string FilePath { get; } = path ?? DefaultPath;
 
     public NetworkSettings Load()
     {
+        if (FilePath == SpyglassHome.File("network-settings.json")) SpyglassHome.MigrateLegacy(FilePath, "network-settings.json");
         try { return JsonSerializer.Deserialize<NetworkSettings>(File.ReadAllText(FilePath)) ?? new(); }
         catch { return new(); }
     }
