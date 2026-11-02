@@ -151,5 +151,9 @@ jobs:
           & $publisher publish -payload $env:VSIX `
             -publishManifest ide/vs/Spyglass.VisualStudio/publishManifest.json `
             -personalAccessToken $env:VSCE_PAT `
-            -ignoreWarnings "VSIXValidatorWarning01,VSIXValidatorWarning02"
-          if ($LASTEXITCODE -ne 0) { throw "VsixPublisher failed ($LASTEXITCODE)" }
+            -ignoreWarnings "VSIXValidatorWarning01,VSIXValidatorWarning02" 2>&1 | Tee-Object -Variable output
+          $code = $LASTEXITCODE
+          # VsixPublisher on windows-2022 crashes in its own telemetry (System.Memory load error) AFTER a successful
+          # upload and exits non-zero; trust the "VsixPub0038 : Uploaded" line instead of the exit code.
+          if (($output | Out-String) -match 'VsixPub0038') { Write-Host "Uploaded (VsixPublisher exit code $code ignored)"; exit 0 }
+          if ($code -ne 0) { throw "VsixPublisher failed ($code)" }

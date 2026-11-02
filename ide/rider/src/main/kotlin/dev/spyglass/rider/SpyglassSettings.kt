@@ -76,7 +76,7 @@ class SpyglassConfigurable : BoundConfigurable("Spyglass") {
             }
             row("Command:") {
                 textField().bindText({ o.command ?: "spyglass" }, { o.command = it.trim() }).columns(COLUMNS_LARGE)
-                    .comment("The Spyglass dotnet tool (<code>dotnet tool install -g Spyglass</code>), a path to it, or a path to Spyglass.dll")
+                    .comment("The Spyglass dotnet tool (<code>dotnet tool install -g TKCode.Spyglass</code>), a path to it, or a path to Spyglass.dll")
             }
             row { checkBox("Start spyglass serve in the background when no Spyglass is running").bindSelected(o::autoStart) }
         }

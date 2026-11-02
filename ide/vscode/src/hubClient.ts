@@ -243,7 +243,7 @@ export class HubClient extends EventEmitter {
       const child = spawn(exe, argv, { detached: true, stdio: "ignore", windowsHide: true });
       child.on("error", (e: any) =>
         this.options.log(e.code === "ENOENT"
-          ? `Cannot start Spyglass: '${exe}' not found. Install it with \`dotnet tool install -g Spyglass\`, or set "spyglass.command".`
+          ? `Cannot start Spyglass: '${exe}' not found. Install it with \`dotnet tool install -g TKCode.Spyglass\`, or set "spyglass.command".`
           : `Cannot start Spyglass: ${e.message}`));
       child.unref();
     } catch (e: any) {

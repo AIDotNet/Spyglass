@@ -13,7 +13,7 @@
     </ul>
     <p>Works next to Rider's Avalonia support and AvaloniaRider (no completion, no previewer of its own).
       Needs the <code>Spyglass</code> dotnet tool and, in the app, <code>UseSpyglass()</code> plus the
-      <code>Spyglass.HotReload</code> package.</p>
+      <code>TKCode.Spyglass.HotReload</code> package.</p>
   ]]></description>
 
   <depends>com.intellij.modules.platform</depends>

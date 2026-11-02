@@ -112,7 +112,7 @@ class OpenSpyglassAction : SpyglassAction() {
         val argv = HubClient.launchCommandLine(SpyglassSettings.getInstance().command)
         val exe = HubClient.findExecutable(argv[0], env)
         if (exe == null) {
-            notify(e.project!!, "'${argv[0]}' not found. Install Spyglass with <code>dotnet tool install -g Spyglass</code>, or set the command in Settings › Tools › Spyglass.", NotificationType.WARNING)
+            notify(e.project!!, "'${argv[0]}' not found. Install Spyglass with <code>dotnet tool install -g TKCode.Spyglass</code>, or set the command in Settings › Tools › Spyglass.", NotificationType.WARNING)
             return
         }
         try {

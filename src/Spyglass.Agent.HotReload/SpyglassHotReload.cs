@@ -26,7 +26,7 @@ public static class SpyglassHotReload
     /// <summary>Raised (any thread) when an assembly registers documents after a session started.</summary>
     internal static event Action? DocumentsChanged;
 
-    /// <summary>Called from a module initializer in every assembly that references the Spyglass.HotReload package.</summary>
+    /// <summary>Called from a module initializer in every assembly that references the TKCode.Spyglass.HotReload package.</summary>
     [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
     public static void Register(Assembly assembly, bool useCompiledBindingsByDefault, params SpyglassXamlDocument[] documents)
     {

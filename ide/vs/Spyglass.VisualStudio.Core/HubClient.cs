@@ -367,7 +367,7 @@ public sealed class HubClient : IAsyncDisposable
         catch (Exception ex)
         {
             _options.Log(ex is System.ComponentModel.Win32Exception
-                ? $"Cannot start Spyglass: '{file}' not found. Install it with `dotnet tool install -g Spyglass`, or set the Spyglass command in Tools › Options."
+                ? $"Cannot start Spyglass: '{file}' not found. Install it with `dotnet tool install -g TKCode.Spyglass`, or set the Spyglass command in Tools › Options."
                 : $"Cannot start Spyglass: {ex.Message}");
         }
     }

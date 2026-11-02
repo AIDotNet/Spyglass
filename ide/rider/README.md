@@ -12,8 +12,8 @@ XAML hot reload for running [Avalonia](https://avaloniaui.net) apps in JetBrains
 
 ## Setup
 
-1. In the app: `AppBuilder…UseSpyglass()` (package `Spyglass.Agent`) and, for Debug builds, the `Spyglass.HotReload` package.
-2. Install the Spyglass tool: `dotnet tool install -g Spyglass` (the plugin starts `spyglass serve` in the background
+1. In the app: `AppBuilder…UseSpyglass()` (package `TKCode.Spyglass.Agent`) and, for Debug builds, the `TKCode.Spyglass.HotReload` package.
+2. Install the Spyglass tool: `dotnet tool install -g TKCode.Spyglass` (the plugin starts `spyglass serve` in the background
    when nothing is running; the Spyglass window works too).
 3. Run the app (Run/Debug, `dotnet run`, or **Tools › Spyglass › Run Project with dotnet watch** to also apply C# edits).
 

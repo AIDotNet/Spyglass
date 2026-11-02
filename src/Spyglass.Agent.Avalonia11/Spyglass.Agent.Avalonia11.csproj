@@ -7,7 +7,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>Spyglass.Agent</AssemblyName>
     <RootNamespace>Spyglass.Agent</RootNamespace>
-    <PackageId>Spyglass.Agent.Avalonia11</PackageId>
+    <PackageId>TKCode.Spyglass.Agent.Avalonia11</PackageId>
     <DefineConstants>$(DefineConstants);AVALONIA11</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>

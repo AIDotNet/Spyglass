@@ -12,8 +12,8 @@ Requires **Visual Studio 2022 17.14 or later** (Visual Studio 2026 included), Wi
 
 ## Setup
 
-1. In the app: `AppBuilder…UseSpyglass()` (package `Spyglass.Agent`) and, for Debug builds, the `Spyglass.HotReload` package.
-2. Install the Spyglass tool: `dotnet tool install -g Spyglass` (the extension starts `spyglass serve` in the background
+1. In the app: `AppBuilder…UseSpyglass()` (package `TKCode.Spyglass.Agent`) and, for Debug builds, the `TKCode.Spyglass.HotReload` package.
+2. Install the Spyglass tool: `dotnet tool install -g TKCode.Spyglass` (the extension starts `spyglass serve` in the background
    when nothing is running; the Spyglass window works too).
 3. Run the app (F5, `dotnet run`, or **Extensions › Spyglass › Run Project with dotnet watch** to also apply C# edits).
 

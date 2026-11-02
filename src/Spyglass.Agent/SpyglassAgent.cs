@@ -176,7 +176,7 @@ public sealed class SpyglassAgent
         var path = ClientLauncher.Resolve(Options.ClientPath);
         if (path is null)
         {
-            Toast("Spyglass is not running and was not found. Install it with `dotnet tool install -g Spyglass`, or set SPYGLASS_CLIENT to its path.", warning: true);
+            Toast("Spyglass is not running and was not found. Install it with `dotnet tool install -g TKCode.Spyglass`, or set SPYGLASS_CLIENT to its path.", warning: true);
             return;
         }
         if (!ClientLauncher.TryStart(path, out var error))

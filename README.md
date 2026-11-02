@@ -2,6 +2,21 @@
 
 Open-source, out-of-process debugging tool for Avalonia UI apps (like browser DevTools), with a free MCP server for AI coding agents. Product design lives in [`design/`](design/README.md).
 
+![Spyglass inspecting an Avalonia app: visual tree, properties and source location](docs/images/elements.png)
+
+## Features
+
+| | |
+|---|---|
+| **Elements**: visual/logical tree, search, pick-an-element, live property editing, XAML source locations | **Styles**: the applied cascade, overridden values struck through, force `:pointerover`/`:pressed` and other pseudo-classes |
+| ![Elements](docs/images/elements.png) | ![Styles](docs/images/styles.png) |
+| **Binding errors**: the failing path, the message, the XAML line and the DataContext, with a jump to the element | **Network**: Chrome-style request list with headers, payload, timing and cookies; HAR import/export |
+| ![Bindings](docs/images/bindings.png) | ![Network](docs/images/network.png) |
+| **Resources**: browse theme dictionaries and styles, look up keys, edit colours live | **Performance**: FPS, layout/render percentiles, findings and in-app overlays |
+| ![Resources](docs/images/resources.png) | ![Performance](docs/images/performance.png) |
+
+The screenshots are of the bundled `samples/Spyglass.Sample` app (it has a deliberate binding typo and some HTTP traffic).
+
 ## Projects
 
 | Path | What |
@@ -9,8 +24,8 @@ Open-source, out-of-process debugging tool for Avalonia UI apps (like browser De
 | `src/Spyglass.Protocol` | Wire contract (JSON-RPC 2.0 over WebSocket), shared by agent and client |
 | `src/Spyglass.Agent` | In-app agent: `AppBuilder.UseSpyglass()` (public Avalonia APIs only) |
 | `src/Spyglass.StartupHook` (`spyglass run <command>`) | Attach without code changes: `DOTNET_STARTUP_HOOKS=…/Spyglass.StartupHook.dll dotnet MyApp.dll` (Avalonia 11.2+ and 12; `SPYGLASS_ATTACH=advanced` for the Advanced agent on 12.1.4) |
-| `src/Spyglass.Agent.Avalonia11` | The same agent built for Avalonia 11.2+ apps (`Spyglass.Agent.Avalonia11` package; same namespace, no XAML source locations) |
-| `src/Spyglass.Agent.HotReload` | XAML hot reload in the app (`Spyglass.HotReload` package, Debug only), with `src/Spyglass.HotReload.Generators` |
+| `src/Spyglass.Agent.Avalonia11` | The same agent built for Avalonia 11.2+ apps (`TKCode.Spyglass.Agent.Avalonia11` package; same namespace, no XAML source locations) |
+| `src/Spyglass.Agent.HotReload` | XAML hot reload in the app (`TKCode.Spyglass.HotReload` package, Debug only), with `src/Spyglass.HotReload.Generators` |
 | `src/Spyglass.Agent.Advanced` | Advanced agent features on Avalonia private APIs (`UseSpyglassAdvanced()`, pinned to Avalonia 12.1.4) |
 | `src/Spyglass.App.Core` | Hub that agents connect to (`ws://127.0.0.1:29500/agent`) and the typed session API |
 | `src/Spyglass.Mcp` | MCP server mounted at `http://127.0.0.1:29500/mcp` |
@@ -33,8 +48,11 @@ claude mcp add --transport http spyglass http://127.0.0.1:29500/mcp   # 3. optio
 ## Install as a tool
 
 ```bash
-dotnet tool install -g Spyglass        # then: `spyglass` (GUI) and `spyglass mcp` (headless MCP server)
+dotnet tool install -g TKCode.Spyglass        # then: `spyglass` (GUI) and `spyglass mcp` (headless MCP server)
 ```
+
+NuGet packages are published as `TKCode.Spyglass.*` (the tool is `TKCode.Spyglass`; the command stays `spyglass`).
+The agent package is `TKCode.Spyglass.Agent` (`TKCode.Spyglass.Agent.Avalonia11` for Avalonia 11.2+ apps).
 
 `spyglass mcp` is for editors that launch an MCP server process (stdio), CI and remote machines. If a Spyglass is already
 running on the port it forwards to it, so your coding agent and the GUI share one session:
@@ -72,7 +90,7 @@ In the running app, **Ctrl+Shift+I** (macOS **Cmd+Option+I**) brings Spyglass to
 Add the hot reload package to the app (Debug builds only; nothing to call in code):
 
 ```xml
-<PackageReference Include="Spyglass.HotReload" Version="..." Condition="'$(Configuration)' == 'Debug'" />
+<PackageReference Include="TKCode.Spyglass.HotReload" Version="..." Condition="'$(Configuration)' == 'Debug'" />
 ```
 
 Run the app with `.UseSpyglass()` while Spyglass (or the headless `spyglass serve`) is running. Saving a `.axaml` file

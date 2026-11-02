@@ -26,5 +26,5 @@
     <ProjectReference Include="..\..\src\Spyglass.App\Spyglass.App.csproj" ReferenceOutputAssembly="false" />
     <PackageReference Include="ModelContextProtocol" />
   </ItemGroup>
-  <Import Project="..\..\src\Spyglass.Agent.HotReload\buildTransitive\Spyglass.HotReload.targets" />
+  <Import Project="..\..\src\Spyglass.Agent.HotReload\buildTransitive\TKCode.Spyglass.HotReload.targets" />
 </Project>

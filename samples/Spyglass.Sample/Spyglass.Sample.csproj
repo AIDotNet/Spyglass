@@ -12,10 +12,10 @@
     <PackageReference Include="Avalonia.Fonts.Inter" />
     <ProjectReference Include="..\..\src\Spyglass.Agent.Advanced\Spyglass.Agent.Advanced.csproj" />
   </ItemGroup>
-  <!-- XAML hot reload (Debug only): what `PackageReference Include="Spyglass.HotReload"` gives an app outside this repo. -->
+  <!-- XAML hot reload (Debug only): what `PackageReference Include="TKCode.Spyglass.HotReload"` gives an app outside this repo. -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <ProjectReference Include="..\..\src\Spyglass.Agent.HotReload\Spyglass.Agent.HotReload.csproj" />
     <ProjectReference Include="..\..\src\Spyglass.HotReload.Generators\Spyglass.HotReload.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
-  <Import Project="..\..\src\Spyglass.Agent.HotReload\buildTransitive\Spyglass.HotReload.targets" Condition="'$(Configuration)' == 'Debug'" />
+  <Import Project="..\..\src\Spyglass.Agent.HotReload\buildTransitive\TKCode.Spyglass.HotReload.targets" Condition="'$(Configuration)' == 'Debug'" />
 </Project>

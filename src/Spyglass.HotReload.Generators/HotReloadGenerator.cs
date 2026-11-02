@@ -35,7 +35,7 @@ public sealed class HotReloadGenerator : IIncrementalGenerator
                 Flag(g, "build_property.SpyglassHotReload"),
                 Value(g, "build_property.SpyglassHotReloadProjectDir") ?? "",
                 Flag(g, "build_property.AvaloniaUseCompiledBindingsByDefault"),
-                // Set by Spyglass.HotReload.targets when it switched Avalonia's name generator to OnlyProperties (design §5.1).
+                // Set by TKCode.Spyglass.HotReload.targets when it switched Avalonia's name generator to OnlyProperties (design §5.1).
                 Flag(g, "build_property.SpyglassHotReloadOwnsInitializeComponent")
                     && Value(g, "build_property.AvaloniaNameGeneratorBehavior") == "OnlyProperties");
         });

@@ -238,7 +238,7 @@ class HubClient(private val options: HubClientOptions) {
         } catch (e: Exception) {
             options.log(
                 if (findExecutable(argv[0], options.environment) == null)
-                    "Cannot start Spyglass: '${argv[0]}' not found. Install it with `dotnet tool install -g Spyglass`, or set the Spyglass command in Settings › Tools › Spyglass."
+                    "Cannot start Spyglass: '${argv[0]}' not found. Install it with `dotnet tool install -g TKCode.Spyglass`, or set the Spyglass command in Settings › Tools › Spyglass."
                 else "Cannot start Spyglass: ${e.message}"
             )
         }

@@ -5,7 +5,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Spyglass.Agent.HotReload</RootNamespace>
-    <PackageId>Spyglass.HotReload</PackageId>
+    <PackageId>TKCode.Spyglass.HotReload</PackageId>
     <Description>XAML hot reload for Avalonia apps debugged with Spyglass: edit .axaml in any editor (or unsaved in VS Code, Rider, Visual Studio) and the running app updates in place.</Description>
   </PropertyGroup>
   <ItemGroup>
