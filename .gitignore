@@ -8,3 +8,10 @@ spike/**/shots/
 .shots/
 .work/
 .idea/
+
+# local only
+design/
+.claude/
+.vscode/
+TestResults/
+*.vsix

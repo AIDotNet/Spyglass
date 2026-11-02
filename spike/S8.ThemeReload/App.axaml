@@ -1,0 +1,16 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="S8.App">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://S8.ThemeReload/Colors.axaml" />
+        <MergeResourceInclude Source="avares://S8.ThemeReload/Merged.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <SolidColorBrush x:Key="AppBrush" Color="Red" />
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://S8.ThemeReload/Theme.axaml" />
+  </Application.Styles>
+</Application>

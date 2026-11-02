@@ -58,6 +58,9 @@ public sealed class SpyglassAgentOptions
 public interface IAgentFeature
 {
     IReadOnlyList<string> Capabilities { get; }
+
+    /// <summary>True for features built on Avalonia private APIs (reported as the Advanced agent flavor).</summary>
+    bool IsAdvanced => false;
 }
 
 /// <summary>A feature that registers request handlers on every new connection (internal: Spyglass packages only).</summary>

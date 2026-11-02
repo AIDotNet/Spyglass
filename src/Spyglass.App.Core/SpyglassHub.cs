@@ -35,7 +35,18 @@ public sealed class SpyglassHub : IAsyncDisposable
     readonly ConcurrentDictionary<string, AgentSession> _sessions = new();
     WebApplication? _app;
 
-    public SpyglassHub(SpyglassHubOptions? options = null) => _options = options ?? new SpyglassHubOptions();
+    public SpyglassHub(SpyglassHubOptions? options = null)
+    {
+        _options = options ?? new SpyglassHubOptions();
+        HotReload = new HotReloadCoordinator(this);
+        Ide = new IdeEndpoint(this);
+    }
+
+    /// <summary>IDE extensions (ws://…/ide): unsaved XAML buffers, diagnostics, reveal in editor.</summary>
+    public IdeEndpoint Ide { get; }
+
+    /// <summary>File watching and routing for XAML hot reload (design/hot-reload/README.md §2).</summary>
+    public HotReloadCoordinator HotReload { get; }
 
     public int Port { get; private set; }
     public LanGate Lan => _options.Lan;
@@ -61,6 +72,7 @@ public sealed class SpyglassHub : IAsyncDisposable
         _options.Lan.Install(app);
         app.UseWebSockets();
         app.Map(SpyglassProtocol.AgentPath, HandleAgentAsync);
+        app.Map(SpyglassProtocol.IdePath, Ide.HandleAsync);
         _options.ConfigureApp?.Invoke(app);
 
         await app.StartAsync(ct).ConfigureAwait(false);
@@ -68,6 +80,7 @@ public sealed class SpyglassHub : IAsyncDisposable
         var address = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
             .Features.Get<IServerAddressesFeature>()!.Addresses.First();
         Port = new Uri(address).Port;
+        Ide.WriteTokenFile(Port);
     }
 
     /// <summary>Waits until at least one agent is connected.</summary>
@@ -121,6 +134,9 @@ public sealed class SpyglassHub : IAsyncDisposable
         peer.OnNotification<EventsRaisedParams>(Methods.EventsRaised, p => session?.RaiseEventsRaised(p));
         peer.OnNotification<MetricsSampleParams>(Methods.MetricsSample, p => session?.RaiseMetricsSample(p));
         peer.OnNotification<PickSelectedParams>(Methods.PickSelected, p => session?.RaisePickSelected(p));
+        peer.OnNotification<HotReloadManifest>(Methods.HotReloadManifest, p => session?.RaiseHotReloadManifest(p));
+        peer.OnNotification<HotReloadResult>(Methods.HotReloadApplied, p => session?.RaiseHotReloadApplied(p));
+        peer.OnNotification<HotReloadCodeUpdate>(Methods.HotReloadCodeUpdated, p => session?.RaiseHotReloadCodeUpdated(p));
 
         try
         {
@@ -135,6 +151,8 @@ public sealed class SpyglassHub : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        HotReload.Dispose();
+        await Ide.DisposeAsync().ConfigureAwait(false);
         if (_app is not null)
         {
             await _app.StopAsync().ConfigureAwait(false);

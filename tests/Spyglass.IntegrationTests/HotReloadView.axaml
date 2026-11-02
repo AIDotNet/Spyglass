@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Spyglass.IntegrationTests"
+             x:Class="Spyglass.IntegrationTests.HotReloadView"
+             x:DataType="local:HotReloadViewModel"
+             Padding="4" Button.Click="OnAnyClick">
+  <!-- Classless documents for HR5 tests (HotReloadThemeTests). -->
+  <UserControl.Styles>
+    <StyleInclude Source="/HotReloadStyles.axaml" />
+  </UserControl.Styles>
+  <UserControl.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="/HotReloadColors.axaml" />
+        <MergeResourceInclude Source="/HotReloadMerged.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </UserControl.Resources>
+  <StackPanel x:Name="Root" Spacing="4">
+    <TextBlock x:Name="Styled" Classes="hr" Text="styled" />
+    <Border x:Name="DynamicAccent" Height="2" Background="{DynamicResource Hr.Accent}" />
+    <Border x:Name="StaticAccent" Height="2" Background="{StaticResource Hr.Accent}" />
+    <Border x:Name="MergedAccent" Height="2" Background="{DynamicResource Hr.Merged}" />
+    <TextBlock x:Name="Title" Text="{Binding Title}" />
+    <TextBox x:Name="Input" />
+    <Button x:Name="Go" Content="Go" />
+  </StackPanel>
+</UserControl>

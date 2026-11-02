@@ -9,6 +9,9 @@
     <!-- dotnet tool: `dotnet tool install -g Spyglass`, then `spyglass` (GUI) or `spyglass mcp` (headless MCP). -->
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>spyglass</ToolCommandName>
+    <!-- RID-specific tool (.NET 10+): one small package per platform plus the `Spyglass` pointer package, so each user downloads only their own native assets. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;osx-x64;osx-arm64;linux-x64;linux-arm64</RuntimeIdentifiers>
+    <DebugType>none</DebugType>
     <PackageId>Spyglass</PackageId>
     <Description>Open-source debugging tool for Avalonia apps (like browser DevTools) with a free MCP server for AI coding agents.</Description>
     <PackageTags>avalonia;devtools;debugging;mcp;inspector</PackageTags>

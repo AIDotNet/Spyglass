@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops ../../Directory.Packages.props (central package management) from applying here. -->
+</Project>

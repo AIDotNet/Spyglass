@@ -27,10 +27,38 @@ public sealed class MainViewModel : ObservableObject
         _pageContent = Connections;
         hub.SessionConnected += s => Dispatcher.UIThread.Post(() => OnConnected(s));
         hub.SessionDisconnected += s => Dispatcher.UIThread.Post(() => OnDisconnected(s));
+        hub.HotReload.Changed += () => Dispatcher.UIThread.Post(UpdateHotReload);
+        OpenInEditor.Ide = hub.Ide;
         WatchLanguage();
     }
 
     protected internal override void OnLanguageChanged() { Raise(nameof(Status)); Raise(nameof(WindowTitle)); }
+
+    // ---------- hot reload (design/hot-reload/README.md §1.3, §9) ----------
+
+    string? _hotReload;
+    bool _hotReloadFailed;
+
+    /// <summary>Status capsule text for the current app: "⚡ Hot reload · 12 files", the last reload, or why it is off. Null: not installed.</summary>
+    public string? HotReloadStatus { get => _hotReload; private set { if (Set(ref _hotReload, value)) Raise(nameof(HasHotReload)); } }
+    public bool HasHotReload => _hotReload is not null;
+    /// <summary>The last reload of the current app failed (compile error, restart required).</summary>
+    public bool HotReloadFailed { get => _hotReloadFailed; private set => Set(ref _hotReloadFailed, value); }
+
+    void UpdateHotReload()
+    {
+        var s = Current?.Session;
+        if (s is null || !s.Has(Capabilities.HotReload)) { HotReloadStatus = null; HotReloadFailed = false; return; }
+        var last = _hub.HotReload.History.LastOrDefault(e => e.SessionShortId == s.ShortId);
+        HotReloadFailed = last is { Result.Ok: false };
+        HotReloadStatus = s.HotReload switch
+        {
+            null => "Hot reload starting…",
+            { Available: false } m => $"Hot reload off: {m.Reason}",
+            _ when last is not null && DateTimeOffset.Now - last.Time < TimeSpan.FromMinutes(5) => ServeCli.Describe(last),
+            { } m => $"⚡ Hot reload · {m.Documents.Count} XAML file(s)",
+        };
+    }
 
     public ObservableCollection<SessionViewModel> Sessions { get; } = new();
 
@@ -143,6 +171,8 @@ public sealed class MainViewModel : ObservableObject
         vm.Bindings.PropertyChanged += (_, _) => { if (vm == Current) Raise(nameof(BindingsBadge)); };
         vm.Logs.PropertyChanged += (_, e) => { if (vm == Current && e.PropertyName == nameof(LogsViewModel.ProblemCount)) Raise(nameof(LogsBadge)); };
         s.ActivateRequested += p => Dispatcher.UIThread.Post(() => Activate(vm, p));
+        // A reload rebuilt part of the app's tree: refresh the element tree (keeps the selection when the node survived).
+        s.HotReloadApplied += r => { if (r is { Ok: true, Instances: > 0 }) Dispatcher.UIThread.Post(() => vm.RefreshAfterHotReload()); };
         Sessions.Add(vm);
         Current = vm;
         Connections.Refresh();
@@ -190,6 +220,7 @@ public sealed class MainViewModel : ObservableObject
     void UpdateStatus()
     {
         Raise(nameof(IsConnected));
+        UpdateHotReload();
         Raise(nameof(Status));
     }
 }
@@ -205,6 +236,15 @@ public sealed class SessionViewModel(AgentSession session, Action<int> showEleme
     public ResourcesViewModel Resources => _resources ??= new(Session, Elements);
     ResourcesViewModel? _resources;
     public PerformanceViewModel Performance { get; } = new(session, showElement);
+
+    IDisposable? _hotReloadRefresh;
+
+    /// <summary>Debounced (typing in an IDE reloads every ~300 ms): reload the element tree once things settle.</summary>
+    public void RefreshAfterHotReload()
+    {
+        _hotReloadRefresh?.Dispose();
+        _hotReloadRefresh = DispatcherTimer.RunOnce(() => _ = Elements.LoadAsync(), TimeSpan.FromMilliseconds(400));
+    }
     public string Title => Session.App.Name;
     public string Details => $"PID {Session.App.Pid} · {Session.App.Os} {Session.App.Arch} · Avalonia {Session.App.AvaloniaVersion} · " +
                              $"{(Session.App.IsDebugBuild ? "Debug" : "Release")} · Agent {Session.Agent.Version} ({Session.Agent.Flavor.ToString().ToLowerInvariant()})";

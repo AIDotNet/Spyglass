@@ -5,6 +5,8 @@
     <Project Path="src/Spyglass.Agent.Avalonia11/Spyglass.Agent.Avalonia11.csproj" />
     <Project Path="src/Spyglass.StartupHook/Spyglass.StartupHook.csproj" />
     <Project Path="src/Spyglass.Agent.Advanced/Spyglass.Agent.Advanced.csproj" />
+    <Project Path="src/Spyglass.Agent.HotReload/Spyglass.Agent.HotReload.csproj" />
+    <Project Path="src/Spyglass.HotReload.Generators/Spyglass.HotReload.Generators.csproj" />
     <Project Path="src/Spyglass.App.Core/Spyglass.App.Core.csproj" />
     <Project Path="src/Spyglass.Mcp/Spyglass.Mcp.csproj" />
     <Project Path="src/Spyglass.App/Spyglass.App.csproj" />

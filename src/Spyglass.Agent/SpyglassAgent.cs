@@ -53,9 +53,24 @@ public sealed class SpyglassAgent
         Capabilities = caps.Distinct().ToList();
     }
 
+    static readonly List<IAgentFeature> GlobalFeatures = [];
+
+    /// <summary>
+    /// Registers a feature for every agent, without the app calling <c>AddFeature</c>. Used by Spyglass packages whose
+    /// generated module initializer runs before <c>Main</c> (Spyglass.Agent.HotReload). Takes effect for agents started later.
+    /// </summary>
+    internal static void AddGlobalFeature(IAgentFeature feature)
+    {
+        lock (GlobalFeatures)
+            if (!GlobalFeatures.Contains(feature)) GlobalFeatures.Add(feature);
+    }
+
     internal static void Start(SpyglassAgentOptions options)
     {
         if (Current is not null) return;
+        lock (GlobalFeatures)
+            foreach (var f in GlobalFeatures)
+                if (!options.Features.Contains(f)) options.Features.Add(f);
         BindingErrorCollector.Install();
         LogCollector.Install();   // wraps the binding error sink; both chain to the app's original sink
         OpenWindows.Install();
@@ -215,7 +230,7 @@ public sealed class SpyglassAgent
         return new HelloParams(
             SpyglassProtocol.Version,
             new AgentInfo("Spyglass.Agent", typeof(SpyglassAgent).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
-                Options.Features.Count > 0 ? AgentFlavor.Advanced : AgentFlavor.Basic),
+                Options.Features.Any(f => f.IsAdvanced) ? AgentFlavor.Advanced : AgentFlavor.Basic),
             new AppInfo(
                 Options.ApplicationName ?? Assembly.GetEntryAssembly()?.GetName().Name ?? process.ProcessName,
                 Environment.ProcessId,

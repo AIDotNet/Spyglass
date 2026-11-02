@@ -11,6 +11,18 @@ namespace Spyglass.Protocol;
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     UseStringEnumConverter = true)]
 [JsonSerializable(typeof(JsonRpcMessage))]
+// hot reload
+[JsonSerializable(typeof(HotReloadManifest))]
+[JsonSerializable(typeof(HotReloadApplyParams))]
+[JsonSerializable(typeof(HotReloadResult))]
+[JsonSerializable(typeof(HotReloadCodeUpdate))]
+[JsonSerializable(typeof(IdeHelloParams))]
+[JsonSerializable(typeof(IdeHelloResult))]
+[JsonSerializable(typeof(XamlDocumentParams))]
+[JsonSerializable(typeof(XamlDiagnosticsParams))]
+[JsonSerializable(typeof(HotReloadStatusParams))]
+[JsonSerializable(typeof(EditorRevealParams))]
+[JsonSerializable(typeof(EditorRevealResult))]
 [JsonSerializable(typeof(Empty))]
 // session
 [JsonSerializable(typeof(HelloParams))]

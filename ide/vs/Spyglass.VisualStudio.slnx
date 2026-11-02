@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Spyglass.VisualStudio.Core/Spyglass.VisualStudio.Core.csproj" />
+  <Project Path="Spyglass.VisualStudio.Core.Tests/Spyglass.VisualStudio.Core.Tests.csproj" />
+  <Project Path="Spyglass.VisualStudio/Spyglass.VisualStudio.csproj" />
+</Solution>

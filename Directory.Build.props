@@ -9,5 +9,9 @@
     <Authors>Spyglass contributors</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Version>0.1.0-dev</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>

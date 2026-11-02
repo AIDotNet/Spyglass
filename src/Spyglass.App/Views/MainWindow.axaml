@@ -52,6 +52,16 @@
             <Ellipse Width="7" Height="7" Fill="{arc:ArcDesignTokenResource TextMuted}" IsVisible="{Binding !IsConnected}" />
             <TextBlock VerticalAlignment="Center" FontSize="{arc:ArcDesignTokenResource TypeXS}"
                        Foreground="{arc:ArcDesignTokenResource TextSecondary}" Text="{Binding Status}" />
+            <!-- Hot reload (design/hot-reload/README.md §1.3) -->
+            <TextBlock VerticalAlignment="Center" FontSize="{arc:ArcDesignTokenResource TypeXS}" IsVisible="{Binding HasHotReload}"
+                       Foreground="{arc:ArcDesignTokenResource TextMuted}" Text="·" />
+            <TextBlock VerticalAlignment="Center" FontSize="{arc:ArcDesignTokenResource TypeXS}" MaxWidth="520" TextTrimming="CharacterEllipsis"
+                       IsVisible="{Binding HasHotReload}" Text="{Binding HotReloadStatus}" ToolTip.Tip="{Binding HotReloadStatus}"
+                       Foreground="{arc:ArcDesignTokenResource TextSecondary}" Classes.failed="{Binding HotReloadFailed}">
+              <TextBlock.Styles>
+                <Style Selector="TextBlock.failed"><Setter Property="Foreground" Value="{arc:ArcDesignTokenResource Danger}" /></Style>
+              </TextBlock.Styles>
+            </TextBlock>
           </StackPanel>
         </Border>
 

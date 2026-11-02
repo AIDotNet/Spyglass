@@ -166,9 +166,9 @@ public sealed class NetworkViewModel : ObservableObject
 
     static readonly (NetworkColumn Column, string Title, double Width)[] FixedColumns =
     [
-        (NetworkColumn.Id, "#", 50), (NetworkColumn.Method, "Net.Col.Method", 60), (NetworkColumn.Status, "Net.Col.Status", 150), (NetworkColumn.Type, "Net.Col.Type", 74),
-        (NetworkColumn.Protocol, "Net.Col.Protocol", 70), (NetworkColumn.Scheme, "Net.Col.Scheme", 64), (NetworkColumn.Domain, "Net.Col.Domain", 150),
-        (NetworkColumn.Remote, "Net.Col.Remote", 130), (NetworkColumn.Connection, "Net.Col.Connection", 100), (NetworkColumn.Initiator, "Net.Col.Initiator", 150),
+        (NetworkColumn.Id, "#", 50), (NetworkColumn.Method, "Net.Col.Method", 60), (NetworkColumn.Status, "Net.Col.Status", 72), (NetworkColumn.Type, "Net.Col.Type", 60),
+        (NetworkColumn.Protocol, "Net.Col.Protocol", 70), (NetworkColumn.Scheme, "Net.Col.Scheme", 64), (NetworkColumn.Domain, "Net.Col.Domain", 130),
+        (NetworkColumn.Remote, "Net.Col.Remote", 130), (NetworkColumn.Connection, "Net.Col.Connection", 100), (NetworkColumn.Initiator, "Net.Col.Initiator", 130),
         (NetworkColumn.Cookies, "Net.Col.Cookies", 66), (NetworkColumn.SetCookies, "Net.Col.SetCookies", 84), (NetworkColumn.Size, "Net.Col.Size", 70), (NetworkColumn.Time, "Net.Col.Time", 70),
     ];
 

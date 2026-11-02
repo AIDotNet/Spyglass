@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- HubClient / XamlBufferSync against a fake hub (Kestrel), and against the real `spyglass serve` + sample app
+       (RealHubTests; skipped when the repo's Debug binaries are not built). Runs with Microsoft.Testing.Platform. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- Tests use explicit timeouts; threading TestContext tokens through every call adds noise. -->
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spyglass.VisualStudio.Core\Spyglass.VisualStudio.Core.csproj" />
+  </ItemGroup>
+</Project>

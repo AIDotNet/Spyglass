@@ -38,8 +38,10 @@ public class LogsTests(AppFixture app)
     public async Task Warning_is_captured_with_area_level_message_and_source_element()
     {
         var since = await Cursor();
-        Assert.True(await Log(LogEventLevel.Warning, LogArea.Layout, app.Window.SaveButton,
-            "Measure of {Control} took {Ms} ms", app.Window.SaveButton, 42));
+        // x:Name is a property in Debug builds with Spyglass.HotReload (FindNameScope): read it on the UI thread.
+        var save = await app.OnUi(() => app.Window.SaveButton);
+        Assert.True(await Log(LogEventLevel.Warning, LogArea.Layout, save,
+            "Measure of {Control} took {Ms} ms", save, 42));
 
         var r = await app.Session.GetLogsAsync(since);
         var e = Assert.Single(r.Entries);
@@ -133,7 +135,7 @@ public class LogsTests(AppFixture app)
         try
         {
             var since = await Cursor();
-            await Log(LogEventLevel.Warning, LogArea.Property, app.Window.NameBox, "pushed warning");
+            await Log(LogEventLevel.Warning, LogArea.Property, await app.OnUi(() => app.Window.NameBox), "pushed warning");
             var e = await pushed.Task.WaitAsync(Timeout);
             Assert.True(e.Seq > since);
             Assert.Equal("Property", e.Area);
@@ -152,7 +154,7 @@ public class LogsTests(AppFixture app)
         async Task<string> Call(Dictionary<string, object?> args) =>
             string.Join("\n", (await client.CallToolAsync("logs_read", args)).Content.OfType<TextContentBlock>().Select(t => t.Text));
 
-        await Log(LogEventLevel.Warning, LogArea.Layout, app.Window.SaveButton, "Mcp visible {What}", "warning");
+        await Log(LogEventLevel.Warning, LogArea.Layout, await app.OnUi(() => app.Window.SaveButton), "Mcp visible {What}", "warning");
         var text = await Call(new());
         Assert.Matches(@"\(cursor: \d+\)", text);
         Assert.Matches(@"\d\d:\d\d:\d\d\.\d{3} WRN \[Layout\] Mcp visible warning  ← Button#SaveButton \[e\d+\]", text);

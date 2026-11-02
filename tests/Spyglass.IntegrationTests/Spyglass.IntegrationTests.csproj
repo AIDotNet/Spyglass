@@ -17,10 +17,14 @@
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <ProjectReference Include="..\..\src\Spyglass.Agent\Spyglass.Agent.csproj" />
     <ProjectReference Include="..\..\src\Spyglass.Agent.Advanced\Spyglass.Agent.Advanced.csproj" />
+    <!-- Hot reload: what the Spyglass.HotReload package gives an app (runtime + generator + targets). -->
+    <ProjectReference Include="..\..\src\Spyglass.Agent.HotReload\Spyglass.Agent.HotReload.csproj" />
+    <ProjectReference Include="..\..\src\Spyglass.HotReload.Generators\Spyglass.HotReload.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\src\Spyglass.App.Core\Spyglass.App.Core.csproj" />
     <ProjectReference Include="..\..\src\Spyglass.Mcp\Spyglass.Mcp.csproj" />
     <!-- Built (not referenced) so McpCliTests can launch the real `spyglass mcp` process. -->
     <ProjectReference Include="..\..\src\Spyglass.App\Spyglass.App.csproj" ReferenceOutputAssembly="false" />
     <PackageReference Include="ModelContextProtocol" />
   </ItemGroup>
+  <Import Project="..\..\src\Spyglass.Agent.HotReload\buildTransitive\Spyglass.HotReload.targets" />
 </Project>

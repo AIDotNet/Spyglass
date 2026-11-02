@@ -27,6 +27,8 @@ public sealed class AppFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        // The hub writes the IDE token file there (IdeEndpoint); keep it out of the user's ~/.spyglass.
+        Environment.SetEnvironmentVariable("SPYGLASS_HOME", Directory.CreateTempSubdirectory("spyglass-tests-").FullName);
         Hub = new SpyglassHub(new SpyglassHubOptions { Port = 0 }.WithMcp());
         await Hub.StartAsync();
         Port = Hub.Port;

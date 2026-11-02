@@ -1,0 +1,13 @@
+<Project>
+  <!-- The Visual Studio extension builds on its own: no repo-wide settings (central package management, Avalonia
+       options) leak in from ../../Directory.Build.props, and package versions live in each project. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <Authors>Spyglass contributors</Authors>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+</Project>

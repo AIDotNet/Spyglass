@@ -1,0 +1,68 @@
+<idea-plugin>
+  <id>dev.spyglass.rider</id>
+  <name>Spyglass for Avalonia</name>
+  <vendor url="https://github.com/spyglass-dev/spyglass">Spyglass</vendor>
+  <description><![CDATA[
+    <p>XAML hot reload for running <a href="https://avaloniaui.net">Avalonia</a> apps, free and open source.</p>
+    <ul>
+      <li><b>Edit <code>.axaml</code> and the running app updates as you type</b> (300 ms after you stop), without saving and
+        without restarting. The view keeps its DataContext, typed text, selection, scroll position and focus.</li>
+      <li><b>Mistakes never break the app</b>: a XAML error is highlighted at its line and column; the app keeps the last
+        good UI until you fix it.</li>
+      <li>"Open in editor" in the Spyglass window jumps to the element's XAML line here.</li>
+    </ul>
+    <p>Works next to Rider's Avalonia support and AvaloniaRider (no completion, no previewer of its own).
+      Needs the <code>Spyglass</code> dotnet tool and, in the app, <code>UseSpyglass()</code> plus the
+      <code>Spyglass.HotReload</code> package.</p>
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="dev.spyglass.rider.SpyglassStartupActivity"/>
+    <statusBarWidgetFactory id="SpyglassHotReload" implementation="dev.spyglass.rider.SpyglassStatusBarWidgetFactory" order="first"/>
+    <applicationConfigurable parentId="tools" id="dev.spyglass.rider.settings" displayName="Spyglass"
+                             instance="dev.spyglass.rider.SpyglassConfigurable"/>
+    <toolWindow id="Spyglass" anchor="bottom" doNotActivateOnStart="true" canCloseContents="false"
+                icon="AllIcons.Toolwindows.ToolWindowMessages" factoryClass="dev.spyglass.rider.SpyglassToolWindowFactory"/>
+    <notificationGroup id="Spyglass" displayType="BALLOON"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="dev.spyglass.rider.SpyglassFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+  <applicationListeners>
+    <listener class="dev.spyglass.rider.SpyglassSaveListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+  </applicationListeners>
+
+  <actions>
+    <action id="Spyglass.ToggleHotReload" class="dev.spyglass.rider.ToggleHotReloadAction" text="Toggle XAML Hot Reload"
+            description="Send unsaved .axaml edits to running Avalonia apps"/>
+    <action id="Spyglass.OpenSpyglass" class="dev.spyglass.rider.OpenSpyglassAction" text="Open Spyglass"
+            description="Start the Spyglass window"/>
+    <action id="Spyglass.Reconnect" class="dev.spyglass.rider.ReconnectAction" text="Reconnect"
+            description="Connect to the Spyglass hub again"/>
+    <action id="Spyglass.RunWithDotnetWatch" class="dev.spyglass.rider.RunWithDotnetWatchAction" text="Run Project with dotnet watch"
+            description="Run a project with dotnet watch so C# edits apply without restarting"/>
+    <action id="Spyglass.ShowLog" class="dev.spyglass.rider.ShowLogAction" text="Show Log"
+            description="Show the Spyglass log"/>
+
+    <group id="Spyglass.Menu" text="Spyglass" popup="true">
+      <reference ref="Spyglass.ToggleHotReload"/>
+      <reference ref="Spyglass.OpenSpyglass"/>
+      <reference ref="Spyglass.RunWithDotnetWatch"/>
+      <separator/>
+      <reference ref="Spyglass.Reconnect"/>
+      <reference ref="Spyglass.ShowLog"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+    <group id="Spyglass.StatusBarPopup">
+      <reference ref="Spyglass.ToggleHotReload"/>
+      <reference ref="Spyglass.OpenSpyglass"/>
+      <reference ref="Spyglass.RunWithDotnetWatch"/>
+      <separator/>
+      <reference ref="Spyglass.Reconnect"/>
+      <reference ref="Spyglass.ShowLog"/>
+    </group>
+  </actions>
+</idea-plugin>

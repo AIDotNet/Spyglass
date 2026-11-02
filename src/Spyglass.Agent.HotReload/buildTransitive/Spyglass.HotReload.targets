@@ -1,0 +1,25 @@
+<Project>
+  <!-- Spyglass.HotReload (design/hot-reload/README.md §3, §5.1). Hot reload is Debug-only: set SpyglassHotReload=false to
+       opt out, or true to force it in another configuration. -->
+  <PropertyGroup>
+    <SpyglassHotReload Condition="'$(SpyglassHotReload)' == '' and '$(Configuration)' == 'Debug'">true</SpyglassHotReload>
+    <SpyglassHotReloadProjectDir>$(MSBuildProjectDirectory)</SpyglassHotReloadProjectDir>
+
+    <!-- §5.1: Spyglass writes InitializeComponent (it survives Hot Reload deltas; Avalonia's does not, spike S7) and x:Name
+         becomes a property that looks the control up on each access (never stale after a reload). Avalonia's props
+         already defaulted the behavior to InitializeComponent, so this cannot tell a default from an explicit choice:
+         set SpyglassHotReloadInitializeComponent=false to keep Avalonia's fields and InitializeComponent. -->
+    <SpyglassHotReloadInitializeComponent Condition="'$(SpyglassHotReloadInitializeComponent)' == ''">true</SpyglassHotReloadInitializeComponent>
+    <SpyglassHotReloadOwnsInitializeComponent Condition="'$(SpyglassHotReload)' == 'true' and '$(SpyglassHotReloadInitializeComponent)' == 'true' and '$(AvaloniaNameGeneratorIsEnabled)' != 'false' and '$(AvaloniaNameGeneratorBehavior)' == 'InitializeComponent'">true</SpyglassHotReloadOwnsInitializeComponent>
+    <AvaloniaNameGeneratorBehavior Condition="'$(SpyglassHotReloadOwnsInitializeComponent)' == 'true'">OnlyProperties</AvaloniaNameGeneratorBehavior>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="SpyglassHotReload" />
+    <CompilerVisibleProperty Include="SpyglassHotReloadProjectDir" />
+    <CompilerVisibleProperty Include="SpyglassHotReloadOwnsInitializeComponent" />
+    <CompilerVisibleProperty Include="AvaloniaNameGeneratorBehavior" />
+    <CompilerVisibleProperty Include="AvaloniaUseCompiledBindingsByDefault" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="SourceItemGroup" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="Link" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,51 @@
+{
+  "name": "spyglass-avalonia",
+  "displayName": "Spyglass for Avalonia",
+  "description": "XAML hot reload for running Avalonia apps: unsaved .axaml edits update the app as you type. Free and open source.",
+  "version": "0.1.0",
+  "publisher": "spyglass",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/spyglass-dev/spyglass" },
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Debuggers", "Other"],
+  "keywords": ["avalonia", "xaml", "axaml", "hot reload", "devtools"],
+  "main": "./out/src/extension.js",
+  "activationEvents": ["workspaceContains:**/*.axaml", "onLanguage:axaml", "onLanguage:xml"],
+  "contributes": {
+    "commands": [
+      { "command": "spyglass.toggleHotReload", "title": "Toggle XAML Hot Reload", "category": "Spyglass" },
+      { "command": "spyglass.openSpyglass", "title": "Open Spyglass", "category": "Spyglass" },
+      { "command": "spyglass.reconnect", "title": "Reconnect", "category": "Spyglass" },
+      { "command": "spyglass.runWithDotnetWatch", "title": "Run Project with dotnet watch", "category": "Spyglass" },
+      { "command": "spyglass.showOutput", "title": "Show Output", "category": "Spyglass" }
+    ],
+    "configuration": {
+      "title": "Spyglass",
+      "properties": {
+        "spyglass.port": { "type": "number", "default": 0, "description": "Port of the Spyglass hub. 0 = SPYGLASS_PORT or 29500." },
+        "spyglass.command": { "type": "string", "default": "spyglass", "description": "The Spyglass command (dotnet tool `spyglass`), used to start `spyglass serve` when nothing listens on the port." },
+        "spyglass.autoStart": { "type": "boolean", "default": true, "description": "Start `spyglass serve` in the background when no Spyglass is running." },
+        "spyglass.hotReload.enabled": { "type": "boolean", "default": true, "description": "Send unsaved .axaml edits to running apps." },
+        "spyglass.hotReload.delay": { "type": "number", "default": 300, "minimum": 0, "description": "Milliseconds without typing before an edit is sent. 0 = only on save." }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "watch": "tsc -w -p .",
+    "test": "npm run compile && node --test out/test/*.test.js",
+    "test:e2e": "npm run compile && node out/test/e2e/run.js",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "@types/vscode": "1.95.0",
+    "@types/ws": "8.18.1",
+    "@vscode/test-electron": "2.5.2",
+    "@vscode/vsce": "3.6.0",
+    "typescript": "5.9.2"
+  }
+}

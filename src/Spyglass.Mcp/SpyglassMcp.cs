@@ -17,7 +17,9 @@ public static class SpyglassMcp
         accepts selectors (`Button#Save`, `Window#Main StackPanel > Button.primary`, `ListBox > ListBoxItem:nth(3)`),
         `text=Save` (visible text) and `xaml=MainView.axaml:23` (Debug builds).
         Use `element_inspect` first when diagnosing an element: it includes the XAML location, non-default properties
-        and binding errors. Tools never modify source files; edit the XAML/C# yourself, then inspect again.
+        and binding errors. Tools never modify source files; edit the XAML/C# yourself, then inspect again. When the app
+        uses Spyglass.HotReload, saved .axaml changes apply to the running app without a restart: call
+        `hot_reload_status` to confirm, or to read the XAML compile error.
         """;
 
     public static void AddServices(IServiceCollection services) =>
@@ -33,7 +35,8 @@ public static class SpyglassMcp
             .WithTools<SpyglassEventTools>()
             .WithTools<SpyglassResourceTools>()
             .WithTools<SpyglassPerfTools>()
-            .WithTools<SpyglassActionTools>();
+            .WithTools<SpyglassActionTools>()
+            .WithTools<SpyglassHotReloadTools>();
 
     public static void MapEndpoint(WebApplication app) => app.MapMcp(Path);
 

@@ -263,14 +263,14 @@
                                     IsVisible="{Binding !$parent[UserControl].((vm:NetworkViewModel)DataContext).HasSelection}">
                           <TextBlock Width="50" Text="{Binding IdText}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowId}" />
                           <TextBlock Width="60" Text="{Binding Method}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowMethod}" />
-                          <TextBlock Width="150" Text="{Binding Status}" Classes="cell" Classes.error="{Binding IsError}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowStatus}" />
-                          <TextBlock Width="74" Text="{Binding Type}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowType}" />
+                          <TextBlock Width="72" Text="{Binding Status}" Classes="cell" Classes.error="{Binding IsError}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowStatus}" />
+                          <TextBlock Width="60" Text="{Binding Type}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowType}" />
                           <TextBlock Width="70" Text="{Binding Protocol}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowProtocol}" />
                           <TextBlock Width="64" Text="{Binding Scheme}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowScheme}" />
-                          <TextBlock Width="150" Text="{Binding Domain}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowDomain}" />
+                          <TextBlock Width="130" Text="{Binding Domain}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowDomain}" />
                           <TextBlock Width="130" Text="{Binding Remote}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowRemote}" />
                           <TextBlock Width="100" Text="{Binding Connection}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowConnection}" />
-                          <TextBlock Width="150" Text="{Binding Initiator}" Classes="cell" ToolTip.Tip="{Binding InitiatorTip}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowInitiator}" />
+                          <TextBlock Width="130" Text="{Binding Initiator}" Classes="cell" ToolTip.Tip="{Binding InitiatorTip}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowInitiator}" />
                           <TextBlock Width="66" Text="{Binding Cookies}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowCookies}" />
                           <TextBlock Width="84" Text="{Binding SetCookies}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowSetCookies}" />
                           <TextBlock Width="70" Text="{Binding Size}" Classes="cell" ToolTip.Tip="{Binding SizeTip}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowSize}" />

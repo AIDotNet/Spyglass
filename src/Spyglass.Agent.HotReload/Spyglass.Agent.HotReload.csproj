@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- XAML hot reload inside the debugged app (design/hot-reload/README.md §3–§4). Debug builds only.
+       Not AOT/trim compatible: the runtime XAML compiler (Avalonia.Markup.Xaml.Loader) emits IL with Reflection.Emit,
+       which is why this is a separate assembly and Spyglass.Agent stays IsAotCompatible. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Spyglass.Agent.HotReload</RootNamespace>
+    <PackageId>Spyglass.HotReload</PackageId>
+    <Description>XAML hot reload for Avalonia apps debugged with Spyglass: edit .axaml in any editor (or unsaved in VS Code, Rider, Visual Studio) and the running app updates in place.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Markup.Xaml.Loader" />
+    <ProjectReference Include="..\Spyglass.Agent\Spyglass.Agent.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Spyglass.IntegrationTests" />
+  </ItemGroup>
+  <!-- Package layout: the generator as an analyzer, the targets in buildTransitive (design §3). -->
+  <ItemGroup>
+    <ProjectReference Include="..\Spyglass.HotReload.Generators\Spyglass.HotReload.Generators.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\Spyglass.HotReload.Generators\bin\$(Configuration)\netstandard2.0\Spyglass.HotReload.Generators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="buildTransitive\*" Pack="true" PackagePath="buildTransitive" />
+  </ItemGroup>
+</Project>

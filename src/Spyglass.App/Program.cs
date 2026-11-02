@@ -14,6 +14,9 @@ internal static class Program
         // `spyglass mcp ...`: the MCP server without the GUI (stdio / HTTP, for coding agents, CI, remote machines).
         if (args is ["mcp", ..])
             return Spyglass.Mcp.McpCli.RunAsync(args[1..]).GetAwaiter().GetResult();
+        // `spyglass serve`: the hub without the GUI (hot reload file watching + MCP over HTTP), started by IDE extensions.
+        if (args is ["serve", ..])
+            return Spyglass.Mcp.ServeCli.RunAsync(args[1..]).GetAwaiter().GetResult();
 
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

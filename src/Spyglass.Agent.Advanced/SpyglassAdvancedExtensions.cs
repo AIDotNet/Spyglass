@@ -19,6 +19,7 @@ public static class SpyglassAdvancedExtensions
 internal sealed class AdvancedFeature : IAgentFeature, IConnectionFeature
 {
     public IReadOnlyList<string> Capabilities { get; } = [Protocol.Capabilities.ValueFrames, Protocol.Capabilities.BindingDetails];
+    public bool IsAdvanced => true;
 
     public void Register(AgentConnection connection)
     {

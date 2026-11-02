@@ -15,6 +15,9 @@ public static class SpyglassProtocol
 
     public const string AgentPath = "/agent";
 
+    /// <summary>IDE extensions (design/hot-reload/README.md §7.1). Loopback only, token required.</summary>
+    public const string IdePath = "/ide";
+
     public static bool IsCompatible(string agentVersion) =>
         Major(agentVersion) is { } m && m == Major(Version);
 
@@ -122,6 +125,22 @@ public static class Methods
     public const string MetricsSample = "metrics/sample";          // A→C ntf
     public const string OverlaysSet = "overlays/set";
     public const string OverlaysGet = "overlays/get";
+
+    // hot reload (v0.3, design/hot-reload/README.md §7.2)
+    public const string HotReloadGetManifest = "hotReload/getManifest";
+    public const string HotReloadManifest = "hotReload/manifest";  // A→C ntf (new assembly registered documents)
+    public const string HotReloadApply = "hotReload/apply";
+    public const string HotReloadApplied = "hotReload/applied";    // A→C ntf (every reload, whatever started it)
+    public const string HotReloadCodeUpdated = "hotReload/codeUpdated"; // A→C ntf (a C# delta was applied)
+
+    // IDE ↔ hub (/ide endpoint, design/hot-reload/README.md §7.1). I = IDE extension, H = hub.
+    public const string IdeHello = "ide/hello";                    // I→H req
+    public const string XamlDidOpen = "xaml/didOpen";              // I→H ntf
+    public const string XamlDidChange = "xaml/didChange";          // I→H ntf (full text, debounced by the extension)
+    public const string XamlDidClose = "xaml/didClose";            // I→H ntf
+    public const string XamlDiagnostics = "xaml/diagnostics";      // H→I ntf
+    public const string HotReloadStatus = "hotReload/status";      // H→I ntf
+    public const string EditorReveal = "editor/reveal";            // H→I req
 }
 
 /// <summary>Capabilities an agent declares in <see cref="Methods.SessionHello"/>.</summary>
@@ -148,6 +167,9 @@ public static class Capabilities
     /// <summary>input/act, wait/until, changes/reset.</summary>
     public const string Input = "input";
 
+    /// <summary>XAML hot reload: hotReload/* (Spyglass.Agent.HotReload, Debug builds only).</summary>
+    public const string HotReload = "hotReload";
+
     // Advanced agent ([PrivateApi], exact Avalonia version)
     public const string ValueFrames = "valueFrames";
     public const string BindingDetails = "bindingDetails";
@@ -173,4 +195,8 @@ public static class ErrorCodes
     public const int VersionMismatch = -32010;
     public const int Unauthorized = -32011;
     public const int BodyEvicted = -32020;
+    /// <summary>Hot reload is not available in this app (data.reason).</summary>
+    public const int HotReloadUnavailable = -32030;
+    /// <summary>No XAML document with that URI is known to the agent.</summary>
+    public const int XamlDocumentUnknown = -32031;
 }

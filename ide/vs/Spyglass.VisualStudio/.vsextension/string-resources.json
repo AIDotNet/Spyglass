@@ -1,0 +1,14 @@
+{
+  "Spyglass.Menu": "Spyglass",
+  "Spyglass.Show": "Show Spyglass",
+  "Spyglass.ToggleHotReload": "Toggle XAML Hot Reload",
+  "Spyglass.Reconnect": "Reconnect to Spyglass",
+  "Spyglass.RunWithDotnetWatch": "Run Project with dotnet watch",
+  "Spyglass.Settings.Category": "Spyglass",
+  "Spyglass.Settings.Category.Description": "XAML hot reload for running Avalonia apps.",
+  "Spyglass.Settings.HotReloadEnabled": "Send unsaved .axaml edits to running apps",
+  "Spyglass.Settings.HotReloadDelay": "Milliseconds without typing before an edit is sent (0 = only on save)",
+  "Spyglass.Settings.Port": "Hub port (0 = SPYGLASS_PORT or 29500)",
+  "Spyglass.Settings.Command": "Command used to start `spyglass serve` (an executable or Spyglass.dll)",
+  "Spyglass.Settings.AutoStart": "Start `spyglass serve` when no Spyglass is running"
+}
