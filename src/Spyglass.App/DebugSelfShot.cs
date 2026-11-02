@@ -36,6 +36,9 @@ internal static class DebugSelfShot
                 await Dispatcher.UIThread.InvokeAsync(() => s.Elements.SearchText = select);
                 await Task.Delay(1500);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-2-selected.png"));
+                await Dispatcher.UIThread.InvokeAsync(() => s.Elements.DetailsTab = 1);
+                await Task.Delay(1000);
+                await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-3-layout.png"));
                 await Dispatcher.UIThread.InvokeAsync(() => s.Elements.DetailsTab = 2);
                 await Task.Delay(1200);
                 await Dispatcher.UIThread.InvokeAsync(() => Save(window, prefix + "-4-styles.png"));
