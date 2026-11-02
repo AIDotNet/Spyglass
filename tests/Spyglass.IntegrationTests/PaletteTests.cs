@@ -61,7 +61,7 @@ public class PaletteTests
     {
         var map = new ShortcutMap(null, mac: false);
         foreach (var a in ShortcutRegistry.Actions) Assert.True(map.ConflictsOf(a.Id).Count == 0, $"{a.Id} conflicts with {string.Join(", ", map.ConflictsOf(a.Id))}");
-        Assert.Equal("Ctrl K", map.Get(ShortcutRegistry.PaletteOpen)!.Value.ToDisplay(false));
+        Assert.Equal("Ctrl I", map.Get(ShortcutRegistry.PaletteOpen)!.Value.ToDisplay(false));
     }
 
     [Theory]

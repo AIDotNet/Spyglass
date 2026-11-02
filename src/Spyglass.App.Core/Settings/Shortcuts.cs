@@ -113,7 +113,7 @@ public static class ShortcutRegistry
     /// <summary>Registry order is also the order of the Settings list and of dispatch.</summary>
     public static IReadOnlyList<ShortcutAction> Actions { get; } =
     [
-        new(PaletteOpen, "Window", "Command palette", "Mod+K"),
+        new(PaletteOpen, "Window", "Command palette", "Mod+I"),
         .. NavPages.Select((page, i) => new ShortcutAction(NavId(page), "Navigation", "Go to " + page, "Mod+" + (i + 1))),
         new(NetworkToggleRecord, "Network", "Start / stop recording", "Mod+E"),
         new(NetworkSearch, "Network", "Search headers, payloads and responses", "Mod+F"),

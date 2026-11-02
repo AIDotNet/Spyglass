@@ -3,6 +3,12 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
+## Unreleased
+
+### Changed
+- The command palette opens with **Cmd/Ctrl+I** by default (was Cmd/Ctrl+K). Change it in Settings › Keyboard shortcuts;
+  a shortcut you already customised is kept.
+
 ## 0.1.3
 
 ### Added

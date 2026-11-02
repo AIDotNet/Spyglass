@@ -98,7 +98,7 @@
         </TransitioningContentControl>
       </DockPanel>
     </Panel>
-    <!-- Command palette (W6): Cmd/Ctrl+K or the search button; entries are rebuilt every time it opens. -->
+    <!-- Command palette (W6): Cmd/Ctrl+I (configurable) or the search button; entries are rebuilt every time it opens. -->
     <arc:CommandPaletteDialog x:Name="Palette" PlaceholderText="{loc:T Palette.Placeholder}" Label="{loc:T Palette.Label}"
                               EmptyTitle="{loc:T Palette.EmptyTitle}" EmptyDescription="{loc:T Palette.EmptyDescription}"
                               CloseButtonLabel="{loc:T Palette.Close}" ResultsLabel="{loc:T Palette.Results}" />
