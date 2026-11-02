@@ -104,7 +104,7 @@ internal sealed class TreeWalker(NodeRegistry registry)
             IsEnabled = o is not InputElement ie || ie.IsEffectivelyEnabled,
             IsFocused = o is InputElement { IsFocused: true },
             Text = Truncate(TextOf(o)),
-            Placeholder = Truncate((o as TextBox)?.PlaceholderText),
+            Placeholder = Truncate(PlaceholderOf(o)),
             Bounds = BoundsOf(o),
         };
     }
@@ -121,6 +121,14 @@ internal sealed class TreeWalker(NodeRegistry registry)
         ComboBox { SelectedItem: string s } => s,
         _ => null,
     };
+
+    /// <summary>TextBox hint text: PlaceholderText in Avalonia 12, Watermark in 11.</summary>
+    static string? PlaceholderOf(object o) =>
+#if AVALONIA11
+        (o as TextBox)?.Watermark;
+#else
+        (o as TextBox)?.PlaceholderText;
+#endif
 
     static string? Truncate(string? s) =>
         string.IsNullOrEmpty(s) ? null : s!.Length <= 80 ? s : s.Substring(0, 79) + "…";

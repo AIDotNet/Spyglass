@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Basic agent for Avalonia 11.2+ apps (design D1): the very same source as Spyglass.Agent, compiled against
+       Avalonia 11.2.2. Same assembly name and namespace, so an app swaps one package for the other and nothing else
+       changes. Differences (AVALONIA11): no XAML source locations (Avalonia 12 API), Watermark instead of PlaceholderText,
+       PNG is Bitmap.Save's default. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Spyglass.Agent</AssemblyName>
+    <RootNamespace>Spyglass.Agent</RootNamespace>
+    <PackageId>Spyglass.Agent.Avalonia11</PackageId>
+    <DefineConstants>$(DefineConstants);AVALONIA11</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Spyglass.Agent\**\*.cs" Exclude="..\Spyglass.Agent\bin\**;..\Spyglass.Agent\obj\**" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="XamlSourceInfoCompat.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" VersionOverride="11.2.2" />
+    <ProjectReference Include="..\Spyglass.Protocol\Spyglass.Protocol.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Spyglass.Avalonia11.Tests" />
+  </ItemGroup>
+</Project>

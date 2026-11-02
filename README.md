@@ -8,6 +8,7 @@ Open-source, out-of-process debugging tool for Avalonia UI apps (like browser De
 |---|---|
 | `src/Spyglass.Protocol` | Wire contract (JSON-RPC 2.0 over WebSocket), shared by agent and client |
 | `src/Spyglass.Agent` | In-app agent: `AppBuilder.UseSpyglass()` (public Avalonia APIs only) |
+| `src/Spyglass.Agent.Avalonia11` | The same agent built for Avalonia 11.2+ apps (`Spyglass.Agent.Avalonia11` package; same namespace, no XAML source locations) |
 | `src/Spyglass.Agent.Advanced` | Advanced agent features on Avalonia private APIs (`UseSpyglassAdvanced()`, pinned to Avalonia 12.1.4) |
 | `src/Spyglass.App.Core` | Hub that agents connect to (`ws://127.0.0.1:29500/agent`) and the typed session API |
 | `src/Spyglass.Mcp` | MCP server mounted at `http://127.0.0.1:29500/mcp` |

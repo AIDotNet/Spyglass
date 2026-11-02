@@ -348,7 +348,11 @@ internal sealed class AgentConnection : IAsyncDisposable
         using var rtb = new RenderTargetBitmap(new PixelSize(w, h), new Vector(96 * scale, 96 * scale));
         rtb.Render(v);
         using var ms = new MemoryStream();
+#if AVALONIA11
+        rtb.Save(ms);   // Avalonia 11: PNG is the default
+#else
         rtb.Save(ms, PngBitmapEncoderOptions.Default);
+#endif
         return new ScreenshotResult("png", w, h, Convert.ToBase64String(ms.ToArray()));
     }
 

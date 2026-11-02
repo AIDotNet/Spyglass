@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Spyglass.Protocol/Spyglass.Protocol.csproj" />
     <Project Path="src/Spyglass.Agent/Spyglass.Agent.csproj" />
+    <Project Path="src/Spyglass.Agent.Avalonia11/Spyglass.Agent.Avalonia11.csproj" />
     <Project Path="src/Spyglass.Agent.Advanced/Spyglass.Agent.Advanced.csproj" />
     <Project Path="src/Spyglass.App.Core/Spyglass.App.Core.csproj" />
     <Project Path="src/Spyglass.Mcp/Spyglass.Mcp.csproj" />
@@ -12,6 +13,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Spyglass.Protocol.Tests/Spyglass.Protocol.Tests.csproj" />
+    <Project Path="tests/Spyglass.Avalonia11.Tests/Spyglass.Avalonia11.Tests.csproj" />
     <Project Path="tests/Spyglass.IntegrationTests/Spyglass.IntegrationTests.csproj" />
   </Folder>
 </Solution>
