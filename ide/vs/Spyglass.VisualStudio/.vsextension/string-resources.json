@@ -4,11 +4,18 @@
   "Spyglass.ToggleHotReload": "Toggle XAML Hot Reload",
   "Spyglass.Reconnect": "Reconnect to Spyglass",
   "Spyglass.RunWithDotnetWatch": "Run Project with dotnet watch",
+  "Spyglass.OpenPreview": "Open Preview",
+  "Spyglass.OpenPreviewFromEditor": "Spyglass: Open Preview",
   "Spyglass.Settings.Category": "Spyglass",
   "Spyglass.Settings.Category.Description": "XAML hot reload for running Avalonia apps.",
   "Spyglass.Settings.HotReloadEnabled": "Send unsaved .axaml edits to running apps",
   "Spyglass.Settings.HotReloadDelay": "Milliseconds without typing before an edit is sent (0 = only on save)",
   "Spyglass.Settings.Port": "Hub port (0 = SPYGLASS_PORT or 29500)",
   "Spyglass.Settings.Command": "Command used to start `spyglass serve` (an executable or Spyglass.dll)",
-  "Spyglass.Settings.AutoStart": "Start `spyglass serve` when no Spyglass is running"
+  "Spyglass.Settings.AutoStart": "Start `spyglass serve` when no Spyglass is running",
+  "Spyglass.Settings.PreviewEnabled": "Enable the design-time preview of the active .axaml (Extensions › Spyglass › Open Preview)",
+  "Spyglass.Settings.PreviewDelay": "Milliseconds without typing before the preview updates",
+  "Spyglass.Settings.PreviewAutoOpen": "Open the preview window automatically when an .axaml file is opened",
+  "Spyglass.Settings.PreviewZoom": "Preview zoom: fit, or a percentage such as 100%",
+  "Spyglass.Settings.PreviewTheme": "Preview theme variant for Window roots: default, light or dark"
 }

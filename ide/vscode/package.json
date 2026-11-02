@@ -1,7 +1,7 @@
 {
   "name": "spyglass-avalonia",
   "displayName": "Spyglass for Avalonia",
-  "description": "XAML hot reload for running Avalonia apps: unsaved .axaml edits update the app as you type. Free and open source.",
+  "description": "XAML hot reload and design-time preview for Avalonia: unsaved .axaml edits update the running app and a side-by-side preview as you type. Free and open source.",
   "version": "0.1.0",
   "publisher": "AIDotNet",
   "license": "MIT",
@@ -15,11 +15,25 @@
   "activationEvents": ["workspaceContains:**/*.axaml", "onLanguage:axaml", "onLanguage:xml"],
   "contributes": {
     "commands": [
+      { "command": "spyglass.openPreview", "title": "Open Preview to the Side", "category": "Spyglass", "icon": "$(open-preview)" },
       { "command": "spyglass.toggleHotReload", "title": "Toggle XAML Hot Reload", "category": "Spyglass" },
       { "command": "spyglass.openSpyglass", "title": "Open Spyglass", "category": "Spyglass" },
       { "command": "spyglass.reconnect", "title": "Reconnect", "category": "Spyglass" },
       { "command": "spyglass.runWithDotnetWatch", "title": "Run Project with dotnet watch", "category": "Spyglass" },
-      { "command": "spyglass.showOutput", "title": "Show Output", "category": "Spyglass" }
+      { "command": "spyglass.showOutput", "title": "Show Output", "category": "Spyglass" },
+      { "command": "spyglass.preview.restart", "title": "Restart Preview", "category": "Spyglass" },
+      { "command": "spyglass.preview.build", "title": "Build Project for Preview", "category": "Spyglass" }
+    ],
+    "menus": {
+      "editor/title": [
+        { "command": "spyglass.openPreview", "when": "resourceExtname == .axaml || resourceExtname == .xaml", "group": "navigation@1" }
+      ],
+      "editor/context": [
+        { "command": "spyglass.openPreview", "when": "resourceExtname == .axaml || resourceExtname == .xaml", "group": "navigation@9" }
+      ]
+    },
+    "keybindings": [
+      { "command": "spyglass.openPreview", "key": "ctrl+alt+shift+p", "mac": "cmd+alt+shift+p", "when": "resourceExtname == .axaml || resourceExtname == .xaml" }
     ],
     "configuration": {
       "title": "Spyglass",
@@ -28,7 +42,12 @@
         "spyglass.command": { "type": "string", "default": "spyglass", "description": "The Spyglass command (dotnet tool `spyglass`), used to start `spyglass serve` when nothing listens on the port." },
         "spyglass.autoStart": { "type": "boolean", "default": true, "description": "Start `spyglass serve` in the background when no Spyglass is running." },
         "spyglass.hotReload.enabled": { "type": "boolean", "default": true, "description": "Send unsaved .axaml edits to running apps." },
-        "spyglass.hotReload.delay": { "type": "number", "default": 300, "minimum": 0, "description": "Milliseconds without typing before an edit is sent. 0 = only on save." }
+        "spyglass.hotReload.delay": { "type": "number", "default": 300, "minimum": 0, "description": "Milliseconds without typing before an edit is sent. 0 = only on save." },
+        "spyglass.preview.enabled": { "type": "boolean", "default": true, "description": "Enable the design-time preview (Spyglass: Open Preview)." },
+        "spyglass.preview.autoOpen": { "type": "boolean", "default": false, "description": "Open the preview to the side automatically when an .axaml file is opened." },
+        "spyglass.preview.zoom": { "type": "string", "default": "fit", "enum": ["fit", "25%", "50%", "75%", "100%", "125%", "150%", "200%", "300%", "400%"], "description": "Preview zoom. Ctrl+wheel in the preview also zooms." },
+        "spyglass.preview.theme": { "type": "string", "default": "default", "enum": ["default", "light", "dark"], "description": "Theme variant of the previewed Window (RequestedThemeVariant); UserControl roots are previewed unchanged." },
+        "spyglass.preview.delay": { "type": "number", "default": 300, "minimum": 0, "description": "Milliseconds without typing before the preview is updated from the unsaved editor buffer. 0 = only on save." }
       }
     }
   },

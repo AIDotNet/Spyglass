@@ -9,6 +9,11 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The official previewer's wire protocol (MIT, ships with Avalonia): message types and the BSON transport. The
+         version matches the Avalonia the user's app uses only loosely; the protocol is stable across 11.x/12.x. -->
+    <PackageReference Include="Avalonia.Remote.Protocol" Version="12.1.4" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Spyglass.VisualStudio.Core.Tests" />
   </ItemGroup>
 </Project>

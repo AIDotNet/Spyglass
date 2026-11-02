@@ -79,7 +79,7 @@ Spyglass 是一个独立窗口，你的应用通过本机 WebSocket（`127.0.0.1
 | `src/Spyglass.App.Core` | Agent 连接的 Hub（`ws://127.0.0.1:29500/agent`）和强类型会话 API |
 | `src/Spyglass.Mcp` | 挂载在 `http://127.0.0.1:29500/mcp` 的 MCP 服务器 |
 | `src/Spyglass.App` | Spyglass 桌面客户端（Avalonia 12.1.4 + TKCode.Arc） |
-| `ide/vscode` | VS Code 扩展：从未保存的缓冲区热重载 XAML、诊断、状态 |
+| `ide/vscode` | VS Code 扩展：从未保存的缓冲区热重载 XAML、诊断、状态、设计时预览 |
 | `ide/rider` | Rider 插件（Kotlin），功能相同（[README](ide/rider/README.md)） |
 | `ide/vs` | Visual Studio 2022 17.14+ 扩展（VisualStudio.Extensibility），功能相同（[README](ide/vs/README.md)） |
 | `samples/Spyglass.Sample` | 用来调试的小型示例应用 |
@@ -158,6 +158,11 @@ dotnet run --project src/Spyglass.App -- serve   # 不带 GUI 的 Hub：打印�
 用波浪线显示 XAML 错误，并在没有运行实例时启动 `spyglass serve`。尚未上架 Marketplace：
 `cd ide/vscode && npm install && npm run package`，然后安装生成的 `.vsix`。**Rider**（[`ide/rider`](ide/rider/README.md)）和
 **Visual Studio**（[`ide/vs`](ide/vs/README.md)）功能相同；目前请从源码构建。
+
+**设计时预览**：三个 IDE 扩展都能在编辑器旁渲染当前打开的 `.axaml`，无需运行应用
+（VS Code：*Spyglass: Open Preview*；Rider：Tools › Spyglass › Open Preview；Visual Studio：Extensions › Spyglass › Open Preview，
+为浮动窗口）。它使用你自己 Avalonia 包里的预览器，随未保存的编辑刷新，并在编辑器中标出 XAML 错误。
+快捷键：在 `.axaml` 编辑器中按 Ctrl+Alt+Shift+P（macOS 为 Cmd+Alt+Shift+P）。请先构建一次项目。详情：[`design/preview/`](design/preview/README.md)。
 
 **样式、资源字典和 App.axaml** 同样会重载：修改后的 `Styles`/`ResourceDictionary` 文件会替换 `StyleInclude`/`ResourceInclude`
 加载的内容，合并它的文档（`MergeResourceInclude`）或以 `{StaticResource}` 读取其键的文档会被重新应用，因此动态和静态引用都会更新。

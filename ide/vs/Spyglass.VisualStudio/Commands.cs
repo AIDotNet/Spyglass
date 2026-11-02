@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.VisualStudio.Extensibility;
 using Microsoft.VisualStudio.Extensibility.Commands;
+using Microsoft.VisualStudio.Extensibility.Editor;
 using Microsoft.VisualStudio.Extensibility.Shell;
 using Microsoft.VisualStudio.ProjectSystem.Query;
 
@@ -15,6 +16,7 @@ internal static class SpyglassMenu
         Placements = [CommandPlacement.KnownPlacements.ExtensionsMenu],
         Children =
         [
+            MenuChild.Command<OpenPreviewCommand>(),
             MenuChild.Command<ShowSpyglassCommand>(),
             MenuChild.Command<ToggleHotReloadCommand>(),
             MenuChild.Command<ReconnectCommand>(),
@@ -22,6 +24,74 @@ internal static class SpyglassMenu
             MenuChild.Command<RunWithDotnetWatchCommand>(),
         ],
     };
+}
+
+/// <summary>
+/// Opens the design-time preview window (floating, owned by Visual Studio) and shows the active .axaml in it; when the
+/// window is already open it is brought to the front. Extensions › Spyglass and View › Other Windows (the keyboard shortcut
+/// and the editor context menu are separate commands, see below).
+/// </summary>
+[VisualStudioContribution]
+internal sealed class OpenPreviewCommand(SpyglassPreviewService preview) : Command
+{
+    public override CommandConfiguration CommandConfiguration => new("%Spyglass.OpenPreview%")
+    {
+        Icon = new(ImageMoniker.KnownValues.Image, IconSettings.IconAndText),
+        Placements = [CommandPlacement.KnownPlacements.ViewOtherWindowsMenu],
+    };
+
+    public override Task ExecuteCommandAsync(IClientContext context, CancellationToken cancellationToken) =>
+        OpenPreviewHelper.RunAsync(context, preview, cancellationToken);
+}
+
+/// <summary>
+/// The same command in the code editor's right-click menu, visible only in .axaml/.xaml files. The parent is the code
+/// window context menu's text-editing group of the shell command set (vsshlids.h IDG_VS_CODEWIN_TEXTEDIT); a group that
+/// does not exist just leaves the command out of the menu.
+/// </summary>
+[VisualStudioContribution]
+internal sealed class OpenPreviewFromEditorCommand(SpyglassPreviewService preview) : Command
+{
+    static readonly Guid ShellMainMenu = new("d309f791-903f-11d0-9efc-00a0c911004f");
+
+    public override CommandConfiguration CommandConfiguration => new("%Spyglass.OpenPreviewFromEditor%")
+    {
+        Icon = new(ImageMoniker.KnownValues.Image, IconSettings.IconAndText),
+        Placements = [CommandPlacement.VsctParent(ShellMainMenu, id: 0x0200, priority: 0x0600)],
+        VisibleWhen = ActivationConstraint.ClientContext(ClientContextKey.Shell.ActiveSelectionFileName, @".+\.(axaml|xaml)$"),
+    };
+
+    public override Task ExecuteCommandAsync(IClientContext context, CancellationToken cancellationToken) =>
+        OpenPreviewHelper.RunAsync(context, preview, cancellationToken);
+}
+
+/// <summary>
+/// Ctrl+Shift+Alt+P, only while an .axaml/.xaml editor is active (a disabled command's shortcut does nothing). No menu
+/// entry: it is the keyboard route to <see cref="OpenPreviewCommand"/>. Same chord as the VS Code and Rider extensions;
+/// no default Visual Studio binding is known for it (Ctrl+Alt+P is Attach to Process, Ctrl+Shift+P is unbound), but a
+/// user's own keyboard mapping may use it (Tools › Options › Environment › Keyboard).
+/// </summary>
+[VisualStudioContribution]
+internal sealed class OpenPreviewShortcutCommand(SpyglassPreviewService preview) : Command
+{
+    public override CommandConfiguration CommandConfiguration => new("%Spyglass.OpenPreview%")
+    {
+        Shortcuts = [new CommandShortcutConfiguration(ModifierKey.ControlShiftLeftAlt, Key.P)],
+        EnabledWhen = ActivationConstraint.ClientContext(ClientContextKey.Shell.ActiveSelectionFileName, @".+\.(axaml|xaml)$"),
+    };
+
+    public override Task ExecuteCommandAsync(IClientContext context, CancellationToken cancellationToken) =>
+        OpenPreviewHelper.RunAsync(context, preview, cancellationToken);
+}
+
+internal static class OpenPreviewHelper
+{
+    public static async Task RunAsync(IClientContext context, SpyglassPreviewService preview, CancellationToken ct)
+    {
+        var view = await context.GetActiveTextViewAsync(ct);
+        var path = view?.Document.Uri is { IsFile: true } uri ? uri.LocalPath : null;
+        await preview.OpenAsync(path, ct);
+    }
 }
 
 /// <summary>Opens the Spyglass tool window: connection, apps, the last reload, and the log ("open output").</summary>

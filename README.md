@@ -79,7 +79,7 @@ Spyglass runs as its own window and your app connects to it over a local WebSock
 | `src/Spyglass.App.Core` | Hub that agents connect to (`ws://127.0.0.1:29500/agent`) and the typed session API |
 | `src/Spyglass.Mcp` | MCP server mounted at `http://127.0.0.1:29500/mcp` |
 | `src/Spyglass.App` | The Spyglass desktop client (Avalonia 12.1.4 + TKCode.Arc) |
-| `ide/vscode` | VS Code extension: XAML hot reload from unsaved buffers, diagnostics, status |
+| `ide/vscode` | VS Code extension: XAML hot reload from unsaved buffers, diagnostics, status, design-time preview |
 | `ide/rider` | Rider plugin (Kotlin), same features ([README](ide/rider/README.md)) |
 | `ide/vs` | Visual Studio 2022 17.14+ extension (VisualStudio.Extensibility), same features ([README](ide/vs/README.md)) |
 | `samples/Spyglass.Sample` | A small app to debug |
@@ -162,6 +162,11 @@ dotnet run --project src/Spyglass.App -- serve   # hub without the GUI: prints c
 stop), shows XAML errors as squiggles, and starts `spyglass serve` when nothing is running. Not on the Marketplace yet:
 `cd ide/vscode && npm install && npm run package`, then install the `.vsix`. **Rider** ([`ide/rider`](ide/rider/README.md)) and
 **Visual Studio** ([`ide/vs`](ide/vs/README.md)) have the same features; build them from source for now.
+
+**Design-time preview**: all three IDE extensions can render the open `.axaml` next to the editor without running the app
+(VS Code: *Spyglass: Open Preview*, Rider: Tools › Spyglass › Open Preview, Visual Studio: Extensions › Spyglass › Open Preview,
+a floating window). It uses the previewer in your own Avalonia package, follows unsaved edits, and marks XAML errors in the editor.
+Shortcut: Ctrl+Alt+Shift+P (Cmd+Alt+Shift+P on macOS) in an `.axaml` editor. Build the project once first. Details: [`design/preview/`](design/preview/README.md).
 
 **Styles, resource dictionaries and App.axaml** reload too: a changed `Styles`/`ResourceDictionary` file replaces what
 its `StyleInclude`/`ResourceInclude` loaded, and documents that merge it (`MergeResourceInclude`) or read its keys as

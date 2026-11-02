@@ -1,5 +1,6 @@
 package dev.spyglass.rider
 
+import dev.spyglass.rider.preview.SpyglassPreviewService
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunContentExecutor
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -54,7 +55,12 @@ class SpyglassFileEditorListener(private val project: Project) : FileEditorManag
 }
 
 class SpyglassSaveListener : FileDocumentManagerListener {
-    override fun beforeDocumentSaving(document: Document) = SpyglassSettings.forEachService { it.onDocumentSaving(document) }
+    override fun beforeDocumentSaving(document: Document) {
+        SpyglassSettings.forEachService { it.onDocumentSaving(document) }
+        for (p in com.intellij.openapi.project.ProjectManager.getInstance().openProjects) {
+            if (!p.isDisposed) p.getServiceIfCreated(SpyglassPreviewService::class.java)?.onDocumentSaving(document)
+        }
+    }
 }
 
 // ---------- log tool window ----------

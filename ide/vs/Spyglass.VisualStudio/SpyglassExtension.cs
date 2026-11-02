@@ -17,7 +17,7 @@ internal sealed class SpyglassExtension : Extension
             version: ExtensionAssemblyVersion,
             publisherName: "AIDotNet",
             displayName: "Spyglass for Avalonia",
-            description: "XAML hot reload for running Avalonia apps: edit .axaml and the app updates as you type. Free and open source.")
+            description: "XAML hot reload for running Avalonia apps and a design-time .axaml preview: edit and see it update as you type. Free and open source.")
         {
             // Settings (Tools › Options › Spyglass) and the diagnostics API need 17.14; VS 2026 (18.x) runs 17.x extensions.
             InstallationTargetVersion = "[17.14,)",
@@ -29,5 +29,6 @@ internal sealed class SpyglassExtension : Extension
     {
         base.InitializeServices(serviceCollection);
         serviceCollection.AddSingleton<SpyglassService>();
+        serviceCollection.AddSingleton<SpyglassPreviewService>();
     }
 }

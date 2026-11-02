@@ -29,7 +29,7 @@ import javax.swing.Icon
  * .axaml next to Rider's built-in Avalonia support and AvaloniaRider. The newest result per file replaces the previous
  * one; an empty list clears it.
  */
-class DiagnosticsPresenter(private val project: Project, parent: Disposable) {
+class DiagnosticsPresenter(private val project: Project, parent: Disposable, private val source: String = "Spyglass hot reload") {
     private val latest = ConcurrentHashMap<String, XamlDiagnostics>()
     /** EDT only. */
     private val shown = HashMap<String, List<RangeHighlighter>>()
@@ -83,7 +83,7 @@ class DiagnosticsPresenter(private val project: Project, parent: Disposable) {
             }
             val end = maxOf(r.first, minOf(r.last + 1, document.textLength))
             markup.addRangeHighlighter(attributes, r.first.coerceAtMost(document.textLength), end, HighlighterLayer.ERROR + 1, HighlighterTargetArea.EXACT_RANGE).apply {
-                val message = "Spyglass hot reload: ${item.message}" + (item.code?.let { " ($it)" } ?: "")
+                val message = "$source: ${item.message}" + (item.code?.let { " ($it)" } ?: "")
                 errorStripeTooltip = message
                 gutterIconRenderer = DiagnosticGutterIcon(item.severity, message)
             }

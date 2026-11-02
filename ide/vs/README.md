@@ -8,6 +8,12 @@ same behaviour as the VS Code extension (`ide/vscode`), built on the out-of-proc
   the app keeps the last good UI until you fix it.
 - "Open in editor" in the Spyglass window opens the file at the element's line here.
 
+- **Design-time preview** of the active `.axaml`, without running the app, like the official Avalonia extension:
+  **Extensions › Spyglass › Open Preview** (also View › Other Windows, the editor's right-click menu in `.axaml`
+  files, and **Ctrl+Shift+Alt+P** inside an `.axaml`/`.xaml` editor; running it again focuses the open window). It updates as you type, is interactive (mouse,
+  wheel, keyboard, text), zooms (Fit/25–400 %), switches Light/Dark for `Window` roots, and shows XAML errors in the
+  Error List ("Spyglass Preview") and in a clickable error bar that jumps to the line and column. Independent of the hub.
+
 Requires **Visual Studio 2022 17.14 or later** (Visual Studio 2026 included), Windows x64 or Arm64.
 
 ## Setup
@@ -21,12 +27,45 @@ Requires **Visual Studio 2022 17.14 or later** (Visual Studio 2026 included), Wi
 hot-reload, the latest reload result and the log; the log also goes to Output › Spyglass. The extension loads (and
 connects) when you open the first `.axaml`/`.xaml` file or run a Spyglass command.
 
+### Preview
+
+The preview launches the `Avalonia.Designer.HostApp` that ships in your project's Avalonia package (found with
+`dotnet msbuild -getProperty:AvaloniaPreviewerNetCoreToolPath …`), so it needs an **executable Avalonia project that is
+built** (the window offers "Build project"). It is restarted when the project is rebuilt or crashes ("Restart"), and
+stopped when the window is closed.
+
+**The preview is a floating WPF window, not a docked tool window.** VisualStudio.Extensibility's Remote UI (the only way
+an out-of-process extension can add a tool window) cannot show a dynamic bitmap, and reports neither the pane size nor
+pointer coordinates. So the extension opens a plain WPF window on its own thread in the extension host process, owned by
+the Visual Studio main window (stays above it, minimizes with it) and placed on the right third of it the first time.
+Dock it by snapping it with Windows (Win+←/→) or on a second monitor.
+
+- The window size becomes the previewer's viewport (debounced 100 ms) and its DPI follows the monitor scaling, so the
+  picture is sharp on HiDPI. A `Window` renders at its own `Width`/`Height`, a `UserControl` at `d:DesignWidth`/
+  `d:DesignHeight`; the viewport only bounds the layout (the picture is not stretched to the pane).
+- Zoom: Fit (shrinks to the pane, never enlarges), a percentage, − / +, or Ctrl+wheel.
+- Theme (Default/Light/Dark) works for `Window` roots (it adds `RequestedThemeVariant` to the root tag, which the
+  previewer rejects on other roots).
+- Click the picture to give it the keyboard; keys and typed text go to the previewed UI.
+- The status line shows `Updating…`, then `Updated · N ms`, or the XAML error (click it to jump to the line and column).
+- Editing or saving any other `.axaml` of the project (App.axaml, styles, resource dictionaries) re-renders the active
+  view. The previewer reads styles and resources from the *built* assembly, so such changes show after a build; a
+  rebuild of the app restarts the previewer by itself and keeps the file, zoom, theme and window size.
+  App.axaml, resource dictionaries and styles files are never shown by themselves.
+- The window opens on the right third of the Visual Studio window and follows it (move, resize, maximize) until you move
+  or resize the preview window yourself. With **Open the preview window automatically** on (`previewAutoOpen`), opening an
+  `.axaml` shows it (without taking the keyboard from the editor).
+
 ## Settings (Tools › Options › Spyglass)
 
 | Setting | Default | |
 |---|---|---|
 | Send unsaved .axaml edits | on | Off closes the files on the hub; apps go back to the files on disk |
 | Delay | `300` | ms without typing before an edit is sent; `0` = only on save |
+| Preview | on | Show the design-time preview (Open Preview) |
+| Preview delay | `300` | ms without typing before the preview updates |
+| Open the preview automatically | off | Opening an `.axaml` shows the preview window |
+| Preview zoom / theme | `fit` / `default` | Remembered by the window's zoom and theme controls (`fit` or `100%`; `default`, `light`, `dark`) |
 | Port | `0` | Hub port; `0` = `SPYGLASS_PORT` or 29500 |
 | Command | `spyglass` | Starts `spyglass serve` (an executable, or a `Spyglass.dll` run with `dotnet`) |
 | Auto start | on | Start `spyglass serve` when no Spyglass is running |
@@ -42,9 +81,9 @@ Design: `design/hot-reload/` in the Spyglass repository.
 
 | Project | |
 |---|---|
-| `Spyglass.VisualStudio.Core` | net8.0, no Visual Studio dependency: JSON-RPC over `ClientWebSocket`, `HubClient` (token, auto-start, reconnect 1 s → 10 s), `XamlBufferSync` (debounce, didOpen/didChange/didClose), status text |
-| `Spyglass.VisualStudio` | The extension: `ITextViewOpenClosedListener`/`ITextViewChangedListener` for `**/*.axaml`/`**/*.xaml`, `DiagnosticsReporter` (Error List), `OpenDocumentAsync` for `editor/reveal`, settings, commands, a Remote UI tool window |
-| `Spyglass.VisualStudio.Core.Tests` | xUnit: the client against a fake hub, and against the real `spyglass serve` + sample app |
+| `Spyglass.VisualStudio.Core` | net8.0, no Visual Studio dependency: JSON-RPC over `ClientWebSocket`, `HubClient` (token, auto-start, reconnect 1 s → 10 s), `XamlBufferSync` (debounce, didOpen/didChange/didClose), status text; `Preview/`: project properties, previewer host session (`Avalonia.Remote.Protocol` BSON), `PreviewController` (debounce, restart on rebuild, theme, diagnostics), zoom/viewport/input mapping |
+| `Spyglass.VisualStudio` | The extension: `ITextViewOpenClosedListener`/`ITextViewChangedListener` for `**/*.axaml`/`**/*.xaml`, `DiagnosticsReporter` (Error List), `OpenDocumentAsync` for `editor/reveal`, settings, commands, a Remote UI status tool window, and the WPF preview window (`PreviewWindow`, `PreviewWindowHost`) |
+| `Spyglass.VisualStudio.Core.Tests` | xUnit: the client against a fake hub, and against the real `spyglass serve` + sample app; the preview against the real `Avalonia.Designer.HostApp` (frames, error line/column, restart) |
 
 ## Develop
 

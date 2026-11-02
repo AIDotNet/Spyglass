@@ -10,8 +10,11 @@
       <li><b>Mistakes never break the app</b>: a XAML error is highlighted at its line and column; the app keeps the last
         good UI until you fix it.</li>
       <li>"Open in editor" in the Spyglass window jumps to the element's XAML line here.</li>
+      <li><b>Design-time preview</b> (Tools › Spyglass › Open Preview): the official Avalonia previewer host renders the
+        <code>.axaml</code> file beside the editor without running the app, follows unsaved edits, shows errors at their line and
+        column, and forwards mouse and keyboard input.</li>
     </ul>
-    <p>Works next to Rider's Avalonia support and AvaloniaRider (no completion, no previewer of its own).
+    <p>Works next to Rider's Avalonia support and AvaloniaRider (no completion). The preview needs the project to be built once.
       Needs the <code>Spyglass</code> dotnet tool and, in the app, <code>UseSpyglass()</code> plus the
       <code>TKCode.Spyglass.HotReload</code> package.</p>
   ]]></description>
@@ -27,17 +30,37 @@
                              instance="dev.spyglass.rider.SpyglassConfigurable"/>
     <toolWindow id="Spyglass" anchor="bottom" doNotActivateOnStart="true" canCloseContents="false"
                 icon="AllIcons.Toolwindows.ToolWindowMessages" factoryClass="dev.spyglass.rider.SpyglassToolWindowFactory"/>
+    <toolWindow id="Spyglass Preview" anchor="right" doNotActivateOnStart="true" canCloseContents="false"
+                icon="AllIcons.Actions.Preview" factoryClass="dev.spyglass.rider.preview.SpyglassPreviewToolWindowFactory"/>
+    <editorNotificationProvider implementation="dev.spyglass.rider.preview.SpyglassPreviewBannerProvider"/>
     <notificationGroup id="Spyglass" displayType="BALLOON"/>
+    <!-- The preview pane of Rider's XAML split editor (editor | split | preview) for Avalonia files. -->
+    <rider.xaml.preview.editor implementation="dev.spyglass.rider.preview.SpyglassXamlPreviewEditorExtension" order="first"/>
   </extensions>
 
   <projectListeners>
     <listener class="dev.spyglass.rider.SpyglassFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="dev.spyglass.rider.preview.SpyglassPreviewEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
   <applicationListeners>
     <listener class="dev.spyglass.rider.SpyglassSaveListener" topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
   </applicationListeners>
 
   <actions>
+    <action id="Spyglass.OpenPreview" class="dev.spyglass.rider.preview.OpenPreviewAction" text="Open Preview to the Side"
+            description="Open Preview to the Side: show the design-time preview of the current .axaml file next to the editor"
+            icon="AllIcons.Actions.Preview">
+      <!-- Ctrl+Alt+Shift+P (Cmd+Alt+Shift+P on macOS): not bound in Rider's default, macOS or macOS 10.5+ keymaps (checked in the
+           2026.1 distribution); only the Emacs keymap uses it. -->
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift P"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta alt shift P"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt shift P"/>
+      <!-- "EditorTitle" does not exist in Rider (logged as a plugin error at startup); the floating editor toolbar and the tab menu do. -->
+      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
+      <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+    </action>
+    <action id="Spyglass.RestartPreview" class="dev.spyglass.rider.preview.RestartPreviewMenuAction" text="Restart Preview"
+            description="Restart the previewer host"/>
     <action id="Spyglass.ToggleHotReload" class="dev.spyglass.rider.ToggleHotReloadAction" text="Toggle XAML Hot Reload"
             description="Send unsaved .axaml edits to running Avalonia apps"/>
     <action id="Spyglass.OpenSpyglass" class="dev.spyglass.rider.OpenSpyglassAction" text="Open Spyglass"
@@ -50,6 +73,9 @@
             description="Show the Spyglass log"/>
 
     <group id="Spyglass.Menu" text="Spyglass" popup="true">
+      <reference ref="Spyglass.OpenPreview"/>
+      <reference ref="Spyglass.RestartPreview"/>
+      <separator/>
       <reference ref="Spyglass.ToggleHotReload"/>
       <reference ref="Spyglass.OpenSpyglass"/>
       <reference ref="Spyglass.RunWithDotnetWatch"/>
@@ -58,7 +84,14 @@
       <reference ref="Spyglass.ShowLog"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+    <!-- Editor context menu; the action hides itself unless the file is .axaml/.xaml. -->
+    <group id="Spyglass.EditorPopup">
+      <reference ref="Spyglass.OpenPreview"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </group>
     <group id="Spyglass.StatusBarPopup">
+      <reference ref="Spyglass.OpenPreview"/>
+      <separator/>
       <reference ref="Spyglass.ToggleHotReload"/>
       <reference ref="Spyglass.OpenSpyglass"/>
       <reference ref="Spyglass.RunWithDotnetWatch"/>

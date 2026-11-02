@@ -3,6 +3,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { HubClient, HotReloadStatus, XamlDiagnostics } from "./hubClient";
+import { PreviewController } from "./preview/panel";
 
 const isXaml = (d: vscode.TextDocument): boolean =>
   d.uri.scheme === "file" && /\.(axaml|xaml)$/i.test(d.fileName);
@@ -131,6 +132,19 @@ export function activate(context: vscode.ExtensionContext): HubClient {
     statusBar.backgroundColor = client.isConnected && !lastOk ? new vscode.ThemeColor("statusBarItem.errorBackground") : undefined;
     statusBar.show();
   }
+
+  // ---------- design-time preview (design/preview/README.md) ----------
+
+  const preview = new PreviewController(log);
+  context.subscriptions.push(
+    preview,
+    vscode.commands.registerCommand("spyglass.openPreview", () => preview.open()),
+    vscode.commands.registerCommand("spyglass.preview.restart", () => preview.restart()),
+    vscode.commands.registerCommand("spyglass.preview.build", () => preview.build()),
+    vscode.commands.registerCommand("spyglass.preview._state", () => preview.debugState),   // used by the e2e test
+  );
+
+  preview.maybeAutoOpen(vscode.window.activeTextEditor?.document);   // a .axaml already open at startup
 
   // ---------- commands ----------
 

@@ -7,12 +7,21 @@
     <RootNamespace>Spyglass.VisualStudio</RootNamespace>
     <!-- Lets the project compile (not package) on macOS/Linux. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- The preview window is plain WPF created in this (out-of-process) extension host: Remote UI cannot show a dynamic
+         bitmap or report pane size and pointer positions. The window is built in code, there is no XAML to compile. -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <!-- The .vsix is made by VsixUtil.exe (Windows only); elsewhere build the assembly and extension.json only. -->
   <PropertyGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
     <CreateVsixContainer>false</CreateVsixContainer>
     <DeployExtension>false</DeployExtension>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- UseWPF adds these global usings; System.Windows.Shapes.Path would hide System.IO.Path everywhere. -->
+    <Using Remove="System.Windows.Shapes" />
+    <Using Remove="System.IO" />
+    <Using Include="System.IO" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Extensibility.Sdk" Version="17.14.40608" />
     <PackageReference Include="Microsoft.VisualStudio.Extensibility.Build" Version="17.14.40608" />

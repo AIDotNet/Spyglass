@@ -8,7 +8,11 @@ XAML hot reload for running [Avalonia](https://avaloniaui.net) apps in JetBrains
   stripe mark); the app keeps the last good UI until you fix it.
 - Works with any number of running apps; each gets the files it compiled.
 - "Open in editor" in the Spyglass window jumps to the element's XAML line here.
-- Coexists with Rider's built-in Avalonia support and AvaloniaRider: no completion, no previewer, no language service.
+- **Design-time preview** (Tools › Spyglass › Open Preview, or the editor context menu on an `.axaml` file): the official
+  Avalonia previewer host renders the file in a tool window beside the editor, without running the app. It follows unsaved
+  edits (300 ms), shows XAML errors in an error bar and as an underline at the error's line and column, keeps the last good
+  frame, follows the active `.axaml` editor, restarts after a rebuild, and forwards mouse and keyboard input.
+- Coexists with Rider's built-in Avalonia support and AvaloniaRider: no completion, no language service.
 
 ## Setup
 
@@ -21,12 +25,24 @@ The status bar shows the connected apps (⚡), a XAML error (red ✗), or that S
 actions. **Tools › Spyglass**: Toggle XAML Hot Reload, Open Spyglass, Run Project with dotnet watch, Reconnect, Show Log.
 The plugin connects in projects that contain `.axaml` files (or once one is opened).
 
+## Preview
+
+The preview runs `Avalonia.Designer.HostApp` from the project's own Avalonia package (so the version always matches) and
+talks to it over the previewer's BSON protocol; it is independent of the hot-reload hub. The project must be built once:
+the tool window offers **Build Project** (`dotnet build`) when it is not, and starts rendering by itself after any build.
+It needs the .NET SDK (`dotnet msbuild` reads the project's previewer settings). Closing the tool window ends the host.
+Preview limits (as with the official previewer): only `Design.DataContext` data, every update rebuilds the window, the
+project must be an executable (it needs an entry point), and C# changes need a rebuild.
+Design: `design/preview/` in the Spyglass repository.
+
 ## Settings (Settings › Tools › Spyglass)
 
 | Setting | Default | |
 |---|---|---|
 | Send unsaved `.axaml` edits | on | XAML hot reload on/off |
 | Delay | `300` | ms without typing before an edit is sent; `0` = only on save |
+| Show the design-time XAML preview | on | Preview on/off |
+| Preview delay | `300` | ms without typing before the preview refreshes; `0` = only on save |
 | Port | `0` | Hub port; `0` = `SPYGLASS_PORT` or 29500 |
 | Command | `spyglass` | Command used to start `spyglass serve` (an executable or `Spyglass.dll`) |
 | Start spyglass serve | on | Start `spyglass serve` when no Spyglass is running |
@@ -39,6 +55,8 @@ Spyglass agent recompiles them with Avalonia's runtime XAML loader and re-popula
 frontend-only IntelliJ Platform plugin (no ReSharper backend). Design: `design/hot-reload/` in the Spyglass repository.
 
 Code: `dev.spyglass.rider.hub` is the IntelliJ-independent client (JSON-RPC over `java.net.http.WebSocket`, Gson);
+`dev.spyglass.rider.preview` is the previewer client (`Bson`, `RemoteProtocol`, `PreviewSession` and `PreviewProjects` are
+IntelliJ-independent; `SpyglassPreviewService` and `SpyglassPreviewUi` are the tool window glue);
 `dev.spyglass.rider` is the IDE glue (document listener, markup highlighting, status bar widget, actions, settings).
 
 ## Develop
@@ -48,7 +66,8 @@ Needs a JDK 17+ to run Gradle (Rider's bundled JBR works:
 
 ```bash
 ./gradlew buildPlugin                     # build/distributions/spyglass-rider-0.1.0.zip (Settings › Plugins › Install from Disk)
-./gradlew test                            # unit tests (HubClient against a fake hub)
+./gradlew test                            # unit tests (HubClient against a fake hub; the preview client against the real
+                                          # previewer host when samples/Spyglass.Sample is built)
 SPYGLASS_REPO=$PWD/../.. ./gradlew test   # + real spyglass serve and sample app (build the .NET solution first)
 ./gradlew runIde                          # a sandbox Rider with the plugin
 ```
