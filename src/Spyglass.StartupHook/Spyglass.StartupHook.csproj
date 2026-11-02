@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Attach without touching the app: DOTNET_STARTUP_HOOKS=<this dll> dotnet MyApp.dll (design D14).
+       The agent and its dependencies are loaded into their own load context from this folder, so they never
+       clash with the app's own (e.g. System.Text.Json 9 here vs the framework's 8). Avalonia is shared with the app. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Spyglass.StartupHook</AssemblyName>
+    <RootNamespace>Spyglass.StartupHook</RootNamespace>
+    <!-- The hook must not drag its own copy of the app's Avalonia along. -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Spyglass.Agent\Spyglass.Agent.csproj" />
+    <PackageReference Include="Avalonia" ExcludeAssets="runtime" />
+  </ItemGroup>
+  <Target Name="DropAvaloniaFromOutput" AfterTargets="ResolveReferences">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Remove="@(ReferenceCopyLocalPaths)" Condition="$([System.String]::Copy('%(Filename)').StartsWith('Avalonia')) Or $([System.String]::Copy('%(Filename)').StartsWith('MicroCom')) Or $([System.String]::Copy('%(Filename)').StartsWith('Microsoft.CodeAnalysis'))" />
+    </ItemGroup>
+  </Target>
+</Project>
