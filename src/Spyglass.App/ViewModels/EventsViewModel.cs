@@ -19,7 +19,7 @@ public sealed class EventsViewModel : ObservableObject
         "InputElement.PointerPressed", "InputElement.PointerReleased",
     ];
 
-    const int MaxRows = 5000;
+    static int MaxRows => Spyglass.App.Core.Settings.SettingsService.Shared.Current.EventBufferLimit;
 
     readonly AgentSession _session;
     readonly Action<int> _showElement;

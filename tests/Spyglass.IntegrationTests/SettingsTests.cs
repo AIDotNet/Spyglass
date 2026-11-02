@@ -53,6 +53,9 @@ public class SettingsTests : IDisposable
         Assert.Null(s.Port);
         Assert.Equal(10 * 1024, s.BodyLimitKb);
         Assert.Equal("Blue", s.Accent);
+        Assert.Equal(5000, s.EventBufferLimit);
+        Assert.Equal(100_000, new AppSettings { EventBufferLimit = int.MaxValue }.Normalize().EventBufferLimit);
+        Assert.Equal(100, new AppSettings { EventBufferLimit = -5 }.Normalize().EventBufferLimit);
     }
 
     [Fact]

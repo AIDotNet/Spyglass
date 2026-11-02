@@ -43,6 +43,9 @@ public sealed class SettingsViewModel : ObservableObject
     public bool ShowTemplateParts { get => S.ShowTemplateParts; set => Apply(s => s.ShowTemplateParts = value); }
     public bool KeepHighlight { get => S.KeepHighlight; set => Apply(s => s.KeepHighlight = value); }
 
+    // ---- events ----
+    public double EventBufferLimit { get => S.EventBufferLimit; set => Apply(s => s.EventBufferLimit = (int)value); }
+
     // ---- network ----
     public bool AutoRecordNetwork { get => S.AutoRecordNetwork; set => Apply(s => s.AutoRecordNetwork = value); }
     public bool CaptureBodies { get => S.CaptureBodies; set => Apply(s => s.CaptureBodies = value); }

@@ -26,6 +26,10 @@ public sealed class AppSettings
     /// <summary>Keep the highlight box in the app until another element is selected (default: it fades after 1.5 s).</summary>
     public bool KeepHighlight { get; set; }
 
+    // ---- events ----
+    /// <summary>How many routed-event records the Events page keeps (oldest are dropped).</summary>
+    public int EventBufferLimit { get; set; } = 5000;
+
     // ---- network ----
     /// <summary>Start recording when the Network page is first opened (Chrome records while DevTools is open).</summary>
     public bool AutoRecordNetwork { get; set; } = true;
@@ -45,6 +49,7 @@ public sealed class AppSettings
     {
         if (Port is { } p && (p < 1 || p > 65535)) Port = null;
         BodyLimitKb = Math.Clamp(BodyLimitKb, 1, 10 * 1024);
+        EventBufferLimit = Math.Clamp(EventBufferLimit, 100, 100_000);
         if (string.IsNullOrWhiteSpace(Accent)) Accent = "Blue";
         return this;
     }
@@ -108,7 +113,7 @@ public sealed class SettingsService(AppSettingsStore? store = null)
     {
         var d = new AppSettings();
         s.Appearance = d.Appearance; s.Accent = d.Accent; s.Motion = d.Motion; s.Port = d.Port;
-        s.ShowTemplateParts = d.ShowTemplateParts; s.KeepHighlight = d.KeepHighlight;
+        s.ShowTemplateParts = d.ShowTemplateParts; s.KeepHighlight = d.KeepHighlight; s.EventBufferLimit = d.EventBufferLimit;
         s.AutoRecordNetwork = d.AutoRecordNetwork; s.CaptureBodies = d.CaptureBodies; s.BodyLimitKb = d.BodyLimitKb; s.CaptureInitiator = d.CaptureInitiator;
         s.Editor = d.Editor; s.CustomEditorCommand = d.CustomEditorCommand;
     });

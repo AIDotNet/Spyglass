@@ -107,6 +107,18 @@
           </StackPanel>
         </Border>
 
+        <!-- Events -->
+        <TextBlock Classes="section" Text="Events" />
+        <Border Classes="card">
+          <Grid ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="label" Text="Events kept in the list" />
+              <TextBlock Classes="hint" Text="When the list is full the oldest events are dropped." />
+            </StackPanel>
+            <arc:NumberField Grid.Column="1" Width="150" Label="Events kept" IsLabelVisible="False" Minimum="100" Maximum="100000" Value="{Binding EventBufferLimit}" />
+          </Grid>
+        </Border>
+
         <!-- Network -->
         <TextBlock Classes="section" Text="Network" />
         <Border Classes="card">
