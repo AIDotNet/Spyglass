@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using Spyglass.App.Core.Lan;
+using Spyglass.App.Localization;
 using Spyglass.App.Core.Settings;
 using Spyglass.Protocol;
 
@@ -27,6 +28,7 @@ public sealed class LanViewModel : ObservableObject
         _addresses = gate.AllowLan ? LanAddresses.Get() : [];
         gate.Guard.CodeChanged += () => Dispatcher.UIThread.Post(() => { Raise(nameof(Code)); Raise(nameof(Snippet)); });
         settings.Changed += _ => { Raise(nameof(AllowLan)); Raise(nameof(RestartNote)); Raise(nameof(RestartPending)); };
+        WatchLanguage();
         RegenerateCommand = new RelayCommand(() => _gate.Guard.Regenerate());
         CopyCodeCommand = new RelayCommand(() => CopyAsync(Code));
         CopyHostCommand = new RelayCommand(() => CopyAsync(Host));
@@ -41,15 +43,15 @@ public sealed class LanViewModel : ObservableObject
 
     public bool RestartPending => AllowLan != IsActive;
     public string RestartNote => !RestartPending ? "" : AllowLan
-        ? "Restart Spyglass to start accepting connections from other devices."
-        : "Restart Spyglass to stop accepting connections from other devices (it still does until then).";
+        ? Loc.T("Lan.RestartToStart")
+        : Loc.T("Lan.RestartToStop");
 
     public string Code => _gate.Guard.Code;
 
     public IReadOnlyList<LanAddress> Addresses => _addresses;
     public string Host => _addresses.FirstOrDefault()?.Address ?? "<this machine's address>";
     public string AddressesText => _addresses.Count == 0
-        ? "No network address found. Connect to a network first."
+        ? Loc.T("Lan.NoAddress")
         : string.Join("   ", _addresses.Select(a => $"{a.Address}  ({a.Interface})"));
 
     public string Snippet => $$"""
@@ -61,16 +63,12 @@ public sealed class LanViewModel : ObservableObject
         })
         """;
 
-    public string PortText => $"Port {_port()}";
+    public string PortText => Loc.F("Lan.Port", _port());
 
     public RelayCommand RegenerateCommand { get; }
     public RelayCommand CopyCodeCommand { get; }
     public RelayCommand CopyHostCommand { get; }
     public RelayCommand RefreshAddressesCommand { get; }
-
-    public const string CleartextWarning =
-        "Connections from other devices use plain ws:// without encryption. The pairing code and everything Spyglass shows " +
-        "(element trees, property values, network bodies, screenshots) cross the network in clear text. Use trusted networks only.";
 
     public void RefreshAddresses()
     {

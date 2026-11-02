@@ -138,9 +138,9 @@ public sealed class PerformanceViewModel : ObservableObject
 
     static readonly (string Key, string Label)[] Instruments =
     [
-        ("avalonia.ui.measure.time", "Measure"), ("avalonia.ui.arrange.time", "Arrange"),
-        ("avalonia.ui.render.time", "Render (UI thread)"), ("avalonia.comp.update.time", "Compositor update"),
-        ("avalonia.comp.render.time", "Compositor render"), ("avalonia.ui.input.time", "Input"),
+        ("avalonia.ui.measure.time", "Perf.InstrMeasure"), ("avalonia.ui.arrange.time", "Perf.InstrArrange"),
+        ("avalonia.ui.render.time", "Perf.InstrRender"), ("avalonia.comp.update.time", "Perf.InstrCompUpdate"),
+        ("avalonia.comp.render.time", "Perf.InstrCompRender"), ("avalonia.ui.input.time", "Perf.InstrInput"),
     ];
 
     static readonly (string Kind, string Title)[] Kinds =
@@ -196,7 +196,7 @@ public sealed class PerformanceViewModel : ObservableObject
         Percentiles.Clear();
         foreach (var (key, label) in Instruments)
             if (p.Histograms.TryGetValue(key, out var h))
-                Percentiles.Add(new PercentileRow(label, Ms(h.P50), Ms(h.P90), Ms(h.P95), Ms(h.Avg), Ms(h.Max), h.Count.ToString("N0", Inv)));
+                Percentiles.Add(new PercentileRow(Loc.T(label), Ms(h.P50), Ms(h.P90), Ms(h.P95), Ms(h.Avg), Ms(h.Max), h.Count.ToString("N0", Inv)));
 
         HotSpots.Clear();
         foreach (var (kind, title) in Kinds)

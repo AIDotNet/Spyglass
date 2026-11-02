@@ -1,16 +1,28 @@
 using Avalonia.Input;
 using Spyglass.App.Core.Settings;
+using Spyglass.App.Localization;
 
 namespace Spyglass.App.ViewModels;
 
 /// <summary>One editable row of the Settings › Keyboard shortcuts list. The gesture lives in <see cref="AppSettings.Shortcuts"/>; this is a view of it.</summary>
-public sealed class ShortcutItemViewModel(ShortcutAction action, SettingsService service) : ObservableObject
+public sealed class ShortcutItemViewModel : ObservableObject
 {
+    readonly ShortcutAction action;
+    readonly SettingsService service;
+
+    public ShortcutItemViewModel(ShortcutAction action, SettingsService service)
+    {
+        this.action = action;
+        this.service = service;
+        WatchLanguage();
+    }
+
+
     ShortcutMap Map => ShortcutMap.From(service.Current);
 
     public string Id => action.Id;
-    public string Area => action.Area;
-    public string Title => action.Title;
+    public string Area => action.DisplayArea;
+    public string Title => action.DisplayTitle;
 
     /// <summary>Two-way with <c>arc:ShortcutRecorder.Value</c>; null = no shortcut.</summary>
     public KeyGesture? Value
@@ -29,7 +41,7 @@ public sealed class ShortcutItemViewModel(ShortcutAction action, SettingsService
     public KeyGesture? DefaultValue => ShortcutBridge.ToKeyGesture(Map.Default(action.Id));
 
     public bool HasConflict => Map.ConflictsOf(action.Id).Count > 0;
-    public string ConflictText => HasConflict ? "Also used by: " + string.Join(", ", Map.ConflictsOf(action.Id)) + ". Only the first one runs." : "";
+    public string ConflictText => HasConflict ? Loc.F("Settings.ShortcutConflict", string.Join(", ", Map.ConflictsOf(action.Id))) : "";
 
     public void Refresh() => Raise(string.Empty);
 }

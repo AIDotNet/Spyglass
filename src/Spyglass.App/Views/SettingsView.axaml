@@ -93,23 +93,23 @@
             <TextBlock Classes="hint" Text="{Binding PortNote}" />
             <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
               <StackPanel Spacing="2">
-                <TextBlock Classes="label" Text="Allow connections from other devices" />
-                <TextBlock Classes="hint" Text="Phones, emulators and other machines on your network may connect with a pairing code. Off: only this machine (127.0.0.1) can connect." />
+                <TextBlock Classes="label" Text="{loc:T Lan.AllowConnections}" />
+                <TextBlock Classes="hint" Text="{loc:T Lan.AllowConnectionsHint}" />
               </StackPanel>
               <arc:Switch Grid.Column="1" IsChecked="{Binding Lan.AllowLan}" />
             </Grid>
             <TextBlock Classes="hint" Text="{Binding Lan.RestartNote}" IsVisible="{Binding Lan.RestartPending}" />
-            <arc:Alert Tone="Warning" IsOpen="True" IsVisible="{Binding Lan.AllowLan}" Title="Not encrypted: trusted networks only"
-                       Content="Other devices connect over plain ws://. The pairing code and all debug data (element trees, values, network bodies, screenshots) cross the network in clear text. The MCP endpoint stays local to this machine." />
+            <arc:Alert Tone="Warning" IsOpen="True" IsVisible="{Binding Lan.AllowLan}" Title="{loc:T Lan.NotEncrypted}"
+                       Content="{loc:T Lan.SettingsWarning}" />
             <Grid ColumnDefinitions="*,Auto,Auto" IsVisible="{Binding Lan.IsActive}">
               <StackPanel Spacing="2">
-                <TextBlock Classes="label" Text="Pairing code" />
-                <TextBlock Classes="hint" Text="New on every start. Regenerating disconnects other devices that used the old code." />
+                <TextBlock Classes="label" Text="{loc:T Lan.PairingCode}" />
+                <TextBlock Classes="hint" Text="{loc:T Lan.PairingCodeHint}" />
               </StackPanel>
               <TextBlock Grid.Column="1" Text="{Binding Lan.Code}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXL}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0" />
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                <arc:Button Variant="Secondary" Content="Copy" Command="{Binding Lan.CopyCodeCommand}" />
-                <arc:Button Variant="Secondary" Content="Regenerate" Command="{Binding Lan.RegenerateCommand}" />
+                <arc:Button Variant="Secondary" Content="{loc:T Lan.Copy}" Command="{Binding Lan.CopyCodeCommand}" />
+                <arc:Button Variant="Secondary" Content="{loc:T Lan.Regenerate}" Command="{Binding Lan.RegenerateCommand}" />
               </StackPanel>
             </Grid>
           </StackPanel>
@@ -212,8 +212,8 @@
         <Border Classes="card">
           <StackPanel Spacing="8">
             <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Classes="hint" VerticalAlignment="Center" Text="Click a field and press the new keys. Esc cancels, Backspace removes the shortcut; the arrow button restores the default. Changes apply immediately." />
-              <arc:Button Grid.Column="1" Variant="Secondary" Content="Reset all shortcuts" Command="{Binding ResetShortcutsCommand}" IsEnabled="{Binding HasCustomShortcuts}" Margin="12,0,0,0" />
+              <TextBlock Classes="hint" VerticalAlignment="Center" Text="{loc:T Settings.ShortcutsHint}" />
+              <arc:Button Grid.Column="1" Variant="Secondary" Content="{loc:T Settings.ResetAllShortcuts}" Command="{Binding ResetShortcutsCommand}" IsEnabled="{Binding HasCustomShortcuts}" Margin="12,0,0,0" />
             </Grid>
             <ItemsControl ItemsSource="{Binding ClientShortcuts}">
               <ItemsControl.ItemTemplate>

@@ -650,7 +650,7 @@ public sealed class NetworkDetailsViewModel(AgentSession session, Action<string>
     public Func<long, string, NetworkBodyResult?>? ImportedBody { get; init; }
 
     Task<NetworkBodyResult> Fetch(long id, string part) =>
-        id < 0 ? Task.FromResult(ImportedBody?.Invoke(id, part) ?? throw new SpyglassProtocolException(-1, "This imported entry has no body in the HAR."))
+        id < 0 ? Task.FromResult(ImportedBody?.Invoke(id, part) ?? throw new SpyglassProtocolException(-1, Loc.T("Net.ImportedNoBody")))
                : session.GetNetworkBodyAsync(id, part);
     string? _responseText;
     string? _json;

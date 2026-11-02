@@ -4,7 +4,17 @@ using System.Text.Json.Serialization;
 namespace Spyglass.App.Core.Settings;
 
 /// <summary>A client action that can be bound to a key. <see cref="Default"/> uses "Mod" for Cmd (macOS) / Ctrl (elsewhere).</summary>
-public sealed record ShortcutAction(string Id, string Area, string Title, string Default);
+public sealed record ShortcutAction(string Id, string Area, string Title, string Default)
+{
+    /// <summary>String-table key of the area heading ("Shortcuts.Area.Network"); <see cref="Area"/>/<see cref="Title"/> stay as stable English fallbacks.</summary>
+    public string AreaKey => "Shortcuts.Area." + Area;
+    public string TitleKey => "Shortcuts.Action." + Id;
+
+    /// <summary>Area in the current UI language (resolved at display time).</summary>
+    public string DisplayArea => Localization.Localizer.Shared.TryGet(AreaKey, out var t) ? t : Area;
+    /// <summary>Action name in the current UI language (resolved at display time).</summary>
+    public string DisplayTitle => Localization.Localizer.Shared.TryGet(TitleKey, out var t) ? t : Title;
+}
 
 /// <summary>A key combination in Arc's textual syntax ("Ctrl+Shift+K", "Escape", "Cmd+E"). Pure data; Avalonia types are not needed here.</summary>
 public readonly record struct Gesture(bool Ctrl, bool Alt, bool Shift, bool Meta, string Key)
@@ -154,10 +164,10 @@ public sealed class ShortcutMap
     public Gesture Default(string id) => ShortcutRegistry.DefaultOf(ShortcutRegistry.Find(id)!, _mac);
     public bool IsCustom(string id) => Get(id) != Default(id);
 
-    /// <summary>Titles of the other actions bound to the same combination (empty when none).</summary>
+    /// <summary>Display titles (current language) of the other actions bound to the same combination (empty when none).</summary>
     public IReadOnlyList<string> ConflictsOf(string id) =>
         Get(id) is not { } g ? [] :
-        ShortcutRegistry.Actions.Where(a => a.Id != id && Get(a.Id) == g).Select(a => a.Title).ToList();
+        ShortcutRegistry.Actions.Where(a => a.Id != id && Get(a.Id) == g).Select(a => a.DisplayTitle).ToList();
 
     /// <summary>The first action bound to this combination, so a key press runs exactly one action even when two conflict.</summary>
     public ShortcutAction? Find(Gesture pressed) => ShortcutRegistry.Actions.FirstOrDefault(a => Get(a.Id) == pressed);

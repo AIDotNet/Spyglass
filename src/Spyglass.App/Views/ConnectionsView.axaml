@@ -36,33 +36,33 @@
 
         <!-- LAN: only while Spyglass was started with "Allow connections from other devices" -->
         <StackPanel Spacing="10" IsVisible="{Binding Lan.IsActive}">
-          <TextBlock Text="Other devices" FontWeight="SemiBold" Margin="0,12,0,0" />
-          <arc:Alert Tone="Warning" IsOpen="True" Title="Not encrypted: trusted networks only"
-                     Content="Other devices connect over plain ws://. The pairing code and all debug data cross the network in clear text. Only /agent is reachable from other machines; MCP stays local." />
+          <TextBlock Text="{loc:T Lan.OtherDevices}" FontWeight="SemiBold" Margin="0,12,0,0" />
+          <arc:Alert Tone="Warning" IsOpen="True" Title="{loc:T Lan.NotEncrypted}"
+                     Content="{loc:T Lan.ConnectionsWarning}" />
           <Border Classes="card">
             <StackPanel Spacing="10">
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="2">
-                  <TextBlock FontWeight="SemiBold" Text="Host to use" />
+                  <TextBlock FontWeight="SemiBold" Text="{loc:T Lan.HostToUse}" />
                   <TextBlock Text="{Binding Lan.AddressesText}" TextWrapping="Wrap" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}"
                              FontSize="{arc:ArcDesignTokenResource TypeSM}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                  <arc:Button Variant="Secondary" Content="Copy" Command="{Binding Lan.CopyHostCommand}" />
-                  <arc:Button Variant="Ghost" Content="Refresh" Command="{Binding Lan.RefreshAddressesCommand}" />
+                  <arc:Button Variant="Secondary" Content="{loc:T Lan.Copy}" Command="{Binding Lan.CopyHostCommand}" />
+                  <arc:Button Variant="Ghost" Content="{loc:T Lan.Refresh}" Command="{Binding Lan.RefreshAddressesCommand}" />
                 </StackPanel>
               </Grid>
               <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Spacing="2">
-                  <TextBlock FontWeight="SemiBold" Text="Pairing code" />
+                  <TextBlock FontWeight="SemiBold" Text="{loc:T Lan.PairingCode}" />
                   <TextBlock Text="{Binding Lan.Code}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXL}" FontWeight="SemiBold" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                  <arc:Button Variant="Secondary" Content="Copy" Command="{Binding Lan.CopyCodeCommand}" />
-                  <arc:Button Variant="Secondary" Content="Regenerate" Command="{Binding Lan.RegenerateCommand}" />
+                  <arc:Button Variant="Secondary" Content="{loc:T Lan.Copy}" Command="{Binding Lan.CopyCodeCommand}" />
+                  <arc:Button Variant="Secondary" Content="{loc:T Lan.Regenerate}" Command="{Binding Lan.RegenerateCommand}" />
                 </StackPanel>
               </Grid>
-              <arc:CodeBlock FileName="Program.cs (other device)" Language="cs" Code="{Binding Lan.Snippet}" />
+              <arc:CodeBlock FileName="{loc:T Lan.OtherDeviceFile}" Language="cs" Code="{Binding Lan.Snippet}" />
             </StackPanel>
           </Border>
         </StackPanel>
