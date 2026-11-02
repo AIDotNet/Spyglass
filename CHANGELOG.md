@@ -3,7 +3,31 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
-## Unreleased
+## 0.2.0
+
+### Added
+- **Design-time preview in the IDEs** (VS Code, Rider, Visual Studio): open an `.axaml` and see it rendered next to the
+  editor without running the app, refreshed from unsaved edits (300 ms). It runs the `Avalonia.Designer.HostApp` previewer that
+  ships in your own Avalonia package, so the version always matches. XAML errors show as squiggles (source `Spyglass Preview`)
+  and in an error bar; the project must be built once (the panel offers a Build button). VS Code and Rider forward mouse,
+  wheel and keyboard input. Visual Studio shows the preview in a floating window with Fit / 25–400% zoom, Ctrl+wheel and a
+  theme switch (Window roots only). Default shortcut **Ctrl+Alt+Shift+P** (Cmd+Alt+Shift+P on macOS) in `.axaml` editors, an *Open Preview to the Side* button/menu entry in each IDE, and an
+  `autoOpen` option. The preview also refreshes when another `.axaml` in the project changes and restarts itself after a rebuild
+  (changes to `App.axaml` and resource dictionaries only show up after a rebuild). Zoom (Fit, 25–400%, Ctrl+wheel), light/dark
+  theme (Window roots) and click-to-jump error bars work the same in all three. Settings: `preview.enabled`, `preview.delay`,
+  `preview.autoOpen`, `preview.zoom`, `preview.theme`. Design: `design/preview/`.
+  The VS Code preview was exercised in a real VS Code; the Rider and Visual Studio previews are covered by tests against the real
+  previewer host but have had little time in the real IDEs yet, so please report problems.
+
+### Fixed
+- **Elements**: the Properties / Layout / Styles lists scroll again (the tab content got unbounded height); the tabs are now
+  header-only with the panels switched next to them.
+- **Large visual trees**: `tree/getChildren` with unlimited depth no longer fails with "CurrentDepth (64) is equal to or larger
+  than the maximum allowed depth" (JSON max depth raised to 1024).
+- **Hot reload keeps what code-behind did to named controls**: local values set in code (`Rail.IsVisible = true`, icon data,
+  tool tips) and routed event handlers added from app code survive a reload instead of silently resetting (buttons stopped
+  responding). A reload that removes an `x:Name` that code-behind still reads is refused with an error naming the use, instead of
+  crashing the app with a null reference.
 
 ### Changed
 - The command palette opens with **Cmd/Ctrl+I** by default (was Cmd/Ctrl+K). Change it in Settings › Keyboard shortcuts;
