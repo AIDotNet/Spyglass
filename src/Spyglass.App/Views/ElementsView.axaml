@@ -1,0 +1,202 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.ElementsView"
+             x:DataType="vm:ElementsViewModel">
+  <!-- Wireframe W2 (design/ux/02-wireframes.md). -->
+  <DockPanel>
+    <arc:ResizablePanels x:Name="Split">
+      <!-- Element tree -->
+      <arc:ResizablePanel Id="tree" Label="Element tree" DefaultSize="42" MinSize="260">
+        <Border Classes="glass" Margin="0,0,5,0" Padding="10">
+        <DockPanel>
+          <!-- Ancestor path (Chrome-style), Arc Breadcrumb -->
+          <arc:Breadcrumb x:Name="Crumbs" DockPanel.Dock="Bottom" Margin="0,8,0,0" Label="Element path" MaxVisibleItems="6"
+                          ItemsSource="{Binding Breadcrumb}">
+            <arc:Breadcrumb.ItemTemplate>
+              <DataTemplate x:DataType="vm:ElementNodeViewModel">
+                <TextBlock Text="{Binding Crumb}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+              </DataTemplate>
+            </arc:Breadcrumb.ItemTemplate>
+          </arc:Breadcrumb>
+          <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,6">
+            <WrapPanel ItemSpacing="6" LineSpacing="6">
+              <arc:SegmentedControl SelectedValue="{Binding TreeKind}">
+                <arc:SegmentedOption Value="visual" Label="Visual" />
+                <arc:SegmentedOption Value="logical" Label="Logical" />
+              </arc:SegmentedControl>
+              <arc:Checkbox Content="Template parts" IsChecked="{Binding ShowTemplateParts}" VerticalAlignment="Center" />
+              <arc:Button Variant="{Binding PickVariant}" Command="{Binding PickCommand}"
+                          ToolTip.Tip="Pick an element in the app (Ctrl+Shift+C / ⌘⇧C)" AutomationProperties.Name="Pick element">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <lucide:LucideIcon Kind="Crosshair" Size="14" />
+                  <TextBlock Text="{Binding PickLabel}" VerticalAlignment="Center" />
+                </StackPanel>
+              </arc:Button>
+              <arc:Button Variant="Ghost" Command="{Binding RefreshCommand}" ToolTip.Tip="Reload the tree" AutomationProperties.Name="Refresh">
+                <lucide:LucideIcon Kind="RefreshCw" Size="14" />
+              </arc:Button>
+            </WrapPanel>
+            <Grid ColumnDefinitions="*,Auto">
+              <arc:SearchField x:Name="Search" Label="Search elements" IsLabelVisible="False"
+                               Placeholder="Type, #Name, .class, or text" Text="{Binding SearchText}" />
+              <TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding SearchStatus}"
+                         FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+            </Grid>
+          </StackPanel>
+          <arc:TreeView x:Name="Tree" Background="Transparent" ItemsSource="{Binding Roots}" SelectedItem="{Binding SelectedNode, Mode=TwoWay}"
+                        ShowIcons="False">
+            <arc:TreeView.ItemTemplate>
+              <DataTemplate x:DataType="vm:ElementNodeViewModel">
+                <TextBlock VerticalAlignment="Center" Opacity="{Binding Opacity}"
+                           FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeSM}">
+                  <Run Text="{Binding Type}" />
+                  <Run Text="{Binding NameText}" Foreground="{arc:ArcDesignTokenResource Accent}" />
+                  <Run Text="{Binding ClassText}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                  <Run Text="{Binding Hint}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                </TextBlock>
+              </DataTemplate>
+            </arc:TreeView.ItemTemplate>
+          </arc:TreeView>
+        </DockPanel>
+        </Border>
+      </arc:ResizablePanel>
+
+      <!-- Details -->
+      <arc:ResizablePanel Id="details" Label="Details" DefaultSize="58" MinSize="360">
+        <Border Classes="glass" Margin="5,0,0,0" Padding="12">
+        <DockPanel DataContext="{Binding Details}" x:DataType="vm:ElementDetailsViewModel">
+          <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="4,0,4,6">
+            <TextBlock Text="{Binding Header}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+            <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}">
+              <Run Text="{Binding Source}" />
+              <Run Text="  " />
+              <Run Text="{Binding DataContext}" />
+            </TextBlock>
+          </StackPanel>
+          <arc:Tabs SelectedIndex="{Binding $parent[UserControl].((vm:ElementsViewModel)DataContext).DetailsTab, FallbackValue=0}">
+            <arc:TabItem Header="Properties">
+              <DockPanel>
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                  <arc:SearchField Label="Filter properties" IsLabelVisible="False" Placeholder="Filter properties" Text="{Binding Filter}" />
+                  <arc:Checkbox Grid.Column="1" Margin="8,0,0,0" Content="Only set" IsChecked="{Binding OnlySet}" VerticalAlignment="Center" />
+                </Grid>
+                <ScrollViewer>
+                  <ItemsControl x:Name="PropertyList" ItemsSource="{Binding Properties}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:PropertyRowViewModel">
+                        <Grid ColumnDefinitions="170,*,96,Auto" Height="32" ToolTip.Tip="{Binding Tooltip}">
+                          <TextBlock VerticalAlignment="Center" Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                                     FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                          <arc:Switch Grid.Column="1" IsVisible="{Binding IsBool}" IsChecked="{Binding BoolValue}" VerticalAlignment="Center" />
+                          <!-- Editable values: compact input. Read-only / computed values: plain text (no input chrome). -->
+                          <arc:Input Grid.Column="1" HorizontalAlignment="Stretch" Size="Small" IsVisible="{Binding IsEditable}" Text="{Binding EditText}"
+                                     Label="{Binding Name}" IsLabelVisible="False" IsInvalid="{Binding HasError}" ToolTip.Tip="{Binding Error}"
+                                     FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                          <TextBlock Grid.Column="1" IsVisible="{Binding IsPlain}" Text="{Binding EditText}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                     TextTrimming="CharacterEllipsis" Foreground="{arc:ArcDesignTokenResource TextSecondary}"
+                                     FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                          <arc:Badge Grid.Column="2" Margin="6,0,0,0" HorizontalAlignment="Right" Content="{Binding Priority}" Tone="{Binding PriorityTone}" Size="Small" VerticalAlignment="Center" />
+                          <arc:Button Grid.Column="3" Margin="4,0,0,0" Variant="Ghost" Content="↺" IsVisible="{Binding IsModified}"
+                                      Command="{Binding ResetCommand}" ToolTip.Tip="Restore the original value" Padding="6,0" MinHeight="22" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </DockPanel>
+            </arc:TabItem>
+
+            <arc:TabItem Header="Layout">
+              <ScrollViewer>
+                <StackPanel Spacing="12" Margin="4">
+                  <!-- Box model (W2-a) -->
+                  <Border Background="{arc:ArcDesignTokenResource WarningSubtle}" CornerRadius="6" Padding="10,6,10,10">
+                    <StackPanel Spacing="4">
+                      <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}"><Run Text="margin  " /><Run Text="{Binding MarginText}" /></TextBlock>
+                      <Border BorderBrush="{arc:ArcDesignTokenResource BorderStrong}" BorderThickness="1" Background="{arc:ArcDesignTokenResource Surface}" Padding="10,6,10,10">
+                        <StackPanel Spacing="4">
+                          <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}"><Run Text="border  " /><Run Text="{Binding BorderText}" /></TextBlock>
+                          <Border Background="{arc:ArcDesignTokenResource SuccessSubtle}" Padding="10,6,10,10">
+                            <StackPanel Spacing="4">
+                              <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}"><Run Text="padding  " /><Run Text="{Binding PaddingText}" /></TextBlock>
+                              <Border Background="{arc:ArcDesignTokenResource AccentSubtle}" Padding="12">
+                                <TextBlock HorizontalAlignment="Center" Text="{Binding SizeText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                              </Border>
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                  <Grid ColumnDefinitions="110,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+                    <TextBlock Text="Bounds" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Column="1" Text="{Binding BoundsText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                    <TextBlock Grid.Row="1" Text="Desired size" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DesiredText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                    <TextBlock Grid.Row="2" Text="Constraints" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ConstraintsText}" TextWrapping="Wrap" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                    <TextBlock Grid.Row="3" Text="Alignment" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AlignmentText}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                  </Grid>
+                </StackPanel>
+              </ScrollViewer>
+            </arc:TabItem>
+
+            <arc:TabItem Header="Styles">
+              <ScrollViewer>
+                <StackPanel Spacing="12" Margin="4">
+                  <TextBlock Text="Classes" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                  <ItemsControl ItemsSource="{Binding Classes}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="6" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><arc:Badge Content="{Binding}" /></DataTemplate></ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Pseudo-classes (force state)" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                  <ItemsControl ItemsSource="{Binding PseudoClasses}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="12" LineSpacing="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:PseudoClassViewModel">
+                        <arc:Checkbox Content="{Binding Name}" IsChecked="{Binding IsActive}" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Applied styles (cascade)" Foreground="{arc:ArcDesignTokenResource TextSecondary}" IsVisible="{Binding HasValueFrames}" />
+                  <arc:Alert Tone="Info" Title="Style sources need the advanced agent: use UseSpyglassAdvanced()" IsOpen="True" IsVisible="{Binding NoValueFrames}" />
+                  <ItemsControl ItemsSource="{Binding Frames}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="8" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:ValueFrameViewModel">
+                        <Border Classes="card" Opacity="{Binding Opacity}">
+                          <StackPanel Spacing="3">
+                            <TextBlock Classes="cardtitle" Text="{Binding Title}" />
+                            <TextBlock Classes="cardmeta" Text="{Binding Meta}" Margin="0,0,0,4" />
+                          <ItemsControl ItemsSource="{Binding Setters}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:SetterViewModel">
+                                <Grid ColumnDefinitions="170,*" Opacity="{Binding Opacity}" Margin="0,1">
+                                  <TextBlock Text="{Binding Property}" TextDecorations="{Binding Decorations}"
+                                             FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                                             Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                                  <TextBlock Grid.Column="1" Text="{Binding Value}" TextDecorations="{Binding Decorations}" TextTrimming="CharacterEllipsis"
+                                             FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                                </Grid>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </ScrollViewer>
+            </arc:TabItem>
+          </arc:Tabs>
+        </DockPanel>
+        </Border>
+      </arc:ResizablePanel>
+    </arc:ResizablePanels>
+  </DockPanel>
+</UserControl>

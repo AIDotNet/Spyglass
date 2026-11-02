@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:S1.AgentApis"
+        x:Class="S1.AgentApis.TestWindow"
+        x:DataType="local:TestViewModel"
+        Width="640" Height="400" Title="Spike S1">
+  <StackPanel x:Name="Root" Margin="16" Spacing="8">
+    <TextBlock x:Name="Title" Text="{Binding Title}" />
+    <!-- Reflection binding with a typo: compiled bindings would reject it at build time,
+         so this is the runtime failure class that still exists in Avalonia 12. -->
+    <TextBlock x:Name="Broken" x:CompileBindings="False" Text="{Binding User.FullNmae}" />
+    <TextBlock x:Name="NullCtx" x:CompileBindings="False" DataContext="{x:Null}" Text="{Binding Anything}" />
+    <Button x:Name="SaveButton" Classes="primary" Content="Save" Width="120" Height="32" />
+    <ComboBox x:Name="Combo" Width="160" SelectedIndex="0">
+      <ComboBoxItem>One</ComboBoxItem>
+      <ComboBoxItem>Two</ComboBoxItem>
+    </ComboBox>
+  </StackPanel>
+</Window>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Wire contract shared by Agent and Client. No Avalonia dependency.
+       netstandard2.0 keeps the door open for the Avalonia 11.2 Basic agent (D1). Spec: design/protocol/. -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net8.0'">true</IsAotCompatible>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 9.0+ needed on every TFM for [JsonStringEnumMemberName]. -->
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+</Project>

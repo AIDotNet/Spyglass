@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.BindingsView"
+             x:DataType="vm:BindingsViewModel">
+  <!-- Wireframe W4: aggregated binding errors, live -->
+  <Border Classes="glass" Padding="16">
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="4,0,0,12">
+        <TextBlock Text="Binding errors" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
+        <arc:Badge Tone="Danger" Content="{Binding Count}" IsVisible="{Binding HasErrors}" VerticalAlignment="Center" />
+      </StackPanel>
+      <Panel>
+        <arc:EmptyState IsVisible="{Binding IsEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Icon="{lucide:LucideGeometry Kind=Link}" Title="No binding errors"
+                        Description="Runtime binding failures (wrong paths, null DataContext, converter exceptions) appear here as they happen." />
+        <ScrollViewer IsVisible="{Binding HasErrors}">
+          <ItemsControl ItemsSource="{Binding Errors}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:BindingErrorRowViewModel">
+                <Border Classes="card">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="3">
+                      <TextBlock Classes="cardtitle" Text="{Binding Title}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                      <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeSM}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                      <TextBlock Classes="cardmeta" Text="{Binding Meta}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top" Margin="12,0,0,0">
+                      <arc:Badge Tone="Danger" Content="{Binding CountText}" Size="Small" VerticalAlignment="Center" />
+                      <arc:Button Variant="Secondary" Size="Small" Content="Show element" Command="{Binding ShowCommand}" IsEnabled="{Binding CanShow}" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </DockPanel>
+  </Border>
+</UserControl>

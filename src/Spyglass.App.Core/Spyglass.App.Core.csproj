@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Client core: the hub that agents connect to (Kestrel: /agent WebSocket, /mcp mounted by Spyglass.Mcp),
+       typed session API, and UI-agnostic view models. No Avalonia dependency, so it is unit-testable and shared
+       by the GUI and the MCP server. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\Spyglass.Protocol\Spyglass.Protocol.csproj" />
+  </ItemGroup>
+</Project>

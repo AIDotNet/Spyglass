@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops the repo-root Directory.Packages.props from applying to spikes. -->
+</Project>

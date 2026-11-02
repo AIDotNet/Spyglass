@@ -1,0 +1,50 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             x:Class="Spyglass.App.App"
+             Name="Spyglass">
+  <!-- Liquid Glass surfaces (D8). Brushes come from Theme/GlassMaterial.cs (derived from Arc tokens). -->
+  <Application.Styles>
+    <Style Selector="Border.glass">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassPanel}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Spy.GlassStroke}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusPanel}" />
+      <Setter Property="BoxShadow" Value="{arc:ArcDesignTokenResource ShadowFloating}" />
+      <Setter Property="ClipToBounds" Value="False" />
+    </Style>
+    <Style Selector="Border.glass.chrome">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassChrome}" />
+      <Setter Property="BoxShadow" Value="{arc:ArcDesignTokenResource ShadowRaised}" />
+    </Style>
+    <!-- The Sidebar's right edge line and the ResizablePanels divider are handled in Theme/GlassDividers.cs: values
+         set inside Arc templates outrank style setters, and the handle type is internal. -->
+
+    <!-- Arc cards nested in glass panels: a lighter glass layer instead of an opaque surface. -->
+    <Style Selector="arc|Card">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassChrome}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Spy.GlassStroke}" />
+    </Style>
+    <!-- Compact inner card for dev-tool lists (Arc's Card is a large marketing card). -->
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassChrome}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Spy.GlassStroke}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+      <Setter Property="Padding" Value="12,9" />
+    </Style>
+    <Style Selector="TextBlock.cardtitle">
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeSM}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="TextBlock.cardmeta">
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource TextMuted}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="Border.glass.pill">
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusPill}" />
+    </Style>
+  </Application.Styles>
+</Application>

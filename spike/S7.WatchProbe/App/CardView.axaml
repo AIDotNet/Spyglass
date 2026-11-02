@@ -1,0 +1,6 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="S7.App.CardView">
+  <StackPanel>
+    <TextBlock x:Name="Title" Text="v1" />
+  </StackPanel>
+</UserControl>

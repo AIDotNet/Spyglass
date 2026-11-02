@@ -1,0 +1,6 @@
+<Project>
+  <!-- Spikes are throwaway prototypes: keep them out of the repo-wide settings (central package management, warnings as errors). -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

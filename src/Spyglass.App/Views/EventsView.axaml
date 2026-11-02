@@ -1,0 +1,209 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.EventsView"
+             x:DataType="vm:EventsViewModel">
+  <!-- Wireframe W3: event types | records | route of the selected record -->
+  <UserControl.Styles>
+    <Style Selector="Border.row">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+      <Setter Property="Padding" Value="8,0" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.row:pointerover">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassChrome}" />
+    </Style>
+    <Style Selector="Border.row.selected">
+      <Setter Property="Background" Value="{arc:ArcDesignTokenResource AccentSubtle}" />
+    </Style>
+    <Style Selector="Border.step">
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+      <Setter Property="Padding" Value="6,4" />
+    </Style>
+    <Style Selector="Border.step.handler">
+      <Setter Property="Background" Value="{arc:ArcDesignTokenResource SuccessSubtle}" />
+    </Style>
+    <Style Selector="TextBlock.cell">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="FontFamily" Value="{arc:ArcDesignTokenResource MonoFontFamily}" />
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+    </Style>
+    <Style Selector="TextBlock.head">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource TextMuted}" />
+    </Style>
+  </UserControl.Styles>
+
+  <arc:ResizablePanels x:Name="Split">
+    <!-- Event types -->
+    <arc:ResizablePanel Id="types" Label="Event types" DefaultSize="22" MinSize="220">
+      <Border Classes="glass" Margin="0,0,5,0" Padding="12">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+            <TextBlock Text="Event types" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" Margin="4,0,0,0" />
+            <arc:SearchField Label="Filter event types" IsLabelVisible="False" Placeholder="Filter event types" Text="{Binding TypeFilter}" />
+          </StackPanel>
+          <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
+            <WrapPanel ItemSpacing="6" LineSpacing="6">
+              <arc:Button Variant="Secondary" Content="Defaults" Command="{Binding DefaultsCommand}" ToolTip.Tip="Click, key and pointer press/release" />
+              <arc:Button Variant="Ghost" Content="All" Command="{Binding AllCommand}" ToolTip.Tip="Check every listed (filtered) type" />
+              <arc:Button Variant="Ghost" Content="None" Command="{Binding NoneCommand}" />
+            </WrapPanel>
+            <TextBlock Text="{Binding TypesSummary}" FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" Margin="4,0,0,0" />
+          </StackPanel>
+          <ScrollViewer>
+            <ItemsControl x:Name="TypeList" ItemsSource="{Binding Types}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:EventTypeViewModel">
+                  <Grid ColumnDefinitions="*,Auto" Height="30" Margin="2,0,8,0" ToolTip.Tip="{Binding Routes}">
+                    <arc:Checkbox Content="{Binding Name}" IsChecked="{Binding IsChecked}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Owner}" Classes="cell" Margin="8,0,0,0"
+                               Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </arc:ResizablePanel>
+
+    <!-- Records -->
+    <arc:ResizablePanel Id="records" Label="Events" DefaultSize="48" MinSize="380">
+      <Border Classes="glass" Margin="5,0,5,0" Padding="12">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="4,0,0,10">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <arc:Button Variant="{Binding RecordVariant}" Command="{Binding RecordCommand}" AutomationProperties.Name="Record or pause">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <lucide:LucideIcon Kind="Circle" Size="14" IsVisible="{Binding IsPaused}" />
+                  <lucide:LucideIcon Kind="Pause" Size="14" IsVisible="{Binding IsRecording}" />
+                  <TextBlock Text="{Binding RecordLabel}" VerticalAlignment="Center" />
+                </StackPanel>
+              </arc:Button>
+              <arc:Button Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="Clear the list" AutomationProperties.Name="Clear">
+                <lucide:LucideIcon Kind="Trash2" Size="14" />
+              </arc:Button>
+              <arc:Badge Tone="Success" Content="● Recording" Size="Small" VerticalAlignment="Center" IsVisible="{Binding IsRecording}" />
+            </StackPanel>
+            <TextBlock Grid.Column="2" Text="{Binding CountText}" VerticalAlignment="Center"
+                       FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+          </Grid>
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="92,140,*,60,*" Margin="8,0,8,4" IsVisible="{Binding HasRecords}">
+            <TextBlock Classes="head" Text="Time" />
+            <TextBlock Classes="head" Grid.Column="1" Text="Event" />
+            <TextBlock Classes="head" Grid.Column="2" Text="Source" />
+            <TextBlock Classes="head" Grid.Column="3" Text="Strategy" />
+            <TextBlock Classes="head" Grid.Column="4" Text="Handled by" />
+          </Grid>
+          <Panel>
+            <arc:EmptyState IsVisible="{Binding IsEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Icon="{lucide:LucideGeometry Kind=Zap}" Title="No events yet" Description="{Binding EmptyDescription}" />
+            <ScrollViewer IsVisible="{Binding HasRecords}">
+              <ItemsControl x:Name="RecordList" ItemsSource="{Binding Records}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:EventRowViewModel">
+                    <Border Classes="row" Classes.selected="{Binding IsSelected}" Tapped="OnRowTapped" DoubleTapped="OnRowDoubleTapped"
+                            ToolTip.Tip="{Binding Title}">
+                      <Grid ColumnDefinitions="92,140,*,60,*">
+                        <TextBlock Classes="cell" Text="{Binding Time}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                        <TextBlock Classes="cell" Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Classes="cell" Grid.Column="2" Text="{Binding Source}" Foreground="{arc:ArcDesignTokenResource Accent}" />
+                        <TextBlock Classes="cell" Grid.Column="3" Text="{Binding Strategy}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                          <lucide:LucideIcon Kind="Check" Size="12" Foreground="{arc:ArcDesignTokenResource Success}" IsVisible="{Binding Handled}" />
+                          <TextBlock Classes="cell" Text="{Binding HandledBy}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Panel>
+        </DockPanel>
+      </Border>
+    </arc:ResizablePanel>
+
+    <!-- Route of the selected record -->
+    <arc:ResizablePanel Id="route" Label="Route" DefaultSize="30" MinSize="260">
+      <Border Classes="glass" Margin="5,0,0,0" Padding="12">
+        <Panel>
+          <arc:EmptyState IsVisible="{Binding NoSelection}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                          Icon="{lucide:LucideGeometry Kind=Route}" Title="No event selected"
+                          Description="Select an event to see the elements it travelled through and which one handled it." />
+          <DockPanel IsVisible="{Binding HasSelection}">
+            <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="4,0,4,12" DataContext="{Binding Selected}" x:DataType="vm:EventRowViewModel">
+              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" />
+              <Grid ColumnDefinitions="84,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                <TextBlock Classes="head" Text="Event" />
+                <TextBlock Classes="cell" Grid.Column="1" Text="{Binding Title}" />
+                <TextBlock Classes="head" Grid.Row="1" Text="Source" />
+                <TextBlock Classes="cell" Grid.Row="1" Grid.Column="1" Text="{Binding Source}" Foreground="{arc:ArcDesignTokenResource Accent}" />
+                <TextBlock Classes="head" Grid.Row="2" Text="Strategy" />
+                <TextBlock Classes="cell" Grid.Row="2" Grid.Column="1" Text="{Binding Strategy}" />
+                <TextBlock Classes="head" Grid.Row="3" Text="Handled by" />
+                <TextBlock Classes="cell" Grid.Row="3" Grid.Column="1" Text="{Binding HandledBy}" />
+              </Grid>
+              <arc:Button Variant="Secondary" HorizontalAlignment="Left" Margin="0,4,0,0"
+                          Command="{Binding $parent[UserControl].((vm:EventsViewModel)DataContext).ShowSourceCommand, FallbackValue={x:Null}}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <lucide:LucideIcon Kind="LocateFixed" Size="14" />
+                  <TextBlock Text="Show element" VerticalAlignment="Center" />
+                </StackPanel>
+              </arc:Button>
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Top" Classes="head" Text="Route" Margin="4,0,0,6" />
+            <ScrollViewer>
+              <ItemsControl ItemsSource="{Binding Selected.Route, FallbackValue={x:Null}}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RouteStepViewModel">
+                    <Grid ColumnDefinitions="22,*">
+                      <!-- rail: a dot per node, a line to the next one -->
+                      <Rectangle Width="2" Margin="0,15,0,-15" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                                 Fill="{arc:ArcDesignTokenResource BorderStrong}" IsVisible="{Binding HasConnector}" />
+                      <Ellipse Width="10" Height="10" Margin="0,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Center"
+                               Fill="{arc:ArcDesignTokenResource Success}" IsVisible="{Binding IsHandler}" />
+                      <Ellipse Width="8" Height="8" Margin="0,11,0,0" VerticalAlignment="Top" HorizontalAlignment="Center"
+                               Fill="{arc:ArcDesignTokenResource TextMuted}" IsVisible="{Binding IsNotHandler}" />
+                      <Border Grid.Column="1" Classes="step" Classes.handler="{Binding IsHandler}" Margin="0,2">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                          <Panel Width="14" VerticalAlignment="Center" ToolTip.Tip="{Binding Phase}">
+                            <lucide:LucideIcon Kind="ArrowDown" Size="12" IsVisible="{Binding IsTunnel}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                            <lucide:LucideIcon Kind="ArrowUp" Size="12" IsVisible="{Binding IsBubble}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                            <lucide:LucideIcon Kind="Dot" Size="12" IsVisible="{Binding IsDirect}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                          </Panel>
+                          <TextBlock Grid.Column="1" Classes="cell" Margin="6,0,0,0" Text="{Binding Label}" />
+                          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                            <arc:Badge Content="source" Size="Small" IsVisible="{Binding IsSource}" />
+                            <arc:Badge Tone="Success" Content="handled" Size="Small" IsVisible="{Binding IsHandler}" />
+                            <arc:Button Variant="Ghost" Padding="4,0" MinHeight="22" Command="{Binding ShowCommand}"
+                                        ToolTip.Tip="Show in Elements" AutomationProperties.Name="Show in Elements">
+                              <lucide:LucideIcon Kind="LocateFixed" Size="12" />
+                            </arc:Button>
+                          </StackPanel>
+                        </Grid>
+                      </Border>
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
+        </Panel>
+      </Border>
+    </arc:ResizablePanel>
+  </arc:ResizablePanels>
+</UserControl>

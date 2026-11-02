@@ -1,0 +1,263 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.ResourcesView"
+             x:DataType="vm:ResourcesViewModel">
+  <!-- Resources page (design/ux/01 Resources): providers | entries + lookup. Glass cards, Arc controls only. -->
+  <UserControl.Styles>
+    <Style Selector="Border.row">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+      <Setter Property="Padding" Value="8,0" />
+      <Setter Property="Height" Value="30" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.row:pointerover">
+      <Setter Property="Background" Value="{DynamicResource Spy.GlassChrome}" />
+    </Style>
+    <Style Selector="Border.row.selected">
+      <Setter Property="Background" Value="{arc:ArcDesignTokenResource AccentSubtle}" />
+    </Style>
+    <Style Selector="TextBlock.cell">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="FontFamily" Value="{arc:ArcDesignTokenResource MonoFontFamily}" />
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+    </Style>
+    <Style Selector="TextBlock.head">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource TextMuted}" />
+    </Style>
+    <Style Selector="Border.swatch">
+      <Setter Property="Width" Value="16" />
+      <Setter Property="Height" Value="16" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Spy.GlassStroke}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+  </UserControl.Styles>
+
+  <arc:ResizablePanels x:Name="Split">
+    <!-- Providers -->
+    <arc:ResizablePanel Id="providers" Label="Providers" DefaultSize="34" MinSize="260">
+      <Border Classes="glass" Margin="0,0,5,0" Padding="10">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="4,0,0,8">
+            <TextBlock Text="Resource providers" FontWeight="SemiBold" FontSize="{arc:ArcDesignTokenResource TypeLG}" VerticalAlignment="Center" />
+            <arc:Button Grid.Column="1" Variant="Ghost" Command="{Binding RefreshCommand}" ToolTip.Tip="Reload the providers" AutomationProperties.Name="Refresh">
+              <lucide:LucideIcon Kind="RefreshCw" Size="14" />
+            </arc:Button>
+          </Grid>
+          <StackPanel DockPanel.Dock="Top" Spacing="2" Margin="4,0,0,8">
+            <arc:Checkbox Content="Include the selected element's resources" IsChecked="{Binding IncludeElement}" IsVisible="{Binding HasContext}" />
+            <TextBlock Text="{Binding ContextText, StringFormat='From element: {0}'}" IsVisible="{Binding ContextText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                       FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                       Foreground="{arc:ArcDesignTokenResource TextMuted}" Margin="2,2,0,0" />
+          </StackPanel>
+          <TextBlock DockPanel.Dock="Bottom" Margin="4,8,0,0" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                     Foreground="{arc:ArcDesignTokenResource TextMuted}"
+                     Text="Resources inside control templates are not listed." />
+          <Panel>
+            <arc:EmptyState IsVisible="{Binding NoProviders}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            Icon="{lucide:LucideGeometry Kind=Package}" Title="No providers yet"
+                            Description="Connect an app, then reload. Select an element on the Elements page to include its own resources." />
+            <arc:Skeleton IsVisible="{Binding IsLoading}" Height="120" Margin="4" VerticalAlignment="Top" />
+            <arc:TreeView x:Name="Tree" Background="Transparent" ItemsSource="{Binding Roots}" SelectedItem="{Binding SelectedProvider, Mode=TwoWay}"
+                          ShowIcons="False" IsVisible="{Binding HasProviders}">
+              <arc:TreeView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ProviderNodeViewModel">
+                  <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" ToolTip.Tip="{Binding Tooltip}">
+                    <TextBlock VerticalAlignment="Center" Text="{Binding Label}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}"
+                               FontSize="{arc:ArcDesignTokenResource TypeSM}" />
+                    <TextBlock VerticalAlignment="Center" Text="{Binding KindText}" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                               Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                    <TextBlock VerticalAlignment="Center" Text="{Binding CountText}" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                               FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" Foreground="{arc:ArcDesignTokenResource Accent}" />
+                  </StackPanel>
+                </DataTemplate>
+              </arc:TreeView.ItemTemplate>
+            </arc:TreeView>
+          </Panel>
+        </DockPanel>
+      </Border>
+    </arc:ResizablePanel>
+
+    <!-- Entries / Lookup -->
+    <arc:ResizablePanel Id="entries" Label="Entries" DefaultSize="66" MinSize="420">
+      <Border Classes="glass" Margin="5,0,0,0" Padding="12">
+        <DockPanel>
+          <arc:Alert DockPanel.Dock="Top" Tone="Danger" IsOpen="True" Title="{Binding Error}" IsVisible="{Binding HasError}" Margin="0,0,0,8" />
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="4,0,4,6">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding SelectedProvider.Label, FallbackValue='Resources'}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontWeight="SemiBold"
+                         TextTrimming="CharacterEllipsis" />
+              <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}">
+                <Run Text="{Binding SelectedProvider.SubText, FallbackValue=''}" /><Run Text="   " /><Run Text="{Binding CountText}" />
+              </TextBlock>
+            </StackPanel>
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding ActiveVariant, StringFormat='theme: {0}'}"
+                       FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+          </Grid>
+          <!-- Plain switch + two panels (arc:Tabs gives its content unbounded height, so the entry list would not scroll). -->
+          <arc:SegmentedControl DockPanel.Dock="Top" HorizontalAlignment="Left" Margin="0,0,0,8" SelectedValue="{Binding TabKey}" AutomationProperties.Name="Resources view">
+            <arc:SegmentedOption Value="entries" Label="Entries" />
+            <arc:SegmentedOption Value="lookup" Label="Lookup" />
+          </arc:SegmentedControl>
+          <Panel>
+            <!-- ================= Entries ================= -->
+            <Panel IsVisible="{Binding ShowEntries}">
+              <DockPanel>
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                  <arc:SearchField Label="Filter keys" IsLabelVisible="False" Placeholder="Filter by key or value" Text="{Binding SearchText}" />
+                  <arc:Button Grid.Column="1" Margin="8,0,0,0" Variant="Ghost" Command="{Binding ResetAllCommand}" IsVisible="{Binding AnyModified}"
+                              ToolTip.Tip="Restore every value Spyglass changed" AutomationProperties.Name="Reset all edits">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <lucide:LucideIcon Kind="Undo2" Size="14" />
+                      <TextBlock Text="Reset all" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </arc:Button>
+                </Grid>
+
+                <!-- Editor for the selected entry -->
+                <Border DockPanel.Dock="Bottom" Classes="card" Margin="0,8,0,0" IsVisible="{Binding HasSelectedEntry}">
+                  <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel Spacing="1">
+                        <TextBlock Classes="cardtitle" Text="{Binding EditorTitle}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                        <TextBlock Classes="cardmeta" Text="{Binding EditorMeta}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                        <arc:Button Variant="Ghost" Command="{Binding ResolveSelectedCommand}" ToolTip.Tip="Where does this key resolve from, and what does it override?"
+                                    AutomationProperties.Name="Resolve">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <lucide:LucideIcon Kind="Route" Size="14" />
+                            <TextBlock Text="Resolve" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </arc:Button>
+                        <arc:Button Variant="Ghost" Command="{Binding ResetEntryCommand}" IsVisible="{Binding SelectedEntry.IsModified}"
+                                    ToolTip.Tip="Restore the original value" AutomationProperties.Name="Reset value">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <lucide:LucideIcon Kind="Undo2" Size="14" />
+                            <TextBlock Text="Reset" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </arc:Button>
+                      </StackPanel>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding CanEditText}">
+                      <arc:ColorPicker x:Name="Picker" Label="Colour" Color="{Binding EditColor, Mode=TwoWay}" IsVisible="{Binding CanEditColor}" VerticalAlignment="Center" />
+                      <arc:Input x:Name="EditInput" Width="320" Size="Small" Text="{Binding EditText, Mode=TwoWay}" Label="Value" IsLabelVisible="False"
+                                 IsInvalid="{Binding HasEditError}"
+                                 FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" FontSize="{arc:ArcDesignTokenResource TypeXS}" />
+                      <arc:Button Variant="Secondary" Size="Small" Content="Apply" Command="{Binding CommitCommand}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding EditError}" IsVisible="{Binding HasEditError}" TextWrapping="Wrap"
+                               FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource Danger}" />
+                    <TextBlock IsVisible="{Binding !CanEditText}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                               Foreground="{arc:ArcDesignTokenResource TextMuted}"
+                               Text="This value cannot be edited live (templates, collections and other objects are read-only). Edits never add or remove keys." />
+                  </StackPanel>
+                </Border>
+
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="26,3*,112,2*,120" Margin="8,0,8,4" IsVisible="{Binding HasEntries}">
+                  <TextBlock Classes="head" Grid.Column="1" Text="Key" />
+                  <TextBlock Classes="head" Grid.Column="2" Text="Type" />
+                  <TextBlock Classes="head" Grid.Column="3" Text="Value" />
+                  <TextBlock Classes="head" Grid.Column="4" Text="Source" />
+                </Grid>
+                <Panel>
+                  <arc:EmptyState IsVisible="{Binding NoEntries}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                  Icon="{lucide:LucideGeometry Kind=Package}" Title="{Binding EmptyEntriesTitle}" Description="{Binding EmptyEntriesText}" />
+                  <arc:EmptyState IsVisible="{Binding NoSelection}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                  Icon="{lucide:LucideGeometry Kind=Package}" Title="Select a provider" Description="Pick a dictionary on the left to see its keys." />
+                  <arc:Skeleton IsVisible="{Binding IsLoadingEntries}" Height="160" Margin="4" VerticalAlignment="Top" />
+                  <ScrollViewer IsVisible="{Binding HasEntries}">
+                    <ItemsControl ItemsSource="{Binding Entries}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:EntryRowViewModel">
+                          <Border Classes="row" Classes.selected="{Binding IsSelected}" Tapped="OnRowTapped" ToolTip.Tip="{Binding SourceTip}">
+                            <Grid ColumnDefinitions="26,3*,112,2*,120">
+                              <!-- The swatch shows the app's colour (data), not a UI token. -->
+                              <Border Classes="swatch" Background="{Binding Swatch}" IsVisible="{Binding HasSwatch}" HorizontalAlignment="Left" />
+                              <Grid Grid.Column="1" ColumnDefinitions="*,Auto" Margin="0,0,8,0">
+                                <TextBlock Classes="cell" Text="{Binding Key}" FontWeight="SemiBold" />
+                                <Ellipse Grid.Column="1" Width="6" Height="6" Margin="6,0,0,0" Fill="{arc:ArcDesignTokenResource Accent}" IsVisible="{Binding IsModified}"
+                                         VerticalAlignment="Center" ToolTip.Tip="Changed by Spyglass" />
+                              </Grid>
+                              <TextBlock Classes="cell" Grid.Column="2" Text="{Binding TypeText}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                              <TextBlock Classes="cell" Grid.Column="3" Text="{Binding ValueText}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" Margin="0,0,8,0" />
+                              <TextBlock Classes="cell" Grid.Column="4" Text="{Binding SourceText}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+                </Panel>
+              </DockPanel>
+            </Panel>
+
+            <!-- ================= Lookup ================= -->
+            <Panel IsVisible="{Binding ShowLookup}">
+              <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+                  <Grid ColumnDefinitions="*,Auto">
+                    <arc:SearchField x:Name="LookupField" Label="Resource key" IsLabelVisible="False" Placeholder="Resource key, e.g. SystemAccentColor" Text="{Binding LookupKey}" />
+                    <arc:Button Grid.Column="1" Margin="8,0,0,0" Variant="Primary" Command="{Binding ResolveCommand}" AutomationProperties.Name="Resolve key">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <lucide:LucideIcon Kind="Route" Size="14" />
+                        <TextBlock Text="Resolve" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </arc:Button>
+                  </Grid>
+                  <WrapPanel ItemSpacing="10" LineSpacing="6">
+                    <arc:SegmentedControl SelectedValue="{Binding LookupVariant}" AutomationProperties.Name="Theme variant">
+                      <arc:SegmentedOption Value="active" Label="Active theme" />
+                      <arc:SegmentedOption Value="Light" Label="Light" />
+                      <arc:SegmentedOption Value="Dark" Label="Dark" />
+                    </arc:SegmentedControl>
+                    <arc:Checkbox Content="{Binding LookupStart}" IsChecked="{Binding LookupFromElement}" IsEnabled="{Binding CanStartAtElement}" VerticalAlignment="Center" />
+                    <arc:Checkbox Content="Show misses" IsChecked="{Binding ShowMisses}" VerticalAlignment="Center" />
+                  </WrapPanel>
+                  <TextBlock Text="{Binding LookupSummary}" IsVisible="{Binding HasLookup}" TextWrapping="Wrap" Margin="2,0,0,0"
+                             FontSize="{arc:ArcDesignTokenResource TypeSM}" />
+                </StackPanel>
+                <Panel>
+                  <arc:EmptyState IsVisible="{Binding !HasLookup}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                  Icon="{lucide:LucideGeometry Kind=Route}" Title="Where does a key resolve from?"
+                                  Description="Type a key, or select an entry and press Resolve. The chain shows every provider searched, nearest first: what the key means for {DynamicResource Key} on that element." />
+                  <ScrollViewer IsVisible="{Binding HasSteps}">
+                    <ItemsControl ItemsSource="{Binding Steps}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LookupStepViewModel">
+                          <Border Classes="row" Opacity="{Binding Opacity}" Cursor="Arrow">
+                            <Grid ColumnDefinitions="64,26,5*,2*,100">
+                              <arc:Badge Content="{Binding StatusText}" Tone="{Binding Tone}" Size="Small" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                              <Border Classes="swatch" Grid.Column="1" Background="{Binding Swatch}" IsVisible="{Binding HasSwatch}" HorizontalAlignment="Left" />
+                              <TextBlock Classes="cell" Grid.Column="2" Text="{Binding Path}" Margin="0,0,8,0" ToolTip.Tip="{Binding Path}" />
+                              <TextBlock Classes="cell" Grid.Column="3" Text="{Binding ValueText}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" Margin="0,0,8,0" />
+                              <TextBlock Classes="cell" Grid.Column="4" Text="{Binding SourceText}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+                </Panel>
+              </DockPanel>
+            </Panel>
+          </Panel>
+        </DockPanel>
+      </Border>
+    </arc:ResizablePanel>
+  </arc:ResizablePanels>
+</UserControl>

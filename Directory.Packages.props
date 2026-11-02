@@ -1,0 +1,31 @@
+<Project>
+  <PropertyGroup>
+    <!-- Exact pins: TKCode.Arc requires Avalonia 12.1.4 exactly (design/research/02), and
+         Spyglass.Agent.Advanced uses [PrivateApi] members that require an exact Avalonia version (D2). -->
+    <AvaloniaVersion>12.1.4</AvaloniaVersion>
+    <ArcVersion>0.3.2-preview.2</ArcVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+
+    <PackageVersion Include="TKCode.Arc" Version="$(ArcVersion)" />
+    <PackageVersion Include="TKCode.Arc.Blocks" Version="$(ArcVersion)" />
+    <PackageVersion Include="TKCode.Arc.Fonts" Version="$(ArcVersion)" />
+    <PackageVersion Include="TKCode.Arc.Icons.Lucide" Version="$(ArcVersion)" />
+    <PackageVersion Include="TKCode.Arc.Themes.Corners" Version="$(ArcVersion)" />
+
+    <PackageVersion Include="System.Text.Json" Version="10.0.14" />
+
+    <PackageVersion Include="ModelContextProtocol" Version="2.3.0" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
+
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             x:Class="Spyglass.App.Views.ConnectionsView"
+             x:DataType="vm:ConnectionsViewModel">
+  <!-- Wireframe W1 on glass -->
+  <Border Classes="glass">
+    <ScrollViewer>
+      <StackPanel MaxWidth="680" Margin="24,36" Spacing="16" HorizontalAlignment="Center">
+        <StackPanel Spacing="16" IsVisible="{Binding NoSessions}">
+          <arc:EmptyState Title="Waiting for an app to connect"
+                          Description="Add the Spyglass agent to your Avalonia app. It connects automatically; press Ctrl+Shift+I (⌘⌥I) in the app to bring Spyglass forward."
+                          Icon="{lucide:LucideGeometry Kind=Telescope}" />
+          <arc:CodeBlock FileName="Program.cs" Language="cs" Code="{Binding AgentSnippet}" />
+        </StackPanel>
+
+        <StackPanel Spacing="10" IsVisible="{Binding HasSessions}">
+          <TextBlock Text="Connected apps" FontWeight="SemiBold" />
+          <ItemsControl ItemsSource="{Binding Main.Sessions}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Spacing="10" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SessionViewModel">
+                <arc:Card Title="{Binding Title}" Description="{Binding Details}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <TextBlock Text="{Binding ListenText}" HorizontalAlignment="Center"
+                   FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+
+        <TextBlock Text="Use with AI coding agents (MCP)" FontWeight="SemiBold" Margin="0,12,0,0" />
+        <arc:CodeBlock FileName="MCP" Language="bash" Code="{Binding McpSnippet}" />
+      </StackPanel>
+    </ScrollViewer>
+  </Border>
+</UserControl>

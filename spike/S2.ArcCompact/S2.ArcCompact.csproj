@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Spike S2: TKCode.Arc compact density + 10k-node TreeView performance.
+       "dotnet run -c Release (shot mode: pass the shot arg)" renders headless and writes PNGs + timings; plain `dotnet run` opens a desktop window. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <PackageReference Include="TKCode.Arc" Version="0.3.2-preview.2" />
+    <PackageReference Include="TKCode.Arc.Blocks" Version="0.3.2-preview.2" />
+    <PackageReference Include="TKCode.Arc.Fonts" Version="0.3.2-preview.2" />
+    <PackageReference Include="TKCode.Arc.Icons.Lucide" Version="0.3.2-preview.2" />
+    <PackageReference Include="TKCode.Arc.Themes.Corners" Version="0.3.2-preview.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,54 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Spyglass.IntegrationTests.TestApp">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="#0562EF" />
+    </Style>
+    <Style Selector="Button.primary:pointerover">
+      <Setter Property="Background" Value="#2B7BF5" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="Red" />
+      <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector="Border.card.highlight">
+      <Setter Property="Background" Value="Green" />
+    </Style>
+    <Style Selector="Border.card:pointerover">
+      <Setter Property="Background" Value="Blue" />
+    </Style>
+    <!-- (additions below keep the line numbers of the styles above stable: tests assert them) -->
+    <Style Selector="Border.swatch">
+      <Style.Resources>
+        <x:Double x:Key="Test.StyleGap">3</x:Double>
+      </Style.Resources>
+    </Style>
+  </Application.Styles>
+  <!-- Resources feature tests: theme dictionaries, merged dictionary, DynamicResource chains. -->
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <Color x:Key="Test.Accent">#0562EF</Color>
+          <SolidColorBrush x:Key="Test.AccentBrush" Color="{DynamicResource Test.Accent}" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <Color x:Key="Test.Accent">#4D8DFF</Color>
+          <SolidColorBrush x:Key="Test.AccentBrush" Color="{DynamicResource Test.Accent}" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+      <x:Double x:Key="Test.Gap">12</x:Double>
+      <Thickness x:Key="Test.Pad">8,4,8,4</Thickness>
+      <x:String x:Key="Test.Title">Spyglass</x:String>
+      <SolidColorBrush x:Key="Test.Brush" Color="#FF8800" />
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary>
+          <x:Double x:Key="Test.Merged">7</x:Double>
+          <x:Double x:Key="Test.Gap">99</x:Double>
+        </ResourceDictionary>
+      </ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

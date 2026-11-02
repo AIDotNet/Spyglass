@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+        xmlns:local="clr-namespace:S2.ArcCompact"
+        x:Class="S2.ArcCompact.MainWindow"
+        x:DataType="local:MainViewModel"
+        Width="1280" Height="800" Title="Spyglass · Spike S2"
+        Background="{arc:ArcDesignTokenResource Background}">
+  <DockPanel>
+    <!-- Status bar -->
+    <Border DockPanel.Dock="Bottom" Height="24" Padding="8,0"
+            Background="{arc:ArcDesignTokenResource SurfaceMuted}"
+            BorderBrush="{arc:ArcDesignTokenResource BorderSubtle}" BorderThickness="0,1,0,0">
+      <TextBlock VerticalAlignment="Center" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                 Foreground="{arc:ArcDesignTokenResource TextSecondary}"
+                 Text="{Binding Status}" />
+    </Border>
+
+    <!-- Left rail -->
+    <arc:Sidebar x:Name="Nav" DockPanel.Dock="Left" IsCollapsed="True" SelectedKey="elements">
+      <arc:SidebarSection>
+        <arc:SidebarItem Key="elements" Label="Elements" Icon="{x:Static arc:ArcIcons.Layers}" />
+        <arc:SidebarItem Key="events" Label="Events" Icon="{x:Static arc:ArcIcons.Zap}" />
+        <arc:SidebarItem Key="bindings" Label="Bindings" Icon="{x:Static arc:ArcIcons.Link}" Badge="3" />
+        <arc:SidebarItem Key="logs" Label="Logs" Icon="{x:Static arc:ArcIcons.FileText}" />
+        <arc:SidebarItem Key="settings" Label="Settings" Icon="{x:Static arc:ArcIcons.Settings}" />
+      </arc:SidebarSection>
+    </arc:Sidebar>
+
+    <!-- Elements page -->
+    <arc:ResizablePanels>
+      <arc:ResizablePanel Id="tree" Label="Element tree" DefaultSize="40" MinSize="240">
+        <DockPanel Margin="8">
+          <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,6">
+            <arc:SegmentedControl SelectedValue="visual" HorizontalAlignment="Left">
+              <arc:SegmentedOption Value="visual" Label="Visual" />
+              <arc:SegmentedOption Value="logical" Label="Logical" />
+            </arc:SegmentedControl>
+            <arc:SearchField x:Name="Search" Size="Small" Label="Search elements" IsLabelVisible="False"
+                             Placeholder="Type, #Name, .class" />
+          </StackPanel>
+          <arc:TreeView x:Name="Tree" ItemsSource="{Binding Roots}" ShowIcons="False">
+            <arc:TreeView.ItemTemplate>
+              <DataTemplate x:DataType="local:Node">
+                <TextBlock VerticalAlignment="Center" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}"
+                           FontSize="{arc:ArcDesignTokenResource TypeSM}">
+                  <Run Text="{Binding Type}" />
+                  <Run Text="{Binding NameText}" Foreground="{arc:ArcDesignTokenResource Accent}" />
+                  <Run Text="{Binding ClassText}" Foreground="{arc:ArcDesignTokenResource TextMuted}" />
+                </TextBlock>
+              </DataTemplate>
+            </arc:TreeView.ItemTemplate>
+          </arc:TreeView>
+        </DockPanel>
+      </arc:ResizablePanel>
+      <arc:ResizablePanel Id="details" Label="Details" DefaultSize="60" MinSize="360">
+        <arc:Tabs Margin="8">
+          <arc:TabItem Header="Properties">
+            <arc:Table x:Name="Props" ItemsSource="{Binding Properties}">
+              <arc:DataTableColumn Header="Property" Key="Name" Binding="{Binding Name}" />
+              <arc:DataTableColumn Header="Value" Key="Value" Binding="{Binding Value}" />
+              <arc:DataTableColumn Header="Source" Key="Source" Binding="{Binding Source}" />
+            </arc:Table>
+          </arc:TabItem>
+          <arc:TabItem Header="Layout" />
+          <arc:TabItem Header="Styles" />
+          <arc:TabItem Header="DataContext" />
+        </arc:Tabs>
+      </arc:ResizablePanel>
+    </arc:ResizablePanels>
+  </DockPanel>
+</Window>

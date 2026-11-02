@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- MCP server for coding agents (design/mcp/). Mounted on the hub at /mcp (Streamable HTTP). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <ProjectReference Include="..\Spyglass.App.Core\Spyglass.App.Core.csproj" />
+  </ItemGroup>
+</Project>

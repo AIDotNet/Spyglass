@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Advanced agent features built on Avalonia [PrivateApi] members (D2): value frames, binding details.
+       Must be released per Avalonia patch version, with an exact Avalonia dependency. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AvaloniaAccessUnstablePrivateApis>true</AvaloniaAccessUnstablePrivateApis>
+    <Avalonia_I_Want_To_Use_Private_Apis_In_Nuget_Package_And_Promise_To_Pin_The_Exact_Avalonia_Version_In_Package_Dependency>true</Avalonia_I_Want_To_Use_Private_Apis_In_Nuget_Package_And_Promise_To_Pin_The_Exact_Avalonia_Version_In_Package_Dependency>
+    <NoWarn>$(NoWarn);AVA3001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Exact version range in the produced package: [12.1.4] -->
+    <PackageReference Include="Avalonia" VersionOverride="[$(AvaloniaVersion)]" />
+    <ProjectReference Include="..\Spyglass.Agent\Spyglass.Agent.csproj" />
+  </ItemGroup>
+</Project>

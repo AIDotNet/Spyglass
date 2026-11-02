@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+        xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+        xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+        xmlns:views="clr-namespace:Spyglass.App.Views"
+        x:Class="Spyglass.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Width="1320" Height="840" MinWidth="980" MinHeight="620"
+        Title="Spyglass"
+        TransparencyLevelHint="AcrylicBlur, Mica, Blur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="40">
+  <!-- Main frame W0 in the Liquid Glass style (D8): OS window blur + tinted layer + floating glass panels. -->
+  <Window.DataTemplates>
+    <DataTemplate DataType="vm:ConnectionsViewModel"><views:ConnectionsView /></DataTemplate>
+    <DataTemplate DataType="vm:ElementsViewModel"><views:ElementsView /></DataTemplate>
+    <DataTemplate DataType="vm:BindingsViewModel"><views:BindingsView /></DataTemplate>
+    <DataTemplate DataType="vm:NetworkViewModel"><views:NetworkView /></DataTemplate>
+    <DataTemplate DataType="vm:LogsViewModel"><views:LogsView /></DataTemplate>
+    <DataTemplate DataType="vm:EventsViewModel"><views:EventsView /></DataTemplate>
+    <DataTemplate DataType="vm:ResourcesViewModel"><views:ResourcesView /></DataTemplate>
+    <DataTemplate DataType="vm:PerformanceViewModel"><views:PerformanceView /></DataTemplate>
+    <DataTemplate DataType="vm:PlaceholderViewModel">
+      <Border Classes="glass">
+        <arc:EmptyState VerticalAlignment="Center" HorizontalAlignment="Center" Title="{Binding Title}" Description="{Binding Description}" />
+      </Border>
+    </DataTemplate>
+  </Window.DataTemplates>
+
+  <Panel>
+    <!-- Debug self-screenshot only: a colourful "desktop" behind the glass (RenderTargetBitmap cannot capture the OS blur). -->
+    <Border x:Name="SelfShotBackdrop" IsVisible="False" />
+    <Panel Background="{DynamicResource Spy.WindowTint}">
+      <DockPanel Margin="10,0,10,10">
+        <!-- Title area: the OS draws the window buttons here; drag to move. -->
+        <Grid x:Name="TitleBar" DockPanel.Dock="Top" Height="40" Background="Transparent">
+          <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"
+                     FontSize="{arc:ArcDesignTokenResource TypeSM}" Foreground="{arc:ArcDesignTokenResource TextSecondary}"
+                     Text="{Binding WindowTitle}" />
+          <!-- Right side on macOS (window buttons are on the left); leave room for caption buttons elsewhere. -->
+          <arc:ThemeSwitcher x:Name="ThemeSwitch" IsIconOnly="True" Variant="Reveal" HorizontalAlignment="Right" VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Status capsule -->
+        <Border DockPanel.Dock="Bottom" Classes="glass chrome pill" Margin="0,10,0,0" Height="30" Padding="14,0" HorizontalAlignment="Left">
+          <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Ellipse Width="7" Height="7" Fill="{arc:ArcDesignTokenResource Success}" IsVisible="{Binding IsConnected}" />
+            <Ellipse Width="7" Height="7" Fill="{arc:ArcDesignTokenResource TextMuted}" IsVisible="{Binding !IsConnected}" />
+            <TextBlock VerticalAlignment="Center" FontSize="{arc:ArcDesignTokenResource TypeXS}"
+                       Foreground="{arc:ArcDesignTokenResource TextSecondary}" Text="{Binding Status}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Floating navigation rail (Blocks Sidebar, D4) -->
+        <Border DockPanel.Dock="Left" Classes="glass chrome" Margin="0,0,10,0" Padding="0,6">
+          <arc:Sidebar x:Name="Nav" IsCollapsed="True" Background="Transparent" SelectedKey="{Binding Page, Mode=TwoWay}">
+            <arc:SidebarSection>
+              <arc:SidebarItem Key="elements" Label="Elements" Icon="{lucide:LucideGeometry Kind=ListTree}" />
+              <arc:SidebarItem Key="events" Label="Events" Icon="{lucide:LucideGeometry Kind=Zap}" />
+              <arc:SidebarItem Key="network" Label="Network" Icon="{lucide:LucideGeometry Kind=Network}" />
+              <arc:SidebarItem Key="resources" Label="Resources" Icon="{lucide:LucideGeometry Kind=Package}" />
+              <arc:SidebarItem Key="bindings" Label="Bindings" Icon="{lucide:LucideGeometry Kind=Link}" />
+              <arc:SidebarItem Key="logs" Label="Logs" Icon="{lucide:LucideGeometry Kind=ScrollText}" />
+              <arc:SidebarItem Key="performance" Label="Performance" Icon="{lucide:LucideGeometry Kind=Activity}" />
+            </arc:SidebarSection>
+            <arc:SidebarSection Header="App">
+              <arc:SidebarItem Key="connections" Label="Connections" Icon="{lucide:LucideGeometry Kind=Plug}" />
+              <arc:SidebarItem Key="settings" Label="Settings" Icon="{lucide:LucideGeometry Kind=Settings}" />
+            </arc:SidebarSection>
+          </arc:Sidebar>
+        </Border>
+
+        <!-- Pages (each lays out its own glass cards); cross-fade between pages -->
+        <TransitioningContentControl Content="{Binding PageContent}">
+          <TransitioningContentControl.PageTransition>
+            <CrossFade Duration="0:0:0.18" />
+          </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
+      </DockPanel>
+    </Panel>
+  </Panel>
+</Window>

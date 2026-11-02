@@ -1,0 +1,320 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:arc="https://github.com/AIDotNet/TKCode.Arc"
+             xmlns:lucide="https://github.com/AIDotNet/TKCode.Arc/lucide"
+             xmlns:vm="clr-namespace:Spyglass.App.ViewModels"
+             xmlns:views="clr-namespace:Spyglass.App.Views"
+             x:Class="Spyglass.App.Views.NetworkView"
+             x:DataType="vm:NetworkViewModel" Focusable="True">
+  <!-- Network panel, wireframe W8; behaviour per design/network/02-chrome-parity.md -->
+  <UserControl.Styles>
+    <Style Selector="Border.row">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="CornerRadius" Value="{arc:ArcDesignTokenResource RadiusControl}" />
+      <Setter Property="Padding" Value="8,0" />
+      <Setter Property="Height" Value="26" />
+    </Style>
+    <Style Selector="Border.row:pointerover"><Setter Property="Background" Value="{arc:ArcDesignTokenResource SurfaceMuted}" /></Style>
+    <Style Selector="Border.row.match"><Setter Property="Background" Value="{arc:ArcDesignTokenResource WarningSubtle}" /></Style>
+    <Style Selector="Border.hcell:pointerover"><Setter Property="Background" Value="{arc:ArcDesignTokenResource SurfaceMuted}" /></Style>
+    <Style Selector="Border.row.selected"><Setter Property="Background" Value="{arc:ArcDesignTokenResource AccentSubtle}" /></Style>
+    <Style Selector="TextBlock.cell">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+    <Style Selector="TextBlock.cell.error"><Setter Property="Foreground" Value="{arc:ArcDesignTokenResource Danger}" /></Style>
+    <Style Selector="TextBlock.head">
+      <Setter Property="FontSize" Value="{arc:ArcDesignTokenResource TypeXS}" />
+      <Setter Property="Foreground" Value="{arc:ArcDesignTokenResource TextMuted}" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+    </Style>
+    <Style Selector="TextBlock.mono"><Setter Property="FontFamily" Value="{arc:ArcDesignTokenResource MonoFontFamily}" /></Style>
+    <Style Selector="lucide|LucideIcon.recording"><Setter Property="Foreground" Value="{arc:ArcDesignTokenResource Danger}" /></Style>
+  </UserControl.Styles>
+
+  <Border Classes="glass" Padding="12">
+    <DockPanel>
+      <!-- Toolbar (Chrome: Record, Clear, Preserve log, Filter, Invert) -->
+      <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="2" Margin="0,0,8,0">
+          <arc:Button Variant="Ghost" Command="{Binding ToggleRecordCommand}" ToolTip.Tip="{Binding RecordTip}" AutomationProperties.Name="Record">
+            <lucide:LucideIcon Kind="Circle" Size="16" Classes.recording="{Binding IsRecording}" />
+          </arc:Button>
+          <arc:Button Variant="Ghost" Command="{Binding ClearCommand}" ToolTip.Tip="Clear" AutomationProperties.Name="Clear">
+            <lucide:LucideIcon Kind="Ban" Size="16" />
+          </arc:Button>
+          <arc:Button Variant="Ghost" Click="OnSearchToggle" ToolTip.Tip="Search across requests (Ctrl+F)" AutomationProperties.Name="Search">
+            <lucide:LucideIcon Kind="Search" Size="16" />
+          </arc:Button>
+          <arc:Button Variant="Ghost" Click="OnImportHar" ToolTip.Tip="Import HAR file… (or drop it on the table)" AutomationProperties.Name="Import HAR">
+            <lucide:LucideIcon Kind="Upload" Size="16" />
+          </arc:Button>
+          <arc:ContextMenu x:Name="ExportMenu" Label="Export HAR">
+            <arc:Button Variant="Ghost" Click="OnExportHar" ToolTip.Tip="Export HAR (sanitized)…" AutomationProperties.Name="Export HAR">
+              <lucide:LucideIcon Kind="Download" Size="16" />
+            </arc:Button>
+          </arc:ContextMenu>
+          <arc:ContextMenu x:Name="SettingsMenu" Label="Network settings">
+            <arc:Button Variant="Ghost" Click="OnSettings" ToolTip.Tip="Network settings" AutomationProperties.Name="Network settings">
+              <lucide:LucideIcon Kind="Settings" Size="16" />
+            </arc:Button>
+          </arc:ContextMenu>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="14" Margin="12,0,0,0" VerticalAlignment="Center">
+          <arc:Checkbox Content="Preserve log" IsChecked="{Binding PreserveLog}" />
+          <arc:Checkbox Content="Invert" IsChecked="{Binding Invert}" />
+        </StackPanel>
+        <arc:SearchField Label="Filter" IsLabelVisible="False" Text="{Binding Filter}"
+                         Placeholder="Filter  (domain:  status-code:  method:  -negate  /regex/)" />
+      </DockPanel>
+
+      <!-- Resource type buttons: click = only this type, Ctrl/Cmd+click = several -->
+      <ItemsControl x:Name="TypeButtons" DockPanel.Dock="Top" ItemsSource="{Binding Types}" Margin="0,0,0,8">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel ItemSpacing="4" LineSpacing="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:TypeToggleViewModel">
+            <arc:Button Variant="{Binding Variant}" Content="{Binding Label}" Padding="10,0" MinHeight="26" Click="OnTypeClick" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <arc:Alert DockPanel.Dock="Top" Tone="Danger" IsOpen="True" IsVisible="{Binding HasNotice}" Title="{Binding Notice}" Margin="0,0,0,8" />
+
+      <!-- Search across requests (Ctrl/Cmd+F): Enter searches headers, payloads and responses; matching rows are highlighted -->
+      <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" IsVisible="{Binding SearchOpen}">
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="10" Margin="10,0,0,0" VerticalAlignment="Center">
+          <arc:Checkbox Content="Match case" IsChecked="{Binding SearchMatchCase}" />
+          <arc:Checkbox Content="Regex" IsChecked="{Binding SearchRegex}" />
+          <TextBlock Text="{Binding SearchStatus}" Classes="head" VerticalAlignment="Center" MinWidth="70" />
+          <arc:Button Variant="Ghost" Click="OnSearchPrev" ToolTip.Tip="Previous match" AutomationProperties.Name="Previous match"><lucide:LucideIcon Kind="ChevronUp" Size="14" /></arc:Button>
+          <arc:Button Variant="Ghost" Click="OnSearchNext" ToolTip.Tip="Next match (Enter)" AutomationProperties.Name="Next match"><lucide:LucideIcon Kind="ChevronDown" Size="14" /></arc:Button>
+          <arc:Button Variant="Ghost" Click="OnSearchClose" ToolTip.Tip="Close (Esc)" AutomationProperties.Name="Close search"><lucide:LucideIcon Kind="X" Size="14" /></arc:Button>
+        </StackPanel>
+        <arc:SearchField x:Name="SearchBox" Label="Search" IsLabelVisible="False" Text="{Binding SearchText}"
+                         Placeholder="Search across requests: headers, payloads, responses  (Enter)" />
+      </DockPanel>
+
+      <!-- Overview (settings gear: Show overview): drag to select a time range, double-click to reset -->
+      <views:NetworkOverviewControl x:Name="Overview" DockPanel.Dock="Top" Height="52" Margin="0,0,0,8" IsVisible="{Binding ShowOverview}"
+                                    Model="{Binding Overview}" SelectionStart="{Binding SelStartMs}" SelectionEnd="{Binding SelEndMs}"
+                                    TrackBrush="{arc:ArcDesignTokenResource SurfaceMuted}" BarBrush="{arc:ArcDesignTokenResource Accent}"
+                                    SelectionBrush="{arc:ArcDesignTokenResource AccentSubtle}" SelectionEdgeBrush="{arc:ArcDesignTokenResource Accent}"
+                                    TextBrush="{arc:ArcDesignTokenResource TextMuted}"
+                                    ToolTip.Tip="Drag to select a time range, double-click to reset" />
+
+      <!-- Status bar (Chrome: N requests │ resources │ Finish) -->
+      <TextBlock DockPanel.Dock="Bottom" Margin="4,8,0,0" Text="{Binding Summary}"
+                 FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+
+      <!-- Details (opens on selection, Esc closes) -->
+      <Border DockPanel.Dock="Right" Width="560" Margin="10,0,0,0" Classes="glass chrome" Padding="10" IsVisible="{Binding HasSelection}">
+        <DockPanel DataContext="{Binding Details}" x:DataType="vm:NetworkDetailsViewModel">
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="2,0,0,6">
+            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Classes="mono" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <arc:Button Grid.Column="1" Variant="Ghost" Click="OnCloseDetails" ToolTip.Tip="Close (Esc)" AutomationProperties.Name="Close details">
+              <lucide:LucideIcon Kind="X" Size="14" />
+            </arc:Button>
+          </Grid>
+          <arc:Tabs>
+            <arc:TabItem Header="Headers">
+              <ScrollViewer>
+                <StackPanel Spacing="10" Margin="2">
+                  <TextBlock Text="General" FontWeight="SemiBold" />
+                  <ItemsControl ItemsSource="{Binding General}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:KeyValueViewModel">
+                        <Grid ColumnDefinitions="150,*" Margin="0,1">
+                          <TextBlock Text="{Binding Key}" Classes="cell" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                          <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Response Headers" FontWeight="SemiBold" />
+                  <ItemsControl ItemsSource="{Binding ResponseHeaders}" ItemTemplate="{StaticResource HeaderRow}" />
+                  <TextBlock Text="Request Headers" FontWeight="SemiBold" />
+                  <arc:Alert Tone="Warning" IsOpen="True" IsVisible="{Binding Provisional}"
+                             Title="Provisional headers are shown. Headers added by the HTTP handler (such as Host, Cookie from CookieContainer, Accept-Encoding) are not included." />
+                  <ItemsControl ItemsSource="{Binding RequestHeaders}" ItemTemplate="{StaticResource HeaderRow}" />
+                </StackPanel>
+              </ScrollViewer>
+            </arc:TabItem>
+            <arc:TabItem Header="Payload">
+              <ScrollViewer>
+                <StackPanel Spacing="10" Margin="2">
+                  <TextBlock Text="Query String Parameters" FontWeight="SemiBold" IsVisible="{Binding HasQuery}" />
+                  <ItemsControl ItemsSource="{Binding QueryParams}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:KeyValueViewModel">
+                        <Grid ColumnDefinitions="150,*" Margin="0,1">
+                          <TextBlock Text="{Binding Key}" Classes="cell mono" />
+                          <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Text="Request Payload" FontWeight="SemiBold" IsVisible="{Binding HasRequestBody}" />
+                  <arc:CodeBlock Code="{Binding RequestBody}" Language="json" FileName="payload" IsVisible="{Binding HasRequestBody}" />
+                </StackPanel>
+              </ScrollViewer>
+            </arc:TabItem>
+            <arc:TabItem Header="Preview">
+              <Panel Margin="2">
+                <arc:JsonViewer Json="{Binding Json}" IsVisible="{Binding IsJson}" ExpandDepth="2" />
+                <Image Source="{Binding Image}" IsVisible="{Binding IsImage}" Stretch="Uniform" MaxHeight="360" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                <ScrollViewer IsVisible="{Binding IsTextPreview}">
+                  <arc:CodeBlock Code="{Binding ResponseText}" Language="{Binding ResponseLanguage}" FileName="preview" />
+                </ScrollViewer>
+              </Panel>
+            </arc:TabItem>
+            <arc:TabItem Header="Response">
+              <ScrollViewer Margin="2">
+                <arc:CodeBlock Code="{Binding ResponseText}" Language="{Binding ResponseLanguage}" FileName="response" ShowLineNumbers="True" />
+              </ScrollViewer>
+            </arc:TabItem>
+            <arc:TabItem Header="Initiator">
+              <ScrollViewer>
+                <StackPanel Spacing="8" Margin="2">
+                  <TextBlock Text="{Binding InitiatorFrame}" FontWeight="SemiBold" Classes="mono" TextWrapping="Wrap" />
+                  <ItemsControl ItemsSource="{Binding Stack}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="x:String">
+                        <SelectableTextBlock Text="{Binding}" FontSize="{arc:ArcDesignTokenResource TypeXS}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </ScrollViewer>
+            </arc:TabItem>
+            <arc:TabItem Header="Timing">
+              <StackPanel Spacing="6" Margin="2">
+                <ItemsControl ItemsSource="{Binding Timing}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:TimingRowViewModel">
+                      <Grid ColumnDefinitions="190,230,*" Height="22">
+                        <TextBlock Text="{Binding Phase}" Classes="cell" />
+                        <Border Grid.Column="1" Height="8" Width="{Binding BarWidth}" HorizontalAlignment="Left" CornerRadius="4"
+                                Background="{arc:ArcDesignTokenResource Accent}" />
+                        <TextBlock Grid.Column="2" Text="{Binding Duration}" Classes="cell mono" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding TimingTotal}" FontWeight="SemiBold" />
+                <TextBlock FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextMuted}">
+                  <Run Text="Remote address  " /><Run Text="{Binding Remote}" />
+                </TextBlock>
+              </StackPanel>
+            </arc:TabItem>
+            <arc:TabItem Header="Cookies">
+              <Panel Margin="2">
+                <arc:EmptyState Title="No cookies" Description="Cookies added by CookieContainer are not visible to Spyglass." IsVisible="{Binding !HasCookies}" />
+                <ItemsControl ItemsSource="{Binding Cookies}" IsVisible="{Binding HasCookies}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:KeyValueViewModel">
+                      <Grid ColumnDefinitions="150,*" Margin="0,1">
+                        <TextBlock Text="{Binding Key}" Classes="cell mono" />
+                        <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Panel>
+            </arc:TabItem>
+          </arc:Tabs>
+        </DockPanel>
+      </Border>
+
+      <!-- Request table (drop a .har file onto it to import) -->
+      <Panel x:Name="TablePanel" Background="Transparent">
+        <arc:Dialog Title="Add custom header column" Description="Show a response header (for example Server or Cache-Control) as a column." IsOpen="{Binding IsAddingHeader}">
+          <arc:Input Label="Header name" Text="{Binding NewHeaderName}" Placeholder="Cache-Control" />
+          <arc:Dialog.Actions>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <arc:Button Variant="Secondary" Content="Cancel" Click="OnAddHeaderCancel" />
+              <arc:Button Content="Add" Click="OnAddHeaderOk" />
+            </StackPanel>
+          </arc:Dialog.Actions>
+        </arc:Dialog>
+        <arc:EmptyState IsVisible="{Binding IsEmpty}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Icon="{lucide:LucideGeometry Kind=Network}" Title="{Binding EmptyTitle}" Description="{Binding EmptyDescription}" />
+        <DockPanel IsVisible="{Binding HasRows}">
+          <arc:ContextMenu x:Name="HeaderMenu" DockPanel.Dock="Top" Label="Columns">
+            <DockPanel Margin="8,0,8,4" x:Name="HeaderRow">
+              <ItemsControl DockPanel.Dock="Right" ItemsSource="{Binding Columns}" ItemTemplate="{StaticResource HeadCell}"
+                            IsVisible="{Binding !HasSelection}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              </ItemsControl>
+              <ContentControl Content="{Binding NameColumn}" ContentTemplate="{StaticResource HeadCell}" />
+            </DockPanel>
+          </arc:ContextMenu>
+          <arc:ContextMenu x:Name="RowMenu" Label="Request actions">
+            <ScrollViewer>
+              <ItemsControl x:Name="RowList" ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:NetworkRowViewModel">
+                    <Border Classes="row" Classes.selected="{Binding IsSelected}" Classes.match="{Binding IsMatch}" Opacity="{Binding Opacity}" ToolTip.Tip="{Binding Url}">
+                      <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                    IsVisible="{Binding !$parent[UserControl].((vm:NetworkViewModel)DataContext).HasSelection}">
+                          <TextBlock Width="50" Text="{Binding IdText}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowId}" />
+                          <TextBlock Width="60" Text="{Binding Method}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowMethod}" />
+                          <TextBlock Width="150" Text="{Binding Status}" Classes="cell" Classes.error="{Binding IsError}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowStatus}" />
+                          <TextBlock Width="74" Text="{Binding Type}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowType}" />
+                          <TextBlock Width="70" Text="{Binding Protocol}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowProtocol}" />
+                          <TextBlock Width="64" Text="{Binding Scheme}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowScheme}" />
+                          <TextBlock Width="150" Text="{Binding Domain}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowDomain}" />
+                          <TextBlock Width="130" Text="{Binding Remote}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowRemote}" />
+                          <TextBlock Width="100" Text="{Binding Connection}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowConnection}" />
+                          <TextBlock Width="150" Text="{Binding Initiator}" Classes="cell" ToolTip.Tip="{Binding InitiatorTip}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowInitiator}" />
+                          <TextBlock Width="66" Text="{Binding Cookies}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowCookies}" />
+                          <TextBlock Width="84" Text="{Binding SetCookies}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowSetCookies}" />
+                          <TextBlock Width="70" Text="{Binding Size}" Classes="cell" ToolTip.Tip="{Binding SizeTip}" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowSize}" />
+                          <TextBlock Width="70" Text="{Binding Time}" Classes="cell" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowTime}" />
+                          <ItemsControl ItemsSource="{Binding CustomCells}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Width="120" Text="{Binding}" Classes="cell" /></DataTemplate></ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Canvas Width="150" Height="10" VerticalAlignment="Center" IsVisible="{Binding $parent[UserControl].((vm:NetworkViewModel)DataContext).ShowWaterfall}">
+                            <StackPanel Orientation="Horizontal" Canvas.Left="{Binding BarLeft}">
+                              <Border Width="{Binding BarWait}" Height="8" CornerRadius="4,0,0,4" Background="{arc:ArcDesignTokenResource AccentSubtle}" />
+                              <Border Width="{Binding BarDownload}" Height="8" CornerRadius="0,4,4,0" Background="{arc:ArcDesignTokenResource Accent}" />
+                            </StackPanel>
+                          </Canvas>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Name}" Classes="cell mono" Classes.error="{Binding IsError}" />
+                      </DockPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </arc:ContextMenu>
+        </DockPanel>
+      </Panel>
+    </DockPanel>
+  </Border>
+
+  <UserControl.Resources>
+    <DataTemplate x:Key="HeadCell" x:DataType="vm:ColumnViewModel">
+      <Border Classes="hcell" Width="{Binding OuterWidth}" IsVisible="{Binding IsVisible}" Background="Transparent" Padding="0,2,8,2"
+              Tag="{Binding}" PointerPressed="OnHeaderPressed">
+        <StackPanel Orientation="Horizontal" Spacing="3">
+          <TextBlock Text="{Binding Title}" Classes="head" Margin="0" TextTrimming="CharacterEllipsis" />
+          <lucide:LucideIcon Kind="ArrowUp" Size="11" IsVisible="{Binding IsAscending}" Foreground="{arc:ArcDesignTokenResource Accent}" VerticalAlignment="Center" />
+          <lucide:LucideIcon Kind="ArrowDown" Size="11" IsVisible="{Binding IsDescending}" Foreground="{arc:ArcDesignTokenResource Accent}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="HeaderRow" x:DataType="vm:HeaderRowViewModel">
+      <Grid ColumnDefinitions="190,*,Auto" Margin="0,1">
+        <TextBlock Text="{Binding Name}" FontSize="{arc:ArcDesignTokenResource TypeXS}" Foreground="{arc:ArcDesignTokenResource TextSecondary}" TextTrimming="CharacterEllipsis" />
+        <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" FontSize="{arc:ArcDesignTokenResource TypeXS}" FontFamily="{arc:ArcDesignTokenResource MonoFontFamily}" />
+        <arc:Button Grid.Column="2" Variant="Ghost" Content="{Binding RevealText}" Command="{Binding RevealCommand}" IsVisible="{Binding IsSensitive}" Padding="6,0" MinHeight="20" />
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
+</UserControl>
