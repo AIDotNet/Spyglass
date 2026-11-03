@@ -44,6 +44,7 @@ public class IdeEndpointTests(AppFixture app) : IAsyncLifetime
         foreach (var c in _cleanup) await c.DisposeAsync();
         await WaitUntil(() => app.Hub.Ide.Connections.Count == 0, "IDE disconnected");
         if (await File.ReadAllTextAsync(SourcePath) != Original) await File.WriteAllTextAsync(SourcePath, Original);
+        await app.SettleHotReloadAsync();   // closing the IDE re-applies the disk text, the restored file triggers the watcher
         await app.Session.ApplyXamlAsync(Uri, Original);
         await app.OnUi(() => { _window.Close(); return 0; });
     }

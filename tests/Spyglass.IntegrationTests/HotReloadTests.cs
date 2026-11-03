@@ -283,6 +283,7 @@ public class HotReloadTests(AppFixture app) : IAsyncLifetime
         {
             app.Hub.HotReload.Reloaded -= On;
             await File.WriteAllTextAsync(SourcePath, Original);
+            await app.SettleHotReloadAsync();   // the watcher's reload of the restored file must not land in a later test
         }
     }
 

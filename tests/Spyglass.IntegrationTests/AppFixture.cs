@@ -60,6 +60,25 @@ public sealed class AppFixture : IAsyncLifetime
         return r;
     }
 
+    /// <summary>
+    /// Waits until the hub has stopped reloading: no reload for <c>quiet</c> (at most 5 s). Tests that write the real
+    /// HotReloadView.axaml, or close an IDE that had it open, start reloads that arrive later (the file watcher debounces,
+    /// FileSystemWatcher events can be late, especially on Windows); without this they land in the middle of the next test.
+    /// </summary>
+    public async Task SettleHotReloadAsync(int quietMs = 600)
+    {
+        var last = DateTime.UtcNow;
+        void On(HotReloadEvent _) => last = DateTime.UtcNow;
+        Hub.HotReload.Reloaded += On;
+        try
+        {
+            var until = DateTime.UtcNow.AddSeconds(5);
+            while (DateTime.UtcNow - last < TimeSpan.FromMilliseconds(quietMs) && DateTime.UtcNow < until)
+                await Task.Delay(50);
+        }
+        finally { Hub.HotReload.Reloaded -= On; }
+    }
+
     public async ValueTask DisposeAsync()
     {
         Spyglass.Agent.SpyglassAgent.Stop();
