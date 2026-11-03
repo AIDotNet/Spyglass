@@ -157,4 +157,24 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand("workbench.action.closeAllEditors");
   for (const t of previewTabs()) await vscode.window.tabGroups.close(t);
   await until("preview process stopped with its panel", async () => !(await state())?.running, 10000);
+
+  // 7. Avalonia XAML language: .axaml is the axaml language (grammar), IntelliSense answers through VS Code's own API.
+  const xdoc = await vscode.workspace.openTextDocument(file);
+  await vscode.window.showTextDocument(xdoc);
+  assert.strictEqual(xdoc.languageId, "axaml");
+  await until("hub offers XAML IntelliSense", () => client.hasXamlLanguage);
+  const complete = async (needle: string, delta: number) => {
+    const at = xdoc.positionAt(xdoc.getText().indexOf(needle) + delta);
+    return (await vscode.commands.executeCommand<vscode.CompletionList>("vscode.executeCompletionItemProvider", xdoc.uri, at, " ")).items
+      .map((i) => (typeof i.label === "string" ? i.label : i.label.label));
+  };
+  const attrs = await until("attribute completion", async () => { const l = await complete('<StackPanel x:Name="Root"', 12); return l.includes("Orientation") && l; }, 90000);
+  for (const set of ["x:Name", "Margin", "Spacing"]) assert.ok(!attrs.includes(set), `${set} is already set`);
+  for (const ro of ["Bounds", "IsEffectivelyEnabled"]) assert.ok(!attrs.includes(ro), `${ro} is read-only`);
+  const paths = await complete("{Binding Title}", "{Binding ".length);
+  assert.ok(paths.includes("Title") && paths.includes("User"), "binding paths from x:DataType: " + paths.join(", "));
+  const hover = await vscode.commands.executeCommand<vscode.Hover[]>("vscode.executeHoverProvider", xdoc.uri,
+    xdoc.positionAt(xdoc.getText().indexOf("Spacing=") + 2));
+  assert.ok(hover.some((h) => h.contents.some((c) => (c as vscode.MarkdownString).value?.includes("StackPanel.Spacing"))), "hover shows the property");
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
 }

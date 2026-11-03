@@ -14,6 +14,14 @@ same behaviour as the VS Code extension (`ide/vscode`), built on the out-of-proc
   wheel, keyboard, text), zooms (Fit/25–400 %), switches Light/Dark for `Window` roots, and shows XAML errors in the
   Error List ("Spyglass Preview") and in a clickable error bar that jumps to the line and column. Independent of the hub.
 
+- **Avalonia XAML language** for `.axaml`: syntax highlighting (elements, property elements, attributes, attached
+  properties, `x:` directives, markup extensions and their arguments, comments, entities) in Visual Studio's markup colors,
+  and **IntelliSense** from your project's own references, so it knows Avalonia, the component libraries you use, and your
+  own controls and view models once built: elements (a library you have not declared yet gets its `xmlns:` added),
+  properties, events, attached properties, enum and color values, markup extensions, `{Binding}` paths from `x:DataType`,
+  resource keys, event handlers, `Setter` properties; completion documentation and hover from the packages' XML docs.
+  Served by the same engine as VS Code, in `spyglass serve` (Spyglass 0.3+).
+
 Requires **Visual Studio 2022 17.14 or later** (Visual Studio 2026 included), Windows x64 or Arm64.
 
 ## Setup
@@ -55,6 +63,23 @@ Dock it by snapping it with Windows (Win+←/→) or on a second monitor.
 - The window opens on the right third of the Visual Studio window and follows it (move, resize, maximize) until you move
   or resize the preview window yourself. With **Open the preview window automatically** on (`previewAutoOpen`), opening an
   `.axaml` shows it (without taking the keyboard from the editor).
+
+### Avalonia XAML language
+
+The extension registers an `axaml` document type for `.axaml` files with two out-of-process parts:
+
+- **Highlighting**: a classification tagger (`AxamlClassificationTagger.cs`) over `AxamlLexer` (in `Spyglass.VisualStudio.Core`,
+  unit-tested). Out-of-process extensions cannot define colors, so XAML constructs use Visual Studio's built-in
+  classifications: elements = *markup node*, attributes and property elements = *markup attribute*, values = *markup
+  attribute value*, attached-property owners and markup extension names = *type*, `x:` directives = *keyword*.
+- **IntelliSense**: a `LanguageServerProvider` (`AxamlLanguageServerProvider.cs`). The LSP server (`AxamlLanguageServer`,
+  Core) runs inside the extension and is handed to Visual Studio through an in-memory pipe; it forwards completion,
+  completion resolve and hover to the hub's `xaml/*` requests (it starts `spyglass serve` like hot reload does). The first
+  completion in a project waits for its types to load (MSBuild; a few seconds) and returns an incomplete list until then.
+
+Both are preview APIs of VisualStudio.Extensibility (`VSEXTPREVIEW_LSP`, `VSEXTPREVIEW_TAGGERS`). If Avalonia's own
+"Avalonia for Visual Studio" extension is installed, it opens `.axaml` in Visual Studio's XML editor; then that editor's
+coloring and Avalonia's IntelliSense apply instead (hot reload and the preview work either way).
 
 ## Settings (Tools › Options › Spyglass)
 

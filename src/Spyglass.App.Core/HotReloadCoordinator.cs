@@ -114,7 +114,8 @@ public sealed class HotReloadCoordinator : IDisposable
             results.Add(e);
             // The agent only notifies reloads it performed; record failures it never saw, and skips ("same content": e.g. an
             // error was fixed by going back to the text that is already live) so status shows the error is gone.
-            if (failedBeforeApply || r.Skipped is not null) Record(e);
+            // A superseded text was never looked at; the newer one reports for it.
+            if (failedBeforeApply || r.Skipped is not null and not "superseded") Record(e);
         }
         return results;
     }

@@ -9,11 +9,20 @@
   "homepage": "https://github.com/AIDotNet/Spyglass/tree/main/ide/vscode",
   "bugs": { "url": "https://github.com/AIDotNet/Spyglass/issues" },
   "engines": { "vscode": "^1.95.0" },
-  "categories": ["Debuggers", "Other"],
+  "categories": ["Programming Languages", "Debuggers", "Other"],
   "keywords": ["avalonia", "xaml", "axaml", "hot reload", "devtools"],
   "main": "./out/src/extension.js",
   "activationEvents": ["workspaceContains:**/*.axaml", "onLanguage:axaml", "onLanguage:xml"],
   "contributes": {
+    "languages": [
+      { "id": "axaml", "aliases": ["Avalonia XAML", "axaml"], "extensions": [".axaml"], "configuration": "./language-configuration.json" }
+    ],
+    "grammars": [
+      { "language": "axaml", "scopeName": "text.xml.axaml", "path": "./syntaxes/axaml.tmLanguage.json" },
+      { "scopeName": "text.xml.axaml.tags.injection", "path": "./syntaxes/axaml.tags.injection.json", "injectTo": ["text.xml.axaml", "source.axaml"] },
+      { "scopeName": "text.xml.axaml.attributes.injection", "path": "./syntaxes/axaml.attributes.injection.json", "injectTo": ["text.xml.axaml", "source.axaml"] },
+      { "scopeName": "text.xml.axaml.values.injection", "path": "./syntaxes/axaml.values.injection.json", "injectTo": ["text.xml.axaml", "source.axaml"] }
+    ],
     "commands": [
       { "command": "spyglass.openPreview", "title": "Open Preview to the Side", "category": "Spyglass", "icon": "$(open-preview)" },
       { "command": "spyglass.toggleHotReload", "title": "Toggle XAML Hot Reload", "category": "Spyglass" },
@@ -67,6 +76,8 @@
     "@types/ws": "8.18.1",
     "@vscode/test-electron": "2.5.2",
     "@vscode/vsce": "3.6.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.2"
   }
 }

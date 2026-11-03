@@ -11,5 +11,6 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Spyglass.Protocol\Spyglass.Protocol.csproj" />
+    <ProjectReference Include="..\Spyglass.XamlLanguage\Spyglass.XamlLanguage.csproj" />
   </ItemGroup>
 </Project>

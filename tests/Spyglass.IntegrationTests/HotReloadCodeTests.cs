@@ -152,7 +152,13 @@ namespace Spyglass.IntegrationTests
                 await Delta(typeof(Spyglass.Generated.SpyglassXamlStamp_testdelta));
                 await WaitUntilAsync(async () => await app.OnUi(() => _view.FindControl<TextBlock>("Subtitle")) is not null, "buffer re-applied");
             }
-            finally { app.Hub.HotReload.ReleaseFromEditor(SourcePath); }
+            finally
+            {
+                // Releasing re-applies the file on disk ~100 ms later (the editor closed: disk wins); let it land here,
+                // not in the next test (it reverted the stamp test's view on Windows CI).
+                app.Hub.HotReload.ReleaseFromEditor(SourcePath);
+                await app.SettleHotReloadAsync();
+            }
         }
 
         static async Task WaitUntil(Func<bool> condition, string what)

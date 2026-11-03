@@ -18,6 +18,12 @@ public static class IdeMethods
     public const string Diagnostics = "xaml/diagnostics";        // H→I ntf
     public const string Status = "hotReload/status";             // H→I ntf
     public const string Reveal = "editor/reveal";                // H→I req
+    // Avalonia XAML IntelliSense (design/xaml-language/README.md), when ide/hello lists the "xamlLanguage" capability.
+    public const string XamlPrepare = "xaml/prepare";            // I→H ntf
+    public const string XamlCompletion = "xaml/completion";      // I→H req
+    public const string XamlHover = "xaml/hover";                // I→H req
+    public const string XamlDocumentation = "xaml/documentation"; // I→H req
+    public const string XamlLanguageCapability = "xamlLanguage";
 }
 
 public static class RpcErrorCodes
@@ -51,6 +57,24 @@ public sealed record HotReloadStatusParams(IReadOnlyList<HotReloadAppStatus> App
 public sealed record EditorRevealParams(string Path, int Line, int Column);
 
 public sealed record EditorRevealResult(bool Ok);
+
+// ----- Avalonia XAML IntelliSense. Offsets are UTF-16 code units into Text. -----
+
+public sealed record XamlPrepareParams(string Path);
+public sealed record XamlCompletionParams(string Path, string Text, int Offset);
+public sealed record XamlTextEdit(int Offset, int Length, string Text);
+
+/// <summary>Kind: element, property, attachedProperty, event, value, markupExtension, namespace, directive, type, resource, name, closingTag, owner, method.</summary>
+public sealed record XamlCompletionItem(
+    string Label, string Kind, string? Detail = null, string? InsertText = null, bool Snippet = false, string? DocId = null,
+    bool Deprecated = false, bool Retrigger = false, string? SortText = null, XamlTextEdit? AdditionalEdit = null);
+
+/// <summary>The items replace Text[From..Offset]. Incomplete: the project's types are still loading.</summary>
+public sealed record XamlCompletionResult(int From, IReadOnlyList<XamlCompletionItem> Items, bool Incomplete = false, string? Message = null);
+public sealed record XamlHoverParams(string Path, string Text, int Offset);
+public sealed record XamlHoverResult(string? Markdown, int From = 0, int To = 0);
+public sealed record XamlDocumentationParams(string Path, string DocId);
+public sealed record XamlDocumentationResult(string? Markdown);
 
 public static class IdeJson
 {

@@ -17,5 +17,6 @@
   "Spyglass.Settings.PreviewDelay": "Milliseconds without typing before the preview updates",
   "Spyglass.Settings.PreviewAutoOpen": "Open the preview window automatically when an .axaml file is opened",
   "Spyglass.Settings.PreviewZoom": "Preview zoom: fit, or a percentage such as 100%",
-  "Spyglass.Settings.PreviewTheme": "Preview theme variant for Window roots: default, light or dark"
+  "Spyglass.Settings.PreviewTheme": "Preview theme variant for Window roots: default, light or dark",
+  "Spyglass.AxamlLanguageServer.DisplayName": "Spyglass: Avalonia XAML IntelliSense"
 }

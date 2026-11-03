@@ -107,6 +107,23 @@ public sealed class XamlBufferSyncTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Saving_sends_a_pending_change_at_once_and_only_once()
+    {
+        _sync.DelayMs = 5000;
+        await ConnectAsync();
+        _sync.Opened(_main, () => "v1", isDirty: false);
+        await _hub.NextDocumentAsync();
+
+        _sync.Changed(_main, () => "v2", isDirty: true);
+        _sync.Saved(_main, () => "v2");
+        var (method, p) = await _hub.NextDocumentAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Equal((IdeMethods.DidChange, "v2"), (method, p.Text));
+
+        _sync.Saved(_main);   // nothing pending: a plain save sends nothing more
+        Assert.True(await _hub.QuietAsync());
+    }
+
+    [Fact]
     public async Task Closing_sends_didClose_and_cancels_a_pending_change()
     {
         await ConnectAsync();

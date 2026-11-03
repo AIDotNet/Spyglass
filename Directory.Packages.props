@@ -23,6 +23,7 @@
     <PackageVersion Include="TKCode.Arc.Themes.Corners" Version="$(ArcVersion)" />
 
     <PackageVersion Include="System.Text.Json" Version="10.0.14" />
+    <PackageVersion Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
 
     <PackageVersion Include="ModelContextProtocol" Version="2.3.0" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />

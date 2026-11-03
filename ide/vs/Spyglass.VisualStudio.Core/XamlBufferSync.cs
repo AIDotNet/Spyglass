@@ -115,7 +115,8 @@ public sealed class XamlBufferSync : IDisposable
             d.IsDirty = false;
             if (!_enabled) return;
         }
-        if (DelayMs <= 0 && _client.CanReload(path)) Send(key);
+        // A save sends a pending edit now instead of waiting out the typing delay.
+        if ((DelayMs <= 0 || _debounce.Cancel(key)) && _client.CanReload(path)) Send(key);
     }
 
     public void Closed(string path)

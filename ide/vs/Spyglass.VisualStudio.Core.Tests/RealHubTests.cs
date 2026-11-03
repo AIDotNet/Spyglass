@@ -219,3 +219,78 @@ public sealed class RealHubTests(RealHubFixture hub)
         catch { return null; }
     }
 }
+
+/// <summary>Visual Studio's IntelliSense path for real: LSP client → <see cref="Language.AxamlLanguageServer"/> → HubClient → spyglass serve.</summary>
+[Collection("realhub")]
+public sealed class RealHubLanguageTests(RealHubFixture hub)
+{
+    [Fact]
+    public async Task Lsp_completion_and_hover_come_from_the_samples_real_project()
+    {
+        if (hub.SkipReason is { } skip) Assert.Skip(skip);
+        await using var client = new HubClient(new HubClientOptions
+        {
+            Port = RealHubFixture.Port, Home = hub.Home, Ide = "vs", Version = "test", AutoStart = false,
+            WorkspaceFolders = () => [Path.GetDirectoryName(hub.MainWindow)!],
+        });
+        client.Start();
+        await Wait.UntilAsync(() => client.HasXamlLanguage, "the hub offers xamlLanguage", 30000);
+
+        var toServer = new System.IO.Pipelines.Pipe();
+        var toClient = new System.IO.Pipelines.Pipe();
+        using var stop = new CancellationTokenSource();
+        var server = new Language.AxamlLanguageServer(client).RunAsync(toServer.Reader.AsStream(), toClient.Writer.AsStream(), stop.Token);
+        var input = toServer.Writer.AsStream();
+        var output = toClient.Reader.AsStream();
+        var id = 0;
+        async Task<System.Text.Json.Nodes.JsonNode?> Request(string method, System.Text.Json.Nodes.JsonNode p)
+        {
+            var me = ++id;
+            await Language.LspFraming.WriteAsync(input, new() { ["jsonrpc"] = "2.0", ["id"] = me, ["method"] = method, ["params"] = p });
+            while (true)
+            {
+                var m = await Language.LspFraming.ReadAsync(output, CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(30));
+                if (m?["id"]?.GetValue<int>() == me) return m["result"];
+            }
+        }
+
+        var text = await File.ReadAllTextAsync(hub.MainWindow);   // read only
+        var uri = new Uri(hub.MainWindow).AbsoluteUri;
+        await Request("initialize", new System.Text.Json.Nodes.JsonObject { ["capabilities"] = new System.Text.Json.Nodes.JsonObject() });
+        await Language.LspFraming.WriteAsync(input, new() { ["jsonrpc"] = "2.0", ["method"] = "textDocument/didOpen", ["params"] = new System.Text.Json.Nodes.JsonObject
+        {
+            ["textDocument"] = new System.Text.Json.Nodes.JsonObject { ["uri"] = uri, ["languageId"] = "axaml", ["version"] = 1, ["text"] = text },
+        } });
+
+        // Attributes of <StackPanel x:Name="Root" …>: the position just after the element name and its space.
+        var at = text.IndexOf("<StackPanel x:Name=\"Root\"", StringComparison.Ordinal) + "<StackPanel ".Length;
+        var line = text[..at].Count(c => c == '\n');
+        var character = at - (text.LastIndexOf('\n', at - 1) + 1);
+        var position = new System.Text.Json.Nodes.JsonObject
+        {
+            ["textDocument"] = new System.Text.Json.Nodes.JsonObject { ["uri"] = uri },
+            ["position"] = new System.Text.Json.Nodes.JsonObject { ["line"] = line, ["character"] = character },
+        };
+        List<string> labels = [];
+        await Wait.UntilAsync(async () =>
+        {
+            var r = await Request("textDocument/completion", position.DeepClone());
+            labels = r?["items"]?.AsArray().Select(i => i!["label"]!.GetValue<string>()).ToList() ?? [];
+            return labels.Contains("Orientation");
+        }, "completion lists StackPanel.Orientation (the project's types load first)", 120000);
+        Assert.DoesNotContain("Spacing", labels);   // already set on that element
+        Assert.DoesNotContain("Bounds", labels);    // read-only
+
+        var hover = await Request("textDocument/hover", new System.Text.Json.Nodes.JsonObject
+        {
+            ["textDocument"] = new System.Text.Json.Nodes.JsonObject { ["uri"] = uri },
+            ["position"] = new System.Text.Json.Nodes.JsonObject { ["line"] = line, ["character"] = character - 4 },   // inside "StackPanel"
+        });
+        Assert.Contains("Avalonia.Controls.StackPanel", hover!["contents"]!["value"]!.GetValue<string>());
+
+        stop.Cancel();
+        await toServer.Writer.CompleteAsync();
+        await server.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(text, await File.ReadAllTextAsync(hub.MainWindow));
+    }
+}

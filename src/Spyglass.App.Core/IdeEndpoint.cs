@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Spyglass.Protocol;
 using Spyglass.Protocol.Messages;
+using Spyglass.XamlLanguage;
 
 namespace Spyglass.App.Core;
 
@@ -34,6 +35,7 @@ public sealed class IdeEndpoint : IAsyncDisposable
     readonly ConcurrentDictionary<IdeConnection, byte> _ides = new();
     string? _tokenFile;
     int _statusQueued;
+    readonly XamlLanguageService _xaml = new();
 
     internal IdeEndpoint(SpyglassHub hub)
     {
@@ -122,8 +124,13 @@ public sealed class IdeEndpoint : IAsyncDisposable
             _ides[conn] = 0;
             ConnectionsChanged?.Invoke();
             _ = SendStatusSoonAsync(conn);   // after the hello response is on the wire
-            return Task.FromResult(new IdeHelloResult(SpyglassProtocol.Version, _hub.Port, [Capabilities.HotReload]));
+            return Task.FromResult(new IdeHelloResult(SpyglassProtocol.Version, _hub.Port, [Capabilities.HotReload, Capabilities.XamlLanguage]));
         });
+        // Avalonia XAML IntelliSense (design/xaml-language/README.md): any .axaml the IDE has, hot-reloadable or not.
+        peer.OnNotification<XamlPrepareParams>(Methods.XamlPrepare, p => { if (ide is not null) _xaml.Prepare(p.Path); });
+        peer.Handle<XamlCompletionParams, XamlCompletionResult>(Methods.XamlCompletion, (p, ct) => { Authorized(ide); return _xaml.CompleteAsync(p, ct); });
+        peer.Handle<XamlHoverParams, XamlHoverResult>(Methods.XamlHover, (p, ct) => { Authorized(ide); return _xaml.HoverAsync(p, ct); });
+        peer.Handle<XamlDocumentationParams, XamlDocumentationResult>(Methods.XamlDocumentation, (p, ct) => { Authorized(ide); return _xaml.DocumentationAsync(p, ct); });
         peer.OnNotification<XamlDocumentParams>(Methods.XamlDidOpen, p =>
         {
             if (ide is null) return;
@@ -154,6 +161,11 @@ public sealed class IdeEndpoint : IAsyncDisposable
                 ConnectionsChanged?.Invoke();
             }
         }
+    }
+
+    static void Authorized(IdeConnection? ide)
+    {
+        if (ide is null) throw new SpyglassProtocolException(ErrorCodes.Unauthorized, "Send ide/hello first.");
     }
 
     // ---------- push ----------
@@ -213,6 +225,7 @@ public sealed class IdeEndpoint : IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
+        _xaml.Dispose();
         if (_tokenFile is not null) try { File.Delete(_tokenFile); } catch { /* best effort */ }
         return ValueTask.CompletedTask;
     }

@@ -52,6 +52,14 @@ internal sealed class XamlReloader
 
     readonly Dictionary<string, GoodText> _lastGood = new();
     readonly SemaphoreSlim _gate = new(1, 1);
+    readonly Dictionary<(string Uri, HotReloadSource Source), int> _arrivals = [];   // UI thread only
+    int _warmupStarted;
+
+    /// <summary>The runtime compiler keeps unsynchronized statics: the background warm-up and UI-thread compiles take turns.</summary>
+    static readonly object CompilerLock = new();
+
+    /// <summary><see cref="HotReloadResult.Skipped"/> of an apply that a newer text for the same document replaced before it ran.</summary>
+    public const string Superseded = "superseded";
 
     /// <summary>Objects this reloader created for classless documents (runtime-compiled objects carry no source path).</summary>
     readonly ConditionalWeakTable<object, string> _origins = new();
@@ -66,9 +74,15 @@ internal sealed class XamlReloader
         var doc = SpyglassHotReload.Find(uri)
             ?? throw new SpyglassProtocolException(ErrorCodes.XamlDocumentUnknown, $"No XAML document '{uri}' is compiled into this app.");
 
+        // Typing sends a new text every few hundred ms; if a newer one for this document from the same source (the editor,
+        // a dotnet watch stamp) is already waiting, this one is stale. Texts from different sources never skip each other.
+        var key = (doc.Uri.ToLowerInvariant(), source);
+        var ticket = _arrivals[key] = _arrivals.GetValueOrDefault(key) + 1;
         await _gate.WaitAsync();
         try
         {
+            if (_arrivals[key] != ticket)
+                return new HotReloadResult(doc.Uri, true, 0, 0, [], source, version, Superseded);
             var dependents = new List<HotReloadResult>();
             var result = await ApplyCoreAsync(doc, xaml, source, version, force: false, [doc.Uri], dependents);
             if (result.Skipped is null) Applied?.Invoke(result);
@@ -111,6 +125,7 @@ internal sealed class XamlReloader
         var config = Config(doc, diagnostics);
         var applied = 0;
         var slice = Stopwatch.StartNew();
+        Action<object>? populate = null;   // compiled by the first instance's Load, reused for the others (EmittedXaml)
 
         foreach (var instance in instances)
         {
@@ -118,7 +133,13 @@ internal sealed class XamlReloader
             var code = instance is StyledElement se2 ? CaptureCode(se2, last.Text, doc) : null;
             try
             {
-                Populate(instance, doc, xaml, last.Text, config);
+                if (populate is not null) Populate(instance, last.Text, populate);
+                else
+                {
+                    var mark = EmittedXaml.Mark();
+                    Populate(instance, last.Text, o => LoadWithIncludes(doc, o, xaml, config));
+                    populate = EmittedXaml.Find(mark, type);
+                }
             }
             catch (Exception ex)
             {
@@ -147,7 +168,7 @@ internal sealed class XamlReloader
             }
         }
 
-        if (!typeof(Application).IsAssignableFrom(type)) InstallOverride(type, doc, xaml);
+        if (!typeof(Application).IsAssignableFrom(type)) InstallOverride(type, doc, xaml, populate);
         _lastGood[doc.Uri] = new GoodText(xaml, hash);
         if (applied == 0) diagnostics.Add(new XamlDiagnostic(XamlDiagnosticSeverity.Info, $"No live {type.Name}; new instances will use this XAML."));
         return Result(true, applied, diagnostics);
@@ -313,8 +334,11 @@ internal sealed class XamlReloader
                     queue.Enqueue((inc, t));
                 }
         }
-        if (group.Count == 1) return AvaloniaRuntimeXamlLoader.Load(group[0], config);
-        return AvaloniaRuntimeXamlLoader.LoadGroup(group, config)[0]!;
+        lock (CompilerLock)
+        {
+            if (group.Count == 1) return AvaloniaRuntimeXamlLoader.Load(group[0], config);
+            return AvaloniaRuntimeXamlLoader.LoadGroup(group, config)[0]!;
+        }
     }
 
     GoodText LastGood(RegisteredDocument doc)
@@ -339,7 +363,7 @@ internal sealed class XamlReloader
     };
 
     /// <summary>Steps 3–5 of design §4.3: undo the previous root attributes, clear styles/resources, populate.</summary>
-    void Populate(AvaloniaObject instance, RegisteredDocument doc, string xaml, string previous, RuntimeXamlLoaderConfiguration config)
+    static void Populate(AvaloniaObject instance, string previous, Action<object> populate)
     {
         RootReset.Undo(instance, previous);
         switch (instance)
@@ -353,7 +377,7 @@ internal sealed class XamlReloader
                 if (se is Control c) Clear(c.Resources);
                 break;
         }
-        LoadWithIncludes(doc, instance, xaml, config);
+        populate(instance);
     }
 
     /// <summary>Re-populating only adds: merged and theme dictionaries would pile up otherwise.</summary>
@@ -371,7 +395,7 @@ internal sealed class XamlReloader
         {
             // The failed text may have partly applied root attributes; undo both before restoring.
             try { RootReset.Undo(instance, failed); } catch { /* malformed: nothing of it was applied */ }
-            Populate(instance, doc, good, good, Config(doc, []));
+            Populate(instance, good, o => LoadWithIncludes(doc, o, good, Config(doc, [])));
             if (instance is StyledElement se) RefreshNamedFields(se);
             return true;
         }
@@ -468,9 +492,10 @@ internal sealed class XamlReloader
 
     /// <summary>
     /// Points the type's XamlIl populate override at the new XAML. The delegate must never throw (that would break every
-    /// constructor, R3e): on failure it runs the compiled XAML through the trampoline instead (R3g).
+    /// constructor, R3e): on failure it runs the compiled XAML through the trampoline instead (R3g). New instances reuse
+    /// <paramref name="populate"/> (no compile per instance); without it the first new instance compiles and captures one.
     /// </summary>
-    void InstallOverride(Type type, RegisteredDocument doc, string xaml)
+    void InstallOverride(Type type, RegisteredDocument doc, string xaml, Action<object>? populate)
     {
         var field = type.GetField("!XamlIlPopulateOverride", Static);
         var trampoline = type.GetMethod("!XamlIlPopulateTrampoline", Static);
@@ -479,7 +504,16 @@ internal sealed class XamlReloader
         Action<object>? self = null;
         self = o =>
         {
-            try { LoadWithIncludes(doc, o, xaml, Config(doc, [])); }
+            try
+            {
+                if (populate is not null) populate(o);
+                else
+                {
+                    var mark = EmittedXaml.Mark();
+                    LoadWithIncludes(doc, o, xaml, Config(doc, []));
+                    populate = EmittedXaml.Find(mark, type);
+                }
+            }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[Spyglass] hot reload: new {type.Name} falls back to compiled XAML: {ex.Message}");
@@ -490,6 +524,44 @@ internal sealed class XamlReloader
         };
         field.SetValue(null, self);
     }
+
+    // ---------- warm-up ----------
+
+    /// <summary>
+    /// The first runtime compile in a process costs ~0.5 s (type system, xmlns scan, JIT of XamlX); pay it in the background
+    /// as soon as a hub connects instead of on the first edit. The content of a DataTemplate is compiled but not run, so no
+    /// control is created off the UI thread. Any thread; runs once per process.
+    /// </summary>
+    public void StartWarmup()
+    {
+        if (SpyglassHotReload.UnavailableReason() is not null || SpyglassHotReload.Documents.FirstOrDefault() is not { } doc) return;
+        if (Interlocked.Exchange(ref _warmupStarted, 1) == 1) return;
+        _ = Task.Run(() =>
+        {
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                lock (CompilerLock) AvaloniaRuntimeXamlLoader.Load(new RuntimeXamlLoaderDocument(new Uri("avares://Spyglass.Warmup/Warmup.axaml"), WarmupXaml),
+                    new RuntimeXamlLoaderConfiguration { LocalAssembly = doc.Assembly, UseCompiledBindingsByDefault = doc.CompiledBindings });
+                Debug.WriteLine($"[Spyglass] hot reload: XAML compiler warmed up in {sw.ElapsedMilliseconds} ms");
+            }
+            catch (Exception ex) { Debug.WriteLine($"[Spyglass] hot reload: warm-up failed (harmless): {ex.Message}"); }
+        });
+    }
+
+    const string WarmupXaml = """
+        <ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+          <DataTemplate x:Key="SpyglassWarmup">
+            <Border Padding="4" Background="Transparent">
+              <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="{ReflectionBinding Title}" Margin="0,0,4,0" />
+                <Button Content="warm" HorizontalAlignment="Left" />
+                <Grid ColumnDefinitions="Auto,*"><TextBox Grid.Column="1" /></Grid>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ResourceDictionary>
+        """;
 
     static string Hash(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 }

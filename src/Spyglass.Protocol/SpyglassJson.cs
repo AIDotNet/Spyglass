@@ -26,6 +26,13 @@ namespace Spyglass.Protocol;
 [JsonSerializable(typeof(HotReloadStatusParams))]
 [JsonSerializable(typeof(EditorRevealParams))]
 [JsonSerializable(typeof(EditorRevealResult))]
+[JsonSerializable(typeof(XamlPrepareParams))]
+[JsonSerializable(typeof(XamlCompletionParams))]
+[JsonSerializable(typeof(XamlCompletionResult))]
+[JsonSerializable(typeof(XamlHoverParams))]
+[JsonSerializable(typeof(XamlHoverResult))]
+[JsonSerializable(typeof(XamlDocumentationParams))]
+[JsonSerializable(typeof(XamlDocumentationResult))]
 [JsonSerializable(typeof(Empty))]
 // session
 [JsonSerializable(typeof(HelloParams))]
