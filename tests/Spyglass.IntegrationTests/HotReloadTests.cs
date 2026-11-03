@@ -197,6 +197,43 @@ public class HotReloadTests(AppFixture app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task One_compile_per_edit_whatever_the_number_of_instances()
+    {
+        // Types the runtime XAML compiler emitted: a compile per instance would grow this with the instance count.
+        async Task<int> EmittedBy(Func<Task> apply)
+        {
+            var before = await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Mark);
+            await apply();
+            return await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Mark) - before;
+        }
+        var extra = await app.OnUi(() =>
+        {
+            var panel = new StackPanel();
+            for (var i = 0; i < 4; i++) panel.Children.Add(new HotReloadView { DataContext = new HotReloadViewModel() });
+            var w = new Window { Content = panel };
+            w.Show();
+            return w;
+        });
+        try
+        {
+            var five = await EmittedBy(async () => Assert.Equal(5, (await app.Session.ApplyXamlAsync(Uri, Edit("""Content="Go" """, """Content="Five" """))).Instances));
+            await app.OnUi(() => { extra.Close(); return 0; });
+            var one = await EmittedBy(async () => Assert.Equal(1, (await app.Session.ApplyXamlAsync(Uri, Edit("""Content="Go" """, """Content="One" """))).Instances));
+            Assert.True(one > 0);
+            Assert.Equal(one, five);
+
+            // New instances after the reload reuse the compiled XAML too.
+            var created = await EmittedBy(() => app.OnUi(() =>
+            {
+                for (var i = 0; i < 10; i++) Assert.Equal("One", new HotReloadView().FindControl<Button>("Go")!.Content);
+                return 0;
+            }));
+            Assert.Equal(0, created);
+        }
+        finally { await app.OnUi(() => { extra.Close(); return 0; }); }
+    }
+
+    [Fact]
     public async Task Changing_xclass_requires_restart()
     {
         var r = await app.Session.ApplyXamlAsync(Uri, Edit("x:Class=\"Spyglass.IntegrationTests.HotReloadView\"", "x:Class=\"Spyglass.IntegrationTests.Other\""));

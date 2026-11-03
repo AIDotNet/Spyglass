@@ -27,6 +27,7 @@ internal sealed class HotReloadFeature : IAgentFeature, IConnectionFeature
             _peers.RemoveAll(w => !w.TryGetTarget(out var p) || !p.IsOpen);
             _peers.Add(new WeakReference<JsonRpcPeer>(connection.Peer));
         }
+        _reloader.StartWarmup();   // a hub is listening: hot reload is likely, take the cold compile off the first edit
         connection.Peer.Handle<Empty, HotReloadManifest>(Methods.HotReloadGetManifest, (_, _) =>
             Task.FromResult(SpyglassHotReload.Manifest()));
         connection.Peer.Handle<HotReloadApplyParams, HotReloadResult>(Methods.HotReloadApply, (p, _) =>

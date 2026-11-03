@@ -53,7 +53,7 @@ public sealed record XamlDiagnostic(XamlDiagnosticSeverity Severity, string Mess
 /// <param name="Ok">The new XAML is live (compiled and applied to every live instance, and installed for new ones).</param>
 /// <param name="Instances">Live instances that were re-populated.</param>
 /// <param name="Ms">Wall time on the UI thread.</param>
-/// <param name="Skipped">Set when nothing was done, e.g. "same content".</param>
+/// <param name="Skipped">Set when nothing was done: "same content", or "superseded" (a newer text for the document arrived before this one ran).</param>
 /// <param name="RestartRequired">The change cannot be applied in place (root type or x:Class changed…).</param>
 /// <param name="RolledBack">A runtime error happened while applying; instances were restored from the last good XAML.</param>
 public sealed record HotReloadResult(
