@@ -3,6 +3,37 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
+## Unreleased
+
+### Added
+- **Avalonia XAML syntax highlighting in VS Code**: `.axaml` files are the `axaml` language with XAML-aware colors on top of
+  VS Code's XML grammar: markup extensions (`{Binding Path, Mode=TwoWay, Converter={StaticResource X}}`, nested, with
+  `$parent`/`#name`), property elements (`<Grid.RowDefinitions>`), attached properties (`Grid.Row`), `x:` directives, `{}`
+  escapes and `using:`/`clr-namespace:` URIs. Uses the same language id as Avalonia's own extension and also colors on top of its
+  grammar when both are installed. Design: `design/xaml-language/`.
+- **Avalonia XAML IntelliSense in VS Code**, from your project's real references, so component libraries work too: elements
+  (including those of libraries you have not declared yet: picking one adds the library's `xmlns`), property elements, closing
+  tags, properties/events/attached properties, `x:` directives, values (enums, booleans, named colors, static instances),
+  markup extensions and their arguments, `{Binding}` paths from `x:DataType`, `{TemplateBinding}` from the template's target,
+  `StaticResource`/`DynamicResource` keys from the project's `.axaml` files, `ElementName`, event handlers from the
+  code-behind, `Setter` properties from the style's selector, `xmlns` URIs; hover and completion documentation come from the
+  packages' XML docs. Served by `spyglass serve` (new `xaml/completion`, `xaml/hover`, `xaml/documentation`, `xaml/prepare`);
+  the project must be restored, and built for its own controls and view models. Rider already has this built in.
+- **Avalonia XAML highlighting and IntelliSense in Visual Studio**: `.axaml` files get an `axaml` document type with
+  syntax highlighting in Visual Studio's markup colors (elements, property elements, attributes, attached properties, `x:`
+  directives, markup extensions and their arguments) and the same IntelliSense as VS Code (completion with documentation,
+  hover), through an LSP server inside the extension that asks `spyglass serve`. Uses VisualStudio.Extensibility's preview
+  tagger and LSP APIs; tested against the real hub and sample project, not yet in a real Visual Studio.
+
+### Changed
+- **Hot reload is much faster**: a XAML edit is compiled once and every live instance is re-populated from that compiled
+  code, instead of compiling the document (and its includes) again per instance. Measured on a view with three includes:
+  200 instances 10.6 s → 0.58 s, 50 instances 4.0 s → 0.22 s; new instances created after a reload (DataTemplates, new windows)
+  ~50 ms → 0.05 ms each. The runtime XAML compiler is also warmed up in the background when Spyglass connects, so the first
+  edit no longer pays ~0.5 s (483 ms → 68 ms). Edits that a newer edit of the same file overtakes are skipped.
+- **Saving applies at once** (VS Code, Rider, Visual Studio): Ctrl+S sends a pending edit immediately instead of waiting for
+  the typing delay.
+
 ## 0.2.1
 
 ### Fixed

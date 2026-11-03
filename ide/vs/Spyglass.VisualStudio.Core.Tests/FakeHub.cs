@@ -140,6 +140,16 @@ static class Wait
         }
     }
 
+    public static async Task UntilAsync(Func<Task<bool>> condition, string what, int timeoutMs = 10000)
+    {
+        var until = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (!await condition())
+        {
+            if (DateTime.UtcNow > until) throw new TimeoutException($"timed out waiting for: {what}");
+            await Task.Delay(100);
+        }
+    }
+
     public static string TempHome()
     {
         var dir = Path.Combine(Path.GetTempPath(), "spyglass-vs-tests-" + Guid.NewGuid().ToString("N")[..8]);

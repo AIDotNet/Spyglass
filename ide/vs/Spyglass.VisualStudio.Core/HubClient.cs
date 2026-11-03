@@ -45,7 +45,7 @@ public sealed class HubClientOptions
 /// listens (and <see cref="HubClientOptions.AutoStart"/>), reconnects with backoff (1 s → 10 s), and exposes the hub's
 /// pushes as events. Events are raised on thread-pool threads.
 /// </summary>
-public sealed class HubClient : IAsyncDisposable
+public sealed class HubClient : IAsyncDisposable, Language.IXamlLanguageBackend
 {
     readonly HubClientOptions _options;
     readonly object _gate = new();
@@ -148,6 +148,43 @@ public sealed class HubClient : IAsyncDisposable
     public void DidChange(string path, long version, string text) => _peer?.Notify(IdeMethods.DidChange, new XamlDocumentParams(path, version, text));
 
     public void DidClose(string path) => _peer?.Notify(IdeMethods.DidClose, new XamlDocumentParams(path, 0));
+
+    // ---------- Avalonia XAML IntelliSense ----------
+
+    IReadOnlySet<string> _capabilities = new HashSet<string>();
+
+    /// <summary>The connected hub answers xaml/completion, xaml/hover and xaml/documentation (Spyglass 0.3+).</summary>
+    public bool HasXamlLanguage => IsConnected && _capabilities.Contains(IdeMethods.XamlLanguageCapability);
+
+    /// <summary>An .axaml was opened: the hub starts loading its project's types.</summary>
+    public void XamlPrepare(string path)
+    {
+        if (HasXamlLanguage) _peer?.Notify(IdeMethods.XamlPrepare, new XamlPrepareParams(path));
+    }
+
+    public Task<XamlCompletionResult?> XamlCompletionAsync(string path, string text, int offset, CancellationToken ct = default) =>
+        XamlRequestAsync<XamlCompletionResult>(IdeMethods.XamlCompletion, new XamlCompletionParams(path, text, offset), ct);
+
+    public Task<XamlHoverResult?> XamlHoverAsync(string path, string text, int offset, CancellationToken ct = default) =>
+        XamlRequestAsync<XamlHoverResult>(IdeMethods.XamlHover, new XamlHoverParams(path, text, offset), ct);
+
+    public async Task<string?> XamlDocumentationAsync(string path, string docId, CancellationToken ct = default) =>
+        (await XamlRequestAsync<XamlDocumentationResult>(IdeMethods.XamlDocumentation, new XamlDocumentationParams(path, docId), ct).ConfigureAwait(false))?.Markdown;
+
+    /// <summary>Null when the hub cannot answer (not connected, an older hub, an error: logged).</summary>
+    async Task<T?> XamlRequestAsync<T>(string method, object parameters, CancellationToken ct) where T : class
+    {
+        JsonRpcPeer? peer;
+        lock (_gate) peer = _peer;
+        if (peer is null || !HasXamlLanguage) return null;
+        try { return await peer.RequestAsync<T>(method, parameters, TimeSpan.FromSeconds(5), ct).ConfigureAwait(false); }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch (Exception ex)
+        {
+            _options.Log($"{method} failed: {ex.Message}");
+            return null;
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -252,8 +289,9 @@ public sealed class HubClient : IAsyncDisposable
 
         try
         {
-            await peer.RequestAsync<IdeHelloResult>(IdeMethods.Hello,
+            var hello = await peer.RequestAsync<IdeHelloResult>(IdeMethods.Hello,
                 new IdeHelloParams(_options.Ide, _options.Version, _options.WorkspaceFolders(), token!)).ConfigureAwait(false);
+            _capabilities = new HashSet<string>(hello?.Capabilities ?? [], StringComparer.Ordinal);
         }
         catch
         {
