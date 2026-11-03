@@ -9,6 +9,17 @@ XAML hot reload for running [Avalonia](https://avaloniaui.net) apps and a side-b
 - Works with any number of running apps; each gets the files it compiled.
 - "Open in editor" in the Spyglass window jumps to the element's XAML line here.
 
+## Avalonia XAML language
+
+- **Syntax highlighting** for `.axaml`: markup extensions, property elements (`Grid.RowDefinitions`), attached properties
+  (`Grid.Row`), `x:` directives and `using:` namespaces get their own colors on top of the XML grammar, in any theme.
+- **IntelliSense** from your project's own references, so it knows Avalonia *and* the component libraries you use (and your
+  own controls and view models once the project is built): elements, properties, events, attached properties, enum and color
+  values, markup extensions, `{Binding}` paths from `x:DataType`, resource keys, event handlers from the code-behind, `Setter`
+  properties of a style. Picking an element of a library you have not declared yet adds its `xmlns:` to the root. Hover shows
+  the documentation. Needs Spyglass 0.3+ (`spyglass serve`, started automatically) and a restored project.
+- Works next to Avalonia's own extension (same `axaml` language id).
+
 ## Design-time preview
 
 Open an `.axaml` file and press **Ctrl+Alt+Shift+P** (**Cmd+Alt+Shift+P** on macOS), click the preview button in the

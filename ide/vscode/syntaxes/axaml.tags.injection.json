@@ -1,0 +1,42 @@
+{
+  "$comment": "Part of the Avalonia XAML grammar (axaml.tmLanguage.json); see there.",
+  "scopeName": "text.xml.axaml.tags.injection",
+  "injectionSelector": "L:text.xml.axaml -meta.tag -string -comment, L:source.axaml -meta.tag -string -comment",
+  "patterns": [
+    {
+      "name": "meta.tag.xml meta.tag.property-element.axaml",
+      "begin": "(</?)(?:([-\\w]+)(:))?([A-Za-z_][\\w]*)(\\.)([A-Za-z_][\\w]*)(?=[\\s/>])",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.xml"
+        },
+        "2": {
+          "name": "entity.name.tag.namespace.xml"
+        },
+        "3": {
+          "name": "punctuation.separator.namespace.xml"
+        },
+        "4": {
+          "name": "entity.name.tag.localname.xml"
+        },
+        "5": {
+          "name": "punctuation.accessor.axaml"
+        },
+        "6": {
+          "name": "entity.name.tag.localname.xml support.type.property-name.axaml"
+        }
+      },
+      "end": "(/?>)",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.xml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "text.xml#tagStuff"
+        }
+      ]
+    }
+  ]
+}

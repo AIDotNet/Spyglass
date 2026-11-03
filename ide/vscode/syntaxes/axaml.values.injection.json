@@ -1,0 +1,327 @@
+{
+  "$comment": "Part of the Avalonia XAML grammar (axaml.tmLanguage.json); see there.",
+  "scopeName": "text.xml.axaml.values.injection",
+  "injectionSelector": "L:text.xml.axaml meta.tag string.quoted -comment -meta.embedded.markup-extension.axaml, L:source.axaml meta.tag string.quoted -comment -meta.embedded.markup-extension.axaml",
+  "patterns": [
+    {
+      "include": "#literal-escape"
+    },
+    {
+      "include": "#extension-top-dq"
+    },
+    {
+      "include": "#extension-top-sq"
+    },
+    {
+      "include": "#namespace-uri"
+    }
+  ],
+  "repository": {
+    "literal-escape": {
+      "match": "(?<=[\\\"'])\\{\\}",
+      "name": "constant.character.escape.markup-extension.axaml"
+    },
+    "namespace-uri": {
+      "match": "(?<=[\\\"'])(using|clr-namespace)(:)([\\w.]*)(?:(;)\\s*(assembly)(=)([\\w.]*))?",
+      "captures": {
+        "1": {
+          "name": "keyword.other.namespace-scheme.axaml"
+        },
+        "2": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "3": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "4": {
+          "name": "punctuation.separator.axaml"
+        },
+        "5": {
+          "name": "keyword.other.namespace-scheme.axaml"
+        },
+        "6": {
+          "name": "punctuation.separator.key-value.axaml"
+        },
+        "7": {
+          "name": "entity.name.namespace.axaml"
+        }
+      }
+    },
+    "argument": {
+      "match": "(?<![\\w.$#])([A-Za-z_][\\w.]*)\\s*(=)",
+      "captures": {
+        "1": {
+          "name": "variable.parameter.markup-extension.axaml"
+        },
+        "2": {
+          "name": "punctuation.separator.key-value.axaml"
+        }
+      }
+    },
+    "comma": {
+      "match": ",",
+      "name": "punctuation.separator.comma.axaml"
+    },
+    "quoted-single": {
+      "name": "string.quoted.single.axaml",
+      "begin": "'",
+      "end": "'|(?=\\\")",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.begin.axaml"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.end.axaml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "text.xml#entity"
+        }
+      ]
+    },
+    "escape": {
+      "match": "\\\\.",
+      "name": "constant.character.escape.axaml"
+    },
+    "binding-path": {
+      "patterns": [
+        {
+          "match": "(\\$)(parent|self)\\b",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.axaml"
+            },
+            "2": {
+              "name": "variable.language.axaml"
+            }
+          }
+        },
+        {
+          "match": "(#)([A-Za-z_][\\w]*)",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.variable.axaml"
+            },
+            "2": {
+              "name": "variable.other.element-name.axaml"
+            }
+          }
+        }
+      ]
+    },
+    "qualified-type": {
+      "match": "(?<![\\w.$#])([-\\w]+)(:)([A-Za-z_][\\w]*(?:\\.[A-Za-z_][\\w]*)*)",
+      "captures": {
+        "1": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "2": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "3": {
+          "name": "entity.name.type.axaml"
+        }
+      }
+    },
+    "extension-top-dq": {
+      "name": "meta.embedded.markup-extension.axaml",
+      "begin": "(?<=\")\\s*(\\{)\\s*(?:([-\\w]+)(:))?([A-Za-z_][\\w]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.begin.axaml"
+        },
+        "2": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "3": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "4": {
+          "name": "support.function.markup-extension.axaml"
+        }
+      },
+      "end": "(\\})|(?=\")",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.axaml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#extension-dq"
+        },
+        {
+          "include": "#quoted-single"
+        },
+        {
+          "include": "#argument"
+        },
+        {
+          "include": "#comma"
+        },
+        {
+          "include": "#binding-path"
+        },
+        {
+          "include": "#qualified-type"
+        },
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "text.xml#entity"
+        }
+      ]
+    },
+    "extension-dq": {
+      "name": "meta.embedded.markup-extension.axaml",
+      "begin": "(\\{)\\s*(?:([-\\w]+)(:))?([A-Za-z_][\\w]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.begin.axaml"
+        },
+        "2": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "3": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "4": {
+          "name": "support.function.markup-extension.axaml"
+        }
+      },
+      "end": "(\\})|(?=\")",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.axaml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#extension-dq"
+        },
+        {
+          "include": "#quoted-single"
+        },
+        {
+          "include": "#argument"
+        },
+        {
+          "include": "#comma"
+        },
+        {
+          "include": "#binding-path"
+        },
+        {
+          "include": "#qualified-type"
+        },
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "text.xml#entity"
+        }
+      ]
+    },
+    "extension-top-sq": {
+      "name": "meta.embedded.markup-extension.axaml",
+      "begin": "(?<=')\\s*(\\{)\\s*(?:([-\\w]+)(:))?([A-Za-z_][\\w]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.begin.axaml"
+        },
+        "2": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "3": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "4": {
+          "name": "support.function.markup-extension.axaml"
+        }
+      },
+      "end": "(\\})|(?=')",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.axaml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#extension-sq"
+        },
+        {
+          "include": "#argument"
+        },
+        {
+          "include": "#comma"
+        },
+        {
+          "include": "#binding-path"
+        },
+        {
+          "include": "#qualified-type"
+        },
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "text.xml#entity"
+        }
+      ]
+    },
+    "extension-sq": {
+      "name": "meta.embedded.markup-extension.axaml",
+      "begin": "(\\{)\\s*(?:([-\\w]+)(:))?([A-Za-z_][\\w]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.begin.axaml"
+        },
+        "2": {
+          "name": "entity.name.namespace.axaml"
+        },
+        "3": {
+          "name": "punctuation.separator.namespace.axaml"
+        },
+        "4": {
+          "name": "support.function.markup-extension.axaml"
+        }
+      },
+      "end": "(\\})|(?=')",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.embedded.end.axaml"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#extension-sq"
+        },
+        {
+          "include": "#argument"
+        },
+        {
+          "include": "#comma"
+        },
+        {
+          "include": "#binding-path"
+        },
+        {
+          "include": "#qualified-type"
+        },
+        {
+          "include": "#escape"
+        },
+        {
+          "include": "text.xml#entity"
+        }
+      ]
+    }
+  }
+}

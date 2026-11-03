@@ -4,6 +4,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { HubClient, HotReloadStatus, XamlDiagnostics } from "./hubClient";
 import { PreviewController } from "./preview/panel";
+import { registerXamlLanguage } from "./xamlLanguage";
 
 const isXaml = (d: vscode.TextDocument): boolean =>
   d.uri.scheme === "file" && /\.(axaml|xaml)$/i.test(d.fileName);
@@ -59,7 +60,11 @@ export function activate(context: vscode.ExtensionContext): HubClient {
       timers.set(d.fileName, setTimeout(() => { timers.delete(d.fileName); send(d); }, ms));
     }),
     vscode.workspace.onDidSaveTextDocument((d) => {
-      if (enabled() && isXaml(d) && client.canReload(d.fileName) && delay() <= 0) send(d);
+      if (!enabled() || !isXaml(d) || !client.canReload(d.fileName)) return;
+      // Save = "apply now": don't make Ctrl+S wait out the typing delay (the agent skips a text that is already live).
+      const pending = timers.get(d.fileName);
+      if (pending) { clearTimeout(pending); timers.delete(d.fileName); send(d); }
+      else if (delay() <= 0) send(d);
     }),
     vscode.workspace.onDidCloseTextDocument((d) => {
       clearTimeout(timers.get(d.fileName));
@@ -132,6 +137,10 @@ export function activate(context: vscode.ExtensionContext): HubClient {
     statusBar.backgroundColor = client.isConnected && !lastOk ? new vscode.ThemeColor("statusBarItem.errorBackground") : undefined;
     statusBar.show();
   }
+
+  // ---------- Avalonia XAML IntelliSense (design/xaml-language/README.md) ----------
+
+  context.subscriptions.push(registerXamlLanguage(client, log));
 
   // ---------- design-time preview (design/preview/README.md) ----------
 

@@ -200,12 +200,17 @@ class SpyglassProjectService(val project: Project) : Disposable {
         }, ms.toLong(), TimeUnit.MILLISECONDS)
     }
 
-    /** FileDocumentManagerListener.beforeDocumentSaving: with delay 0, edits are sent on save. */
+    /**
+     * FileDocumentManagerListener.beforeDocumentSaving: with delay 0, edits are sent on save; otherwise a save sends the
+     * pending edit now instead of waiting out the typing delay.
+     */
     fun onDocumentSaving(document: Document) {
         val c = client ?: return
-        if (!settings.hotReloadEnabled || settings.delayMs > 0) return
+        if (!settings.hotReloadEnabled) return
         val file = FileDocumentManager.getInstance().getFile(document) ?: return
         if (!isXaml(file) || !FileEditorManager.getInstance(project).isFileOpen(file) || !c.canReload(pathOf(file))) return
+        val pending = timers.remove(pathOf(file))
+        if (settings.delayMs > 0 && (pending == null || !pending.cancel(false))) return   // nothing pending, or it is running
         scheduler.execute { if (!project.isDisposed) send(file, document) }
     }
 

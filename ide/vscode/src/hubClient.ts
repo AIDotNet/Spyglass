@@ -47,6 +47,29 @@ export interface RevealRequest {
   column: number;
 }
 
+// ----- Avalonia XAML IntelliSense (xaml/completion, xaml/hover, xaml/documentation; capability "xamlLanguage") -----
+
+export interface XamlTextEdit { offset: number; length: number; text: string; }
+
+export interface XamlCompletionItem {
+  label: string;
+  /** element, property, attachedProperty, event, value, markupExtension, namespace, directive, type, resource, name, closingTag, owner, method */
+  kind: string;
+  detail?: string;
+  insertText?: string;
+  snippet?: boolean;
+  docId?: string;
+  deprecated?: boolean;
+  retrigger?: boolean;
+  sortText?: string;
+  additionalEdit?: XamlTextEdit;
+}
+
+/** Items replace text[from..offset]. incomplete: the project's types are still loading. */
+export interface XamlCompletionResult { from: number; items: XamlCompletionItem[]; incomplete?: boolean; message?: string; }
+
+export interface XamlHoverResult { markdown?: string; from: number; to: number; }
+
 export type ConnectionState = "disconnected" | "starting" | "connecting" | "connected";
 
 export interface HubClientOptions {
@@ -79,6 +102,7 @@ export class HubClient extends EventEmitter {
   private retryTimer?: NodeJS.Timeout;
   private lastServeStart = 0;
   private files = new Set<string>();
+  private capabilities = new Set<string>();
   state: ConnectionState = "disconnected";
   status?: HotReloadStatus;
   /** Called for editor/reveal; return true when the file was shown. */
@@ -137,6 +161,38 @@ export class HubClient extends EventEmitter {
     this.peer?.notify("xaml/didClose", { path: file, version: 0 });
   }
 
+  /** The hub serves Avalonia XAML IntelliSense (0.3+). */
+  get hasXamlLanguage(): boolean {
+    return this.isConnected && this.capabilities.has("xamlLanguage");
+  }
+
+  /** An .axaml was opened: let the hub load its project's types before the first completion. */
+  xamlPrepare(file: string): void {
+    if (this.hasXamlLanguage) this.peer?.notify("xaml/prepare", { path: file });
+  }
+
+  xamlCompletion(file: string, text: string, offset: number): Promise<XamlCompletionResult | undefined> {
+    return this.xamlRequest<XamlCompletionResult>("xaml/completion", { path: file, text, offset });
+  }
+
+  xamlHover(file: string, text: string, offset: number): Promise<XamlHoverResult | undefined> {
+    return this.xamlRequest<XamlHoverResult>("xaml/hover", { path: file, text, offset });
+  }
+
+  async xamlDocumentation(file: string, docId: string): Promise<string | undefined> {
+    return (await this.xamlRequest<{ markdown?: string }>("xaml/documentation", { path: file, docId }))?.markdown;
+  }
+
+  private async xamlRequest<T>(method: string, params: unknown): Promise<T | undefined> {
+    if (!this.hasXamlLanguage || !this.peer) return undefined;
+    try {
+      return await this.peer.request<T>(method, params, 5000);
+    } catch (e: any) {
+      this.options.log(`${method} failed: ${e?.message ?? e}`);
+      return undefined;
+    }
+  }
+
   private setState(s: ConnectionState): void {
     if (this.state === s) return;
     this.state = s;
@@ -190,12 +246,13 @@ export class HubClient extends EventEmitter {
       if (!this.stopped) this.retryTimer = setTimeout(() => void this.connectLoop(), this.retryMs);
     });
 
-    await peer.request("ide/hello", {
+    const hello = await peer.request<{ capabilities?: string[] }>("ide/hello", {
       ide: this.options.ide,
       version: this.options.version,
       workspaceFolders: this.options.workspaceFolders(),
       token,
     });
+    this.capabilities = new Set(hello?.capabilities ?? []);
     this.peer = peer;
     this.setState("connected");
     this.options.log(`Connected to Spyglass on port ${this.port}.`);

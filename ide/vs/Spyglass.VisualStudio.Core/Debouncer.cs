@@ -33,9 +33,15 @@ public sealed class Debouncer : IDisposable
         }
     }
 
-    public void Cancel(string key)
+    /// <summary>True when a scheduled action was pending (and now will not run).</summary>
+    public bool Cancel(string key)
     {
-        lock (_gate) if (_timers.Remove(key, out var t)) t.Dispose();
+        lock (_gate)
+        {
+            if (!_timers.Remove(key, out var t)) return false;
+            t.Dispose();
+            return true;
+        }
     }
 
     public bool IsPending(string key)

@@ -139,6 +139,10 @@ public static class Methods
     public const string XamlDidChange = "xaml/didChange";          // I→H ntf (full text, debounced by the extension)
     public const string XamlDidClose = "xaml/didClose";            // I→H ntf
     public const string XamlDiagnostics = "xaml/diagnostics";      // H→I ntf
+    public const string XamlPrepare = "xaml/prepare";              // I→H ntf (an .axaml was opened: load its project's types)
+    public const string XamlCompletion = "xaml/completion";        // I→H req
+    public const string XamlHover = "xaml/hover";                  // I→H req
+    public const string XamlDocumentation = "xaml/documentation";  // I→H req
     public const string HotReloadStatus = "hotReload/status";      // H→I ntf
     public const string EditorReveal = "editor/reveal";            // H→I req
 }
@@ -158,6 +162,8 @@ public static class Capabilities
     /// <summary>Avalonia log capture: logs/configure, logs/get, logs/entries.</summary>
     public const string Logs = "logs";
     public const string XamlSource = "xamlSource";
+    /// <summary>Hub → IDE (ide/hello result): xaml/completion, xaml/hover, xaml/documentation, xaml/prepare.</summary>
+    public const string XamlLanguage = "xamlLanguage";
     public const string Metrics = "metrics";
     public const string Activities = "activities";
     public const string Overlays = "overlays";

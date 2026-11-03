@@ -1,0 +1,6 @@
+{
+  "$comment": "Avalonia XAML (.axaml). XML underneath (VS Code's built-in text.xml, so themes and XML scopes stay as they are); the XAML constructs (markup extensions, property elements, attached properties, x: directives, using:/clr-namespace: URIs) come from the *.injection.json grammars, which also inject into source.axaml (Avalonia's own extension), whichever grammar VS Code picks for the axaml language.",
+  "name": "Avalonia XAML",
+  "scopeName": "text.xml.axaml",
+  "patterns": [{ "include": "text.xml" }]
+}

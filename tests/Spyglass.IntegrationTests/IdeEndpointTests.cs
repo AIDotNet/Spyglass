@@ -117,6 +117,39 @@ public class IdeEndpointTests(AppFixture app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Xaml_completion_needs_hello_then_answers_over_the_wire()
+    {
+        // The test project's own HotReloadView.axaml: Avalonia types from the test project's references.
+        var text = Original.Replace("<TextBox x:Name=\"Input\" />", "<TextBox x:Name=\"Input\" />\n    <Bu");
+        var offset = text.IndexOf("<Bu", StringComparison.Ordinal) + 3;
+        var p = new XamlCompletionParams(SourcePath, text, offset);
+
+        var (anonymous, _) = await Open();
+        var ex = await Assert.ThrowsAsync<SpyglassProtocolException>(() =>
+            anonymous.Peer.RequestAsync<XamlCompletionParams, XamlCompletionResult>(Methods.XamlCompletion, p));
+        Assert.Equal(ErrorCodes.Unauthorized, ex.Code);
+
+        var (ide, _) = await Open();
+        var hello = await ide.Peer.RequestAsync<IdeHelloParams, IdeHelloResult>(Methods.IdeHello,
+            new IdeHelloParams("test", "1.0", [], app.Hub.Ide.Token));
+        Assert.Contains(Capabilities.XamlLanguage, hello.Capabilities);
+        await ide.Peer.NotifyAsync(Methods.XamlPrepare, new XamlPrepareParams(SourcePath));
+
+        XamlCompletionResult r;
+        var until = DateTime.UtcNow.AddMinutes(2);
+        do r = await ide.Peer.RequestAsync<XamlCompletionParams, XamlCompletionResult>(Methods.XamlCompletion, p);
+        while (r.Incomplete && DateTime.UtcNow < until);   // the first request may find the project still loading
+        Assert.Null(r.Message);
+        Assert.Equal(offset - 2, r.From);
+        var button = Assert.Single(r.Items, i => i.Label == "Button");
+        Assert.Equal(("element", "T:Avalonia.Controls.Button"), (button.Kind, button.DocId));
+
+        var doc = await ide.Peer.RequestAsync<XamlDocumentationParams, XamlDocumentationResult>(Methods.XamlDocumentation,
+            new XamlDocumentationParams(SourcePath, button.DocId!));
+        Assert.False(string.IsNullOrWhiteSpace(doc.Markdown));
+    }
+
+    [Fact]
     public async Task Wrong_token_is_rejected()
     {
         var (ide, _) = await Open();

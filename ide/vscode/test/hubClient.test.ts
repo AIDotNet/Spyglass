@@ -9,7 +9,7 @@ const opts = { timeout: 15000 };
 import { WebSocketServer } from "ws";
 import { HubClient, HotReloadStatus, XamlDiagnostics, pathKey } from "../src/hubClient";
 
-async function fakeHub() {
+async function fakeHub(capabilities = ["hotReload"]) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "spyglass-home-"));
   const wss = new WebSocketServer({ port: 0, path: "/ide" });
   await new Promise((r) => wss.once("listening", r));
@@ -24,7 +24,9 @@ async function fakeHub() {
       received.push(m);
       if (m.method === "ide/hello") {
         if (m.params.token !== "secret") ws.send(JSON.stringify({ jsonrpc: "2.0", id: m.id, error: { code: -32011, message: "Wrong token" } }));
-        else ws.send(JSON.stringify({ jsonrpc: "2.0", id: m.id, result: { hubVersion: "0.1", port, capabilities: ["hotReload"] } }));
+        else ws.send(JSON.stringify({ jsonrpc: "2.0", id: m.id, result: { hubVersion: "0.1", port, capabilities } }));
+      } else if (m.method === "xaml/completion") {
+        ws.send(JSON.stringify({ jsonrpc: "2.0", id: m.id, result: { from: m.params.offset - 2, items: [{ label: "Button", kind: "element" }] } }));
       }
     });
   });
@@ -128,4 +130,32 @@ test("losing the hub clears reloadable files and reconnects", opts, async () => 
 
 test("pathKey normalises", () => {
   assert.equal(pathKey("/a/b/../c.axaml"), process.platform === "linux" ? "/a/c.axaml" : "/a/c.axaml".toLowerCase());
+});
+
+test("XAML IntelliSense: requests go out only when the hub has the capability", opts, async () => {
+  const old = await fakeHub();
+  const c1 = newClient(old.port, old.home);
+  c1.start();
+  await until(() => c1.isConnected);
+  assert.equal(c1.hasXamlLanguage, false);
+  assert.equal(await c1.xamlCompletion("/p/A.axaml", "<Bu", 3), undefined);
+  c1.xamlPrepare("/p/A.axaml");
+  await new Promise((r) => setTimeout(r, 100));
+  assert.ok(!old.received.some((m) => String(m.method).startsWith("xaml/completion") || m.method === "xaml/prepare"));
+  c1.stop();
+  old.close();
+
+  const hub = await fakeHub(["hotReload", "xamlLanguage"]);
+  const c = newClient(hub.port, hub.home);
+  c.start();
+  await until(() => c.isConnected);
+  assert.equal(c.hasXamlLanguage, true);
+  c.xamlPrepare("/p/A.axaml");
+  const r = await c.xamlCompletion("/p/A.axaml", "<Bu", 3);
+  assert.deepEqual(r, { from: 1, items: [{ label: "Button", kind: "element" }] });
+  const sent = hub.received.find((m) => m.method === "xaml/completion");
+  assert.deepEqual(sent.params, { path: "/p/A.axaml", text: "<Bu", offset: 3 });
+  assert.ok(hub.received.some((m) => m.method === "xaml/prepare" && m.id === undefined), "prepare is a notification");
+  c.stop();
+  hub.close();
 });

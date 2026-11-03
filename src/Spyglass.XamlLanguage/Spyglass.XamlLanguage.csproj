@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Avalonia XAML IntelliSense for IDE extensions (design/xaml-language/README.md): reads the project's referenced
+       assemblies (Avalonia, component libraries, the project's own build output) as metadata only, never loading or
+       running them, and answers completion/hover for .axaml text. Served by the hub's /ide endpoint. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
+    <ProjectReference Include="..\Spyglass.Protocol\Spyglass.Protocol.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Spyglass.IntegrationTests" />
+  </ItemGroup>
+</Project>
