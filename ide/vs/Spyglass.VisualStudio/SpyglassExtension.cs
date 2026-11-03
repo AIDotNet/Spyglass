@@ -10,6 +10,8 @@ namespace Spyglass.VisualStudio;
 [VisualStudioContribution]
 internal sealed class SpyglassExtension : Extension
 {
+    static SpyglassExtension() => HostAssemblies.Install();
+
     public override ExtensionConfiguration ExtensionConfiguration => new()
     {
         Metadata = new(

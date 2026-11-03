@@ -3,6 +3,16 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
+## 0.2.3
+
+### Fixed
+- **Visual Studio: the preview window could not be opened** ("Could not load file or assembly 'System.Windows.Extensions,
+  Version=8.0.0.0'"). Visual Studio's extension host has WPF but not all of the WindowsDesktop assemblies WPF depends on, and
+  the build left them out because the WPF framework "provides" them. The extension now ships them (System.Windows.Extensions,
+  System.Security.Permissions, System.Configuration.ConfigurationManager, System.Diagnostics.EventLog, System.IO.Packaging,
+  System.Security.Cryptography.Xml/Pkcs, Microsoft.Win32.SystemEvents) and loads them from its own folder when the host
+  cannot find them.
+
 ## 0.2.2
 
 ### Added

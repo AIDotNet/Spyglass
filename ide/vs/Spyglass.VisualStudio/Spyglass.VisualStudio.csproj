@@ -29,6 +29,32 @@
   <ItemGroup>
     <ProjectReference Include="..\Spyglass.VisualStudio.Core\Spyglass.VisualStudio.Core.csproj" />
   </ItemGroup>
+  <!-- WPF's own dependencies that are part of the Microsoft.WindowsDesktop.App framework but also ship as NuGet packages.
+       The build leaves them out (the framework "provides" them), but Visual Studio's extension host has WPF without
+       them: opening the preview failed with "Could not load file or assembly 'System.Windows.Extensions, 8.0.0.0'".
+       So they are shipped in the extension and HostAssemblies.cs loads them from there when the host cannot find them.
+       ExcludeAssets="all": downloaded only, never referenced, so they cannot clash with the framework at build time. -->
+  <ItemGroup>
+    <WpfDependencyPackage Include="System.Windows.Extensions" Version="8.0.0" />
+    <WpfDependencyPackage Include="System.Security.Permissions" Version="8.0.0" />
+    <WpfDependencyPackage Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+    <WpfDependencyPackage Include="System.Diagnostics.EventLog" Version="8.0.2" />
+    <WpfDependencyPackage Include="System.IO.Packaging" Version="8.0.1" />
+    <WpfDependencyPackage Include="System.Security.Cryptography.Xml" Version="8.0.5" />
+    <WpfDependencyPackage Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
+    <WpfDependencyPackage Include="Microsoft.Win32.SystemEvents" Version="8.0.0" />
+    <PackageReference Include="@(WpfDependencyPackage)" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="CopyWpfDependencies" AfterTargets="ResolveReferences">
+    <ItemGroup>
+      <_WpfDependencyDir Include="$(NuGetPackageRoot)$([System.String]::Copy('%(WpfDependencyPackage.Identity)').ToLowerInvariant())/%(WpfDependencyPackage.Version)" />
+      <!-- The Windows implementation when the package has one (lib/ then holds a PlatformNotSupported stub). -->
+      <_WpfDependencyDll Include="%(_WpfDependencyDir.Identity)/runtimes/win/lib/net8.0/*.dll" />
+      <_WpfDependencyDll Include="%(_WpfDependencyDir.Identity)/lib/net8.0/*.dll" Condition="!Exists('%(_WpfDependencyDir.Identity)/runtimes/win/lib/net8.0')" />
+      <ReferenceCopyLocalPaths Include="@(_WpfDependencyDll)" DestinationSubDirectory="" />
+    </ItemGroup>
+    <Error Condition="'@(_WpfDependencyDll)' == ''" Text="WPF dependency packages not found under $(NuGetPackageRoot)." />
+  </Target>
   <ItemGroup>
     <!-- Remote UI: the XAML is sent to Visual Studio as text, never compiled here. -->
     <Page Remove="SpyglassStatusControl.xaml" />

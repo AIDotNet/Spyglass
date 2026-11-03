@@ -22,6 +22,7 @@ internal sealed class PreviewWindowHost
     /// <summary>Creates the window with <paramref name="create"/> on the UI thread and shows it. Returns when it is up.</summary>
     public Task<PreviewWindow> OpenAsync(Func<PreviewWindow> create, Action closed)
     {
+        HostAssemblies.Install();
         var tcs = new TaskCompletionSource<PreviewWindow>(TaskCreationOptions.RunContinuationsAsynchronously);
         _thread = new Thread(() =>
         {
