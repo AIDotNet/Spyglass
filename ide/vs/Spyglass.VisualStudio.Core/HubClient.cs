@@ -153,7 +153,7 @@ public sealed class HubClient : IAsyncDisposable, Language.IXamlLanguageBackend
 
     IReadOnlySet<string> _capabilities = new HashSet<string>();
 
-    /// <summary>The connected hub answers xaml/completion, xaml/hover and xaml/documentation (Spyglass 0.3+).</summary>
+    /// <summary>The connected hub answers xaml/completion, xaml/hover and xaml/documentation (Spyglass 0.2.2+).</summary>
     public bool HasXamlLanguage => IsConnected && _capabilities.Contains(IdeMethods.XamlLanguageCapability);
 
     /// <summary>An .axaml was opened: the hub starts loading its project's types.</summary>

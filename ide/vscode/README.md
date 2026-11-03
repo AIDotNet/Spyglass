@@ -17,7 +17,7 @@ XAML hot reload for running [Avalonia](https://avaloniaui.net) apps and a side-b
   own controls and view models once the project is built): elements, properties, events, attached properties, enum and color
   values, markup extensions, `{Binding}` paths from `x:DataType`, resource keys, event handlers from the code-behind, `Setter`
   properties of a style. Picking an element of a library you have not declared yet adds its `xmlns:` to the root. Hover shows
-  the documentation. Needs Spyglass 0.3+ (`spyglass serve`, started automatically) and a restored project.
+  the documentation. Needs Spyglass 0.2.2+ (`spyglass serve`, started automatically) and a restored project.
 - Works next to Avalonia's own extension (same `axaml` language id).
 
 ## Design-time preview

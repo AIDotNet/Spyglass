@@ -161,7 +161,7 @@ export class HubClient extends EventEmitter {
     this.peer?.notify("xaml/didClose", { path: file, version: 0 });
   }
 
-  /** The hub serves Avalonia XAML IntelliSense (0.3+). */
+  /** The hub serves Avalonia XAML IntelliSense (0.2.2+). */
   get hasXamlLanguage(): boolean {
     return this.isConnected && this.capabilities.has("xamlLanguage");
   }

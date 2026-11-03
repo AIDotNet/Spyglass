@@ -3,7 +3,7 @@
 All notable changes to Spyglass. Versions follow the git tags; the NuGet packages, the IDE extensions and the GitHub release
 are published from the tag by `.github/workflows/release.yml`.
 
-## Unreleased
+## 0.2.2
 
 ### Added
 - **Avalonia XAML syntax highlighting in VS Code**: `.axaml` files are the `axaml` language with XAML-aware colors on top of

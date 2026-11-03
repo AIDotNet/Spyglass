@@ -20,7 +20,7 @@ same behaviour as the VS Code extension (`ide/vscode`), built on the out-of-proc
   own controls and view models once built: elements (a library you have not declared yet gets its `xmlns:` added),
   properties, events, attached properties, enum and color values, markup extensions, `{Binding}` paths from `x:DataType`,
   resource keys, event handlers, `Setter` properties; completion documentation and hover from the packages' XML docs.
-  Served by the same engine as VS Code, in `spyglass serve` (Spyglass 0.3+).
+  Served by the same engine as VS Code, in `spyglass serve` (Spyglass 0.2.2+).
 
 Requires **Visual Studio 2022 17.14 or later** (Visual Studio 2026 included), Windows x64 or Arm64.
 
