@@ -202,10 +202,12 @@ public class HotReloadTests(AppFixture app) : IAsyncLifetime
         // Types the runtime XAML compiler emitted: a compile per instance would grow this with the instance count.
         async Task<int> EmittedBy(Func<Task> apply)
         {
-            var before = await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Mark);
+            var before = await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Count);
             await apply();
-            return await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Mark) - before;
+            return await app.OnUi(Spyglass.Agent.HotReload.EmittedXaml.Count) - before;
         }
+        // A failed compile first: it leaves types behind that can never load (CI caught reuse silently stopping after one).
+        Assert.False((await app.Session.ApplyXamlAsync(Uri, Edit("{Binding Title}", "{Binding Titel}"))).Ok);
         var extra = await app.OnUi(() =>
         {
             var panel = new StackPanel();

@@ -25,25 +25,32 @@ internal static class EmittedXaml
 
     static Assembly? _emitted;
 
-    /// <summary>Number of types in the loader's dynamic assembly before a Load; pass it to <see cref="Find"/> afterwards.</summary>
-    public static int Mark()
+    /// <summary>
+    /// The types in the loader's dynamic assembly before a Load; pass it to <see cref="Find"/> afterwards. A set, not a
+    /// count: after a failed compile the assembly keeps types that can never be loaded, and reflection then returns the
+    /// loadable ones with those removed, so positions are not stable from one call to the next.
+    /// </summary>
+    public static HashSet<Type> Mark()
     {
-        try { return Types() is { } t ? t.Length : 0; }
-        catch { return int.MaxValue; }   // Find then finds nothing: Load per instance, as before
+        try { return Types(); }
+        catch { return []; }
     }
+
+    /// <summary>Number of loadable types the runtime XAML compiler has emitted so far (tests: one compile per edit).</summary>
+    internal static int Count() => Mark().Count;
 
     /// <summary>
     /// The populate delegate of the type emitted since <paramref name="mark"/> for the document whose root is
     /// <paramref name="rootType"/> (group members are classless, so the x:Class identifies the main document).
     /// </summary>
-    public static Action<object>? Find(int mark, Type rootType)
+    public static Action<object>? Find(HashSet<Type> mark, Type rootType)
     {
         try
         {
-            if (Types() is not { } types) return null;
-            for (var i = types.Length - 1; i >= mark; i--)
+            foreach (var t in Types())
             {
-                var m = types[i]?.GetMethod(PopulateMethod, BindingFlags.Static | BindingFlags.Public);
+                if (mark.Contains(t)) continue;
+                var m = t.GetMethod(PopulateMethod, BindingFlags.Static | BindingFlags.Public);
                 if (m?.GetParameters() is [{ ParameterType: var sp }, { ParameterType: var root }] && sp == typeof(IServiceProvider) && root == rootType)
                     return Bind(m, root);
             }
@@ -76,14 +83,15 @@ internal static class EmittedXaml
     }
 
     /// <summary>
-    /// Types of the loader's dynamic assembly in definition order (it holds the XamlIlContext class), or null before the
-    /// first compile. A failed compile leaves types that were never created; they are null here, positions stay.
+    /// The loadable types of the loader's dynamic assembly (it holds the XamlIlContext class); empty before the first
+    /// compile. Types a failed compile left behind are skipped.
     /// </summary>
-    static Type?[]? Types()
+    static HashSet<Type> Types()
     {
         _emitted ??= AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.IsDynamic && HasContext(a));
-        try { return _emitted?.GetTypes(); }
-        catch (ReflectionTypeLoadException ex) { return ex.Types; }
+        if (_emitted is null) return [];
+        try { return [.. _emitted.GetTypes()]; }
+        catch (ReflectionTypeLoadException ex) { return [.. ex.Types.OfType<Type>()]; }
 
         static bool HasContext(Assembly a)
         {

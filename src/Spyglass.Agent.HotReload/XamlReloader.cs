@@ -52,7 +52,7 @@ internal sealed class XamlReloader
 
     readonly Dictionary<string, GoodText> _lastGood = new();
     readonly SemaphoreSlim _gate = new(1, 1);
-    readonly Dictionary<string, int> _arrivals = new(StringComparer.OrdinalIgnoreCase);   // UI thread only
+    readonly Dictionary<(string Uri, HotReloadSource Source), int> _arrivals = [];   // UI thread only
     int _warmupStarted;
 
     /// <summary>The runtime compiler keeps unsynchronized statics: the background warm-up and UI-thread compiles take turns.</summary>
@@ -74,12 +74,14 @@ internal sealed class XamlReloader
         var doc = SpyglassHotReload.Find(uri)
             ?? throw new SpyglassProtocolException(ErrorCodes.XamlDocumentUnknown, $"No XAML document '{uri}' is compiled into this app.");
 
-        // Typing sends a new text every few hundred ms; if a newer one for this document is already waiting, this one is stale.
-        var ticket = _arrivals[doc.Uri] = _arrivals.GetValueOrDefault(doc.Uri) + 1;
+        // Typing sends a new text every few hundred ms; if a newer one for this document from the same source (the editor,
+        // a dotnet watch stamp) is already waiting, this one is stale. Texts from different sources never skip each other.
+        var key = (doc.Uri.ToLowerInvariant(), source);
+        var ticket = _arrivals[key] = _arrivals.GetValueOrDefault(key) + 1;
         await _gate.WaitAsync();
         try
         {
-            if (_arrivals[doc.Uri] != ticket)
+            if (_arrivals[key] != ticket)
                 return new HotReloadResult(doc.Uri, true, 0, 0, [], source, version, Superseded);
             var dependents = new List<HotReloadResult>();
             var result = await ApplyCoreAsync(doc, xaml, source, version, force: false, [doc.Uri], dependents);
