@@ -139,7 +139,7 @@ class RealHostTest {
     @Test
     fun `stopping ends the host process`() {
         val s = start()
-        val pid = ProcessHandle.allProcesses().filter { it.info().commandLine().map { c -> c.contains("Avalonia.Designer.HostApp") }.orElse(false) }.toList()
+        val pid = listOfNotNull(s.hostProcess?.toHandle())
         assertTrue(pid.isNotEmpty(), "host process not found")
         s.stop()
         val deadline = System.currentTimeMillis() + 10_000
@@ -150,7 +150,7 @@ class RealHostTest {
     @Test
     fun `a crashing host is reported as exited`() {
         val s = start()
-        ProcessHandle.allProcesses().filter { it.info().commandLine().map { c -> c.contains("Avalonia.Designer.HostApp") }.orElse(false) }.forEach { it.destroyForcibly() }
+        s.hostProcess!!.toHandle().destroyForcibly()
         assertNotNull(exited.poll(15, TimeUnit.SECONDS), "no exit notification")
         s.stop()
     }

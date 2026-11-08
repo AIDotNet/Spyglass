@@ -37,6 +37,8 @@ class PreviewSession(
     private val stopped = AtomicBoolean(false)
     private val writeLock = Any()
     @Volatile private var process: Process? = null
+    /** For tests: Java cannot read another process's command line on Windows, so they cannot find the host by searching. */
+    internal val hostProcess: Process? get() = process
     @Volatile private var server: ServerSocket? = null
     @Volatile private var socket: Socket? = null
     @Volatile private var viewportW = 800.0
