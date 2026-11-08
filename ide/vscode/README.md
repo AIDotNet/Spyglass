@@ -28,7 +28,7 @@ the editor without running your app. Running the command again focuses the exist
 
 - **Live**: it updates from the **unsaved** buffer 300 ms after you stop typing, follows the active `.axaml`, and also
   refreshes when another `.axaml` of the project (App.axaml, styles, dictionaries) is edited or saved. The toolbar shows
-  *Updating…*, *Updated · N ms* or *Error*. It restarts its process by itself when you rebuild, keeping file and zoom.
+  *Updating…*, *Updated · N ms* or *Error*. It restarts its process by itself when you rebuild, keeping file and zoom. It runs from a private copy of the build output in the temp folder (`spyglass-preview`), so it does not lock `bin/` and you can build while it is open.
 - **Errors** appear as a squiggle at the right line and column (source `Spyglass Preview`) and in an error bar under the
   preview; click the bar to jump to the error. The last good picture stays.
 - **Zoom**: Fit, 25–400 %, Ctrl+wheel. **Theme**: Default / Light / Dark (adds `RequestedThemeVariant` to a `Window` root;

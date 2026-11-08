@@ -11,6 +11,7 @@ import { logicalKeyFor, physicalKeyFor } from "./input";
 import { findProjectFile, PreviewProject, PreviewProjectError, projectRelativePath, resolveProject } from "./project";
 import { InputModifier, MouseButton } from "./protocol";
 import { PreviewFrame, PreviewSession, XamlResult } from "./session";
+import { PreviewShadowCopy } from "./shadow";
 import { previewHtml } from "./webview";
 import { applyTheme, dpiFor, FIT, mapBack, parseTheme, parseZoom, PreviewTheme, PreviewZoom, viewportFor, XamlEdit, zoomIn, zoomOut, zoomScale, zoomToString } from "./zoom";
 
@@ -40,7 +41,8 @@ export interface PreviewDebugState {
 export class PreviewController implements vscode.Disposable {
   private panel?: vscode.WebviewPanel;
   private session?: PreviewSession;
-  private project?: PreviewProject;
+  private project?: PreviewProject;   // as resolved; the session itself runs from `shadow`
+  private readonly shadow = new PreviewShadowCopy();
   private doc?: vscode.TextDocument;
   private pane = { width: 800, height: 600, dpr: 1 };
   private lastFrameLogical?: { w: number; h: number };
@@ -144,6 +146,7 @@ export class PreviewController implements vscode.Disposable {
     panel.onDidDispose(() => {
       this.panel = undefined;
       this.stopSession();
+      void this.shadow.delete();
       this.unwatch();
       clearTimeout(this.timer);
       this.diagnostics.clear(); this.shownDiag = undefined; this.pendingDiag = undefined;
@@ -239,9 +242,24 @@ export class PreviewController implements vscode.Disposable {
     if (gen !== this.generation) return;
     const same = this.project && this.project.projectFile === project.projectFile && this.project.targetPath === project.targetPath && this.session?.isRunning;
     this.project = project;
-    if (!same) this.startSession(project);
-    else this.push();
-    this.watch(project.targetPath);
+    this.watch(project.targetPath);   // the real output, not the copy the previewer runs from
+    if (same) { this.push(); return; }
+    this.stopSession();
+    this.message("Starting preview…");
+    this.setState("starting", "Starting preview…");
+    let copy: PreviewProject;
+    try { copy = await this.shadow.sync(project); }
+    catch (e) {
+      if (gen !== this.generation || !this.panel) return;
+      this.project = undefined;
+      const text = `Could not copy the build output: ${(e as Error).message}`;
+      this.log(`preview: ${text}`);
+      this.message(text, { label: "Build project", command: "spyglass.preview.build" });
+      this.setState("error", "Could not copy the build output");
+      return;
+    }
+    if (gen !== this.generation || !this.panel) return;   // another file was opened, or the panel was closed, meanwhile
+    this.startSession(copy);
   }
 
   private startSession(project: PreviewProject): void {
@@ -393,6 +411,7 @@ export class PreviewController implements vscode.Disposable {
   dispose(): void {
     this.panel?.dispose();
     this.stopSession();
+    void this.shadow.delete();
     this.unwatch();
     this.disposables.forEach((d) => d.dispose());
   }

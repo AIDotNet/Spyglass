@@ -25,6 +25,53 @@ jobs:
   vs-extension:
     uses: ./.github/workflows/vs-extension.yml
 
+  # Windows is where a running previewer locks bin/; the tests include a real build while it runs.
+  vscode-windows:
+    runs-on: windows-2022
+    env:
+      MSBUILDDISABLENODEREUSE: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ide/vscode/package-lock.json
+      - name: Build the hub
+        run: dotnet build src/Spyglass.App -c Debug
+      - name: Build the sample app
+        run: dotnet build samples/Spyglass.Sample -c Debug
+      - run: npm ci
+        working-directory: ide/vscode
+      - run: npm test
+        working-directory: ide/vscode
+      # The preview panel in a real VS Code, downloaded by the test.
+      - run: npm run test:e2e
+        working-directory: ide/vscode
+
+  rider-windows:
+    runs-on: windows-2022
+    env:
+      MSBUILDDISABLENODEREUSE: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build the sample app
+        run: dotnet build samples/Spyglass.Sample -c Debug
+      # Downloads the Rider SDK (~3.5 GB) to compile against.
+      - run: ./gradlew.bat test
+        working-directory: ide/rider
+
   pack:
     needs: build-test
     runs-on: ubuntu-latest

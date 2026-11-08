@@ -11,7 +11,7 @@ XAML hot reload for running [Avalonia](https://avaloniaui.net) apps in JetBrains
 - **Design-time preview** (Tools › Spyglass › Open Preview, or the editor context menu on an `.axaml` file): the official
   Avalonia previewer host renders the file in a tool window beside the editor, without running the app. It follows unsaved
   edits (300 ms), shows XAML errors in an error bar and as an underline at the error's line and column, keeps the last good
-  frame, follows the active `.axaml` editor, restarts after a rebuild, and forwards mouse and keyboard input.
+  frame, follows the active `.axaml` editor, restarts after a rebuild, and forwards mouse and keyboard input. It runs from a private copy of the build output in the temp folder (`spyglass-preview`), so it does not lock `bin/` and you can build while it is open.
 - Coexists with Rider's built-in Avalonia support and AvaloniaRider: no completion, no language service.
 
 ## Setup

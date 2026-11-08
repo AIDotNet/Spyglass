@@ -42,7 +42,7 @@ public sealed class PreviewRealBuildTests(SampleProjectFixture sample) : IClassF
         File.AppendAllLines(Report!, [$"## {title}", $"dotnet build: {(ok ? "succeeded" : "failed")}", .. errors, ""]);
     }
 
-    /// <summary>The command line the VS Code and Rider extensions use: the previewer runs from bin/ itself.</summary>
+    /// <summary>Why every extension runs the previewer from a copy: started directly from bin/, it breaks the build.</summary>
     [Fact]
     public async Task A_previewer_running_from_bin_makes_the_build_fail_on_windows()
     {
@@ -59,12 +59,12 @@ public sealed class PreviewRealBuildTests(SampleProjectFixture sample) : IClassF
 
         var (ok, output) = await BuildAfterTouch(project);
 
-        Write("Previewer running from bin/ (VS Code and Rider command line)", ok, output);
+        Write("Previewer running from bin/ (what the copy avoids)", ok, output);
         Assert.False(ok, "The build succeeded, so the lock was not reproduced.");
         Assert.True(output.Contains("MSB3021", StringComparison.Ordinal) || output.Contains("MSB3027", StringComparison.Ordinal), output);
     }
 
-    /// <summary>The Visual Studio extension: the previewer runs from a copy, so the build works and the preview restarts.</summary>
+    /// <summary>The previewer runs from a copy, so the build works and the preview restarts.</summary>
     [Fact]
     public async Task The_controller_lets_the_build_succeed_and_restarts_the_previewer()
     {
@@ -91,7 +91,7 @@ public sealed class PreviewRealBuildTests(SampleProjectFixture sample) : IClassF
 
         var (ok, output) = await BuildAfterTouch(project);
 
-        Write("Previewer running from a copy (Visual Studio extension)", ok, output);
+        Write("Previewer running from a copy (PreviewController)", ok, output);
         Assert.True(ok, output);
         await Within(restarted.Task, "a second previewer start");
         await Within(running.Task, "a render after the restart");

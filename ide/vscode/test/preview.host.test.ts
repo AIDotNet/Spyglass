@@ -1,11 +1,13 @@
 // Real previewer host (Avalonia.Designer.HostApp from the sample's Avalonia package): handshake, frames, XAML errors.
 // Skipped when `dotnet`/the sample build is unavailable (build samples/Spyglass.Sample first).
 import * as assert from "assert";
+import { execFile } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 import { test } from "node:test";
 import { findProjectFile, resolveProject, PreviewProject } from "../src/preview/project";
 import { PreviewSession, PreviewFrame, XamlResult } from "../src/preview/session";
+import { PreviewShadowCopy } from "../src/preview/shadow";
 import { applyTheme, mapBack } from "../src/preview/zoom";
 
 const sampleDir = path.resolve(__dirname, "../../../../samples/Spyglass.Sample");
@@ -111,5 +113,32 @@ test("real host: theme injection changes the picture; an error in a themed root 
     assert.ok(mapped.column! >= 1 && mapped.column! <= editorLine.length + 1, `mapped column ${mapped.column} within "${editorLine}"`);
   } finally {
     session.stop();
+  }
+});
+
+test("real host: a real dotnet build succeeds while the previewer runs from the copy", async (t) => {
+  const p = await project();
+  if (!p) { t.skip("sample project not built / dotnet unavailable"); return; }
+  const shadow = new PreviewShadowCopy();
+  const session = new PreviewSession(await shadow.sync(p));
+  try {
+    session.setViewport(640, 480, 96);
+    await session.start();
+    const result = once<XamlResult>(session, "result");
+    session.updateXaml(fs.readFileSync(xamlFile, "utf8"), "MainWindow.axaml");
+    assert.equal((await result).error, undefined);
+
+    const before = fs.statSync(p.targetPath).mtimeMs;
+    const now = new Date();
+    fs.utimesSync(path.join(sampleDir, "Program.cs"), now, now);   // makes the build compile and copy the assembly again
+    const output = await new Promise<string>((resolve, reject) => {
+      execFile("dotnet", ["build", p.projectFile, "-nologo", "-v:q", "-p:UseSharedCompilation=false"],
+        { maxBuffer: 16 << 20, env: { ...process.env, MSBUILDDISABLENODEREUSE: "1" } },
+        (err, stdout, stderr) => err ? reject(new Error(`dotnet build failed:\n${stdout}${stderr}`)) : resolve(stdout));
+    });
+    assert.ok(fs.statSync(p.targetPath).mtimeMs > before, `the build did not rewrite bin/:\n${output}`);
+  } finally {
+    session.stop();
+    await shadow.delete();
   }
 });

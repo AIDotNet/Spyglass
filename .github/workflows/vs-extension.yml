@@ -30,8 +30,8 @@ jobs:
             /p:DeployExtension=false /v:minimal
           if ($LASTEXITCODE -ne 0) { throw "msbuild failed ($LASTEXITCODE)" }
           if (-not (Get-ChildItem ide/vs/Spyglass.VisualStudio/bin/Release -Recurse -Filter *.vsix)) { throw "no .vsix produced" }
-      # Rewrites the sample's bin/, so not with the other tests. Checks that a previewer running from bin/ (how the VS Code and
-      # Rider extensions start it) breaks a real build on Windows, and that the Visual Studio extension's copy does not.
+      # Rewrites the sample's bin/, so not with the other tests. Checks that a previewer running from bin/ breaks a real build
+      # on Windows (why the extensions run it from a copy), and that the Visual Studio extension's copy does not.
       - name: Real build with the preview open
         env:
           SPYGLASS_REAL_BUILD_REPORT: ${{ runner.temp }}/real-build.md
