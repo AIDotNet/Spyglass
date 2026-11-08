@@ -54,7 +54,9 @@ public sealed class PreviewController : IAsyncDisposable
     readonly CancellationTokenSource _cts = new();
     Active? _active;
     PreviewSession? _session;
-    DateTime _sessionTarget;      // write time of TargetPath when the host started
+    readonly PreviewShadowCopy _shadow = new();
+    PreviewProject? _sessionProject;   // the project as resolved; the session itself runs from _shadow
+    DateTime _sessionTarget;    // write time of TargetPath when the host started
     string? _pendingPath;         // the .axaml whose UpdateXaml answer is awaited
     PreviewXamlEdit _pendingEdit; // what was added to that XAML before sending (maps error positions back)
     PreviewTheme _theme;
@@ -240,17 +242,25 @@ public sealed class PreviewController : IAsyncDisposable
     {
         var stamp = File.GetLastWriteTimeUtc(project.TargetPath);
         var session = _session;
-        if (session is not null && !session.HasExited && session.Project == project && stamp == _sessionTarget) return true;
+        if (session is not null && !session.HasExited && _sessionProject == project && stamp == _sessionTarget) return true;
 
         if (session is not null)
         {
             _options.Log?.Invoke(session.HasExited ? "Restarting the previewer (it exited)." :
-                session.Project != project ? "Switching the previewer to another project." : "The app was rebuilt; restarting the previewer.");
+                _sessionProject != project ? "Switching the previewer to another project." : "The app was rebuilt; restarting the previewer.");
             await StopSessionAsync().ConfigureAwait(false);
         }
 
         SetStatus(new(PreviewStatusKind.Starting, $"Starting the previewer for {Path.GetFileNameWithoutExtension(project.TargetPath)}…"));
-        var created = new PreviewSession(project, new PreviewSessionOptions { Dotnet = _options.Dotnet, Log = _options.Log, DpiX = _dpiX, DpiY = _dpiY });
+        PreviewProject copy;
+        try { copy = await _shadow.SyncAsync(project, ct).ConfigureAwait(false); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _options.Log?.Invoke($"Could not copy the build output: {ex.Message}");
+            SetStatus(new(PreviewStatusKind.Error, "Could not copy the build output: " + ex.Message, CanBuild: true));
+            return false;
+        }
+        var created = new PreviewSession(copy, new PreviewSessionOptions { Dotnet = _options.Dotnet, Log = _options.Log, DpiX = _dpiX, DpiY = _dpiY });
         created.Frame += f => { if (ReferenceEquals(_session, created)) FrameReady?.Invoke(f); };
         created.XamlResult += r => { if (ReferenceEquals(_session, created)) OnXamlResult(r); };
         created.Exited += code =>
@@ -264,7 +274,8 @@ public sealed class PreviewController : IAsyncDisposable
         {
             await created.StartAsync(_options.StartTimeout, ct).ConfigureAwait(false);
             _sessionTarget = stamp;
-            WatchTarget(project);
+            _sessionProject = project;
+            WatchTarget(project);   // the real output, not the copy the previewer runs from
             double w, h, dx, dy;
             lock (_state) { w = _vw; h = _vh; dx = _dpiX; dy = _dpiY; }
             await created.SetViewportAsync(w, h, dx, dy).ConfigureAwait(false);
@@ -356,6 +367,7 @@ public sealed class PreviewController : IAsyncDisposable
         _debounce.Dispose();
         _cts.Cancel();
         await StopSessionAsync().ConfigureAwait(false);
+        await _shadow.DeleteAsync().ConfigureAwait(false);
         _cts.Dispose();
     }
 }

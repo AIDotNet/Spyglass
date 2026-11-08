@@ -40,7 +40,8 @@ connects) when you open the first `.axaml`/`.xaml` file or run a Spyglass comman
 The preview launches the `Avalonia.Designer.HostApp` that ships in your project's Avalonia package (found with
 `dotnet msbuild -getProperty:AvaloniaPreviewerNetCoreToolPath …`), so it needs an **executable Avalonia project that is
 built** (the window offers "Build project"). It is restarted when the project is rebuilt or crashes ("Restart"), and
-stopped when the window is closed.
+stopped when the window is closed. It runs from a private copy of the build output in the temp folder (`spyglass-preview`,
+removed with the window), so it does not lock `bin/` and you can build while the preview is open.
 
 **The preview is a floating WPF window, not a docked tool window.** VisualStudio.Extensibility's Remote UI (the only way
 an out-of-process extension can add a tool window) cannot show a dynamic bitmap, and reports neither the pane size nor
