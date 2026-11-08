@@ -37,7 +37,8 @@ jobs:
           dotnet-version: 10.0.x
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22: Windows shells do not expand the *.test.js in `npm test`, and node --test expands it itself only since 21.
+          node-version: '22'
           cache: npm
           cache-dependency-path: ide/vscode/package-lock.json
       - name: Build the hub
