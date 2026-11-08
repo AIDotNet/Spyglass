@@ -165,17 +165,21 @@ internal sealed class SpyglassService : DisposableObject, IDocumentEventsListene
 
     public void ViewChanged(string path, Func<string> text, bool isDirty) => Sync.Changed(path, text, isDirty);
 
-    /// <summary>The last view of the file closed: the hub hands the file back to its file watcher.</summary>
-    public void ViewClosed(string path)
+    /// <summary>
+    /// A view closed. Returns whether it was the file's last one (a split or second window keeps the file open); then the
+    /// hub hands the file back to its file watcher.
+    /// </summary>
+    public bool ViewClosed(string path)
     {
         lock (_views)
         {
             var n = _views.GetValueOrDefault(path) - 1;
-            if (n > 0) { _views[path] = n; return; }
+            if (n > 0) { _views[path] = n; return false; }
             _views.Remove(path);
         }
         Sync.Closed(path);
         _ = ClearDiagnosticsAsync(path);
+        return true;
     }
 
     Task IDocumentEventsListener.SavedAsync(DocumentEventArgs e, CancellationToken ct)

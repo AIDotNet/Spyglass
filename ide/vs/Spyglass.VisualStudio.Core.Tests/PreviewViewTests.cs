@@ -120,6 +120,26 @@ public sealed class PreviewViewTests
     [InlineData(60, 0.5)]
     public void Wheel_delta_is_in_notches(int delta, double notches) => Assert.Equal(notches, PreviewInput.WheelNotches(delta));
 
+    [Theory]
+    [InlineData("Tab")]
+    [InlineData("Left")]
+    [InlineData("Prior")]
+    [InlineData("Next")]
+    [InlineData("Return")]
+    [InlineData("Escape")]
+    public void Navigation_keys_are_kept_from_the_window(string key) => Assert.True(PreviewInput.IsWindowKey(key));
+
+    [Theory]
+    [InlineData("A")]
+    [InlineData("D1")]
+    [InlineData("Space")]
+    [InlineData("OemComma")]
+    [InlineData("NumPad5")]
+    [InlineData("DeadCharProcessed")]
+    [InlineData("ImeProcessed")]
+    [InlineData(null)]
+    public void Keys_that_can_produce_text_stay_unhandled(string? key) => Assert.False(PreviewInput.IsWindowKey(key));
+
     // ---------- theme injection ----------
 
     const string Ns = "xmlns=\"https://github.com/avaloniaui\"";

@@ -30,7 +30,7 @@ public sealed class PreviewProjectTests : IDisposable
         var r = PreviewProjectResolver.Parse(Path.Combine(_dir, "App.csproj"),
             Json(messy, Touch("bin/App.dll"), Touch("bin/App.runtimeconfig.json"), Touch("bin/App.deps.json")));
         Assert.NotNull(r.Project);
-        Assert.Equal(tool, r.Project!.ToolPath);
+        Assert.Equal(Path.GetFullPath(tool), r.Project!.ToolPath);
         Assert.Equal(_dir, r.Project.ProjectDirectory);
         Assert.Equal("Views/Main.axaml", r.Project.RelativeXamlPath(Path.Combine(_dir, "Views", "Main.axaml")));
     }

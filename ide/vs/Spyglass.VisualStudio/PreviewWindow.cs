@@ -303,7 +303,9 @@ internal sealed class PreviewWindow : Window
         var wpfKey = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
         if (PreviewInput.MapKey(wpfKey.ToString()) is { } key)
             _ = _controller.KeyAsync(down, key, default, null, Modifiers(null));
-        e.Handled = true;   // keys typed into the preview belong to the previewed UI (Tab, arrows, Enter…), not to this window
+        // Tab, arrows, Alt combinations… belong to the previewed UI, not to this window. Other keys stay unhandled, or WPF
+        // would not raise TextInput for them and typed text would never reach the previewer.
+        e.Handled = e.Key == System.Windows.Input.Key.System || PreviewInput.IsWindowKey(wpfKey.ToString());
     }
 
     (double X, double Y) Logical(MouseEventArgs e)

@@ -3,7 +3,7 @@
 #   rider:   the Rider plugin (ide/rider) to the JetBrains Marketplace;
 #   vscode:  the VS Code extension (ide/vscode) to the Visual Studio Marketplace, and to Open VSX when OVSX_PAT is set;
 #   vs:      the Visual Studio extension (ide/vs) to the Visual Studio Marketplace.
-# The jobs are independent: one failing does not stop the others.
+# The jobs are independent: one failing does not stop the others. Only vs has a gate: vs-check must pass first.
 # Uses NuGet Trusted Publishing (GitHub OIDC): no long-lived API key is stored. One-time setup on nuget.org:
 #   Account > Trusted Publishing > add a policy (owner, this repository, workflow file `release.yml`, environment `nuget`),
 #   then set the repository secret NUGET_USER to the nuget.org *username* (not the email).
@@ -115,7 +115,11 @@ jobs:
         if: env.OVSX_PAT != ''
         run: npx --yes ovsx publish spyglass-avalonia.vsix --pat "$OVSX_PAT"
 
+  vs-check:
+    uses: ./.github/workflows/vs-extension.yml
+
   vs:
+    needs: vs-check
     # Same Visual Studio Marketplace publisher and VSCE_PAT as the VS Code job. The .vsix can only be built on Windows
     # (VsixUtil); windows-2022 has Visual Studio 2022 with the extension development workload (VsixPublisher.exe).
     # Listing metadata: ide/vs/Spyglass.VisualStudio/publishManifest.json. VsixPublisher creates the extension on first

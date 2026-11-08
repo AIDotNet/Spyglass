@@ -84,6 +84,16 @@ public static class PreviewInput
         return Enum.TryParse<Key>(wpfKeyName, ignoreCase: false, out var k) && Enum.IsDefined(k) && k != Key.None ? k : null;
     }
 
+    static readonly HashSet<string> WindowKeys = new(StringComparer.OrdinalIgnoreCase)
+        { "Tab", "Left", "Up", "Right", "Down", "PageUp", "Prior", "PageDown", "Next", "Home", "End", "Return", "Enter", "Escape" };
+
+    /// <summary>
+    /// Whether the preview window must mark this key handled so that WPF does not use it itself (focus navigation, scrolling
+    /// the pane). Only those: handling a key's PreviewKeyDown also stops WPF from producing its TextInput, so a letter, digit,
+    /// dead key or IME key marked handled would never reach the previewed UI as text.
+    /// </summary>
+    public static bool IsWindowKey(string? wpfKeyName) => wpfKeyName is not null && WindowKeys.Contains(wpfKeyName);
+
     /// <summary>The modifier array the previewer expects, or null when none are held.</summary>
     public static InputModifiers[]? Modifiers(bool control, bool shift, bool alt, bool left = false, bool right = false, bool middle = false)
     {
