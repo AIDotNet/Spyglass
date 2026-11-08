@@ -1,0 +1,32 @@
+# Builds and tests the Visual Studio extension (ide/vs) and packages its .vsix. Called by ci.yml, and by release.yml before
+# it publishes. Same runner as the release: the .vsix can only be built on Windows (VsixUtil).
+name: vs-extension
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: microsoft/setup-msbuild@v2
+      # The real-hub and real-previewer tests skip themselves when these binaries are missing.
+      - name: Build the hub
+        run: dotnet build src/Spyglass.App -c Debug
+      - name: Build the sample app
+        run: dotnet build samples/Spyglass.Sample -c Debug
+      - name: Test
+        run: dotnet test --project ide/vs/Spyglass.VisualStudio.Core.Tests
+      - name: Package the .vsix
+        shell: pwsh
+        run: |
+          msbuild ide/vs/Spyglass.VisualStudio/Spyglass.VisualStudio.csproj /restore /p:Configuration=Release `
+            /p:DeployExtension=false /v:minimal
+          if ($LASTEXITCODE -ne 0) { throw "msbuild failed ($LASTEXITCODE)" }
+          if (-not (Get-ChildItem ide/vs/Spyglass.VisualStudio/bin/Release -Recurse -Filter *.vsix)) { throw "no .vsix produced" }

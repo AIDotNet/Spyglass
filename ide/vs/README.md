@@ -102,7 +102,6 @@ Port, command and auto start apply the next time Visual Studio starts.
 The extension connects to the Spyglass hub (`ws://127.0.0.1:29500/ide`, loopback only, with a per-hub token read from
 `~/.spyglass/hub-PORT.json`). It sends the buffers of `.axaml` files that a connected app compiled; the app's Spyglass
 agent recompiles them with Avalonia's runtime XAML loader and re-populates the live controls in place.
-Design: `design/hot-reload/` in the Spyglass repository.
 
 | Project | |
 |---|---|

@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Extensibility.Commands;
 using Microsoft.VisualStudio.Extensibility.Editor;
 using Microsoft.VisualStudio.Extensibility.Shell;
 using Microsoft.VisualStudio.ProjectSystem.Query;
+using Spyglass.VisualStudio.Core;
 
 namespace Spyglass.VisualStudio;
 
@@ -177,9 +178,8 @@ internal sealed class RunWithDotnetWatchCommand(SpyglassService spyglass) : Comm
         {
             UseShellExecute = true,   // its own console window, which the user closes to stop the app
             WorkingDirectory = Path.GetDirectoryName(path)!,
+            Arguments = DotnetWatchCommand.CmdArguments(path),
         };
-        psi.ArgumentList.Add("/k");
-        psi.ArgumentList.Add($"dotnet watch run --project \"{path}\"");
         Process.Start(psi)?.Dispose();
     }
 }

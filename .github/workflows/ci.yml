@@ -22,6 +22,9 @@ jobs:
       - run: dotnet test --project tests/Spyglass.Protocol.Tests
       - run: dotnet test --project tests/Spyglass.IntegrationTests
 
+  vs-extension:
+    uses: ./.github/workflows/vs-extension.yml
+
   pack:
     needs: build-test
     runs-on: ubuntu-latest

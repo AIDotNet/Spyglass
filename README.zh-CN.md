@@ -155,9 +155,9 @@ dotnet run --project src/Spyglass.App -- serve   # 不带 GUI 的 Hub：打印�
 ```
 
 **VS Code**：[`ide/vscode`](ide/vscode/README.md) 中的扩展会在你输入时发送*未保存*的修改（停止输入 300 ms 后），
-用波浪线显示 XAML 错误，并在没有运行实例时启动 `spyglass serve`。尚未上架 Marketplace：
-`cd ide/vscode && npm install && npm run package`，然后安装生成的 `.vsix`。**Rider**（[`ide/rider`](ide/rider/README.md)）和
-**Visual Studio**（[`ide/vs`](ide/vs/README.md)）功能相同；目前请从源码构建。
+用波浪线显示 XAML 错误，并在没有运行实例时启动 `spyglass serve`。**Rider**（[`ide/rider`](ide/rider/README.md)）和
+**Visual Studio**（[`ide/vs`](ide/vs/README.md)）同样如此。请安装 **Spyglass for Avalonia**：VS Code 和 Visual Studio 从
+Visual Studio Marketplace 安装，Rider 从 JetBrains Marketplace 安装。
 
 **设计时预览**：三个 IDE 扩展都能在编辑器旁渲染当前打开的 `.axaml`，无需运行应用
 （VS Code：*Spyglass: Open Preview*；Rider：Tools › Spyglass › Open Preview；Visual Studio：Extensions › Spyglass › Open Preview，

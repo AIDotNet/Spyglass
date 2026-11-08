@@ -159,9 +159,9 @@ dotnet run --project src/Spyglass.App -- serve   # hub without the GUI: prints c
 ```
 
 **VS Code**: the extension in [`ide/vscode`](ide/vscode/README.md) sends *unsaved* edits as you type (300 ms after you
-stop), shows XAML errors as squiggles, and starts `spyglass serve` when nothing is running. Not on the Marketplace yet:
-`cd ide/vscode && npm install && npm run package`, then install the `.vsix`. **Rider** ([`ide/rider`](ide/rider/README.md)) and
-**Visual Studio** ([`ide/vs`](ide/vs/README.md)) have the same features; build them from source for now.
+stop), shows XAML errors as squiggles, and starts `spyglass serve` when nothing is running. **Rider** ([`ide/rider`](ide/rider/README.md)) and
+**Visual Studio** ([`ide/vs`](ide/vs/README.md)) do the same. Install **Spyglass for Avalonia** from the Visual Studio Marketplace
+(VS Code and Visual Studio) or the JetBrains Marketplace (Rider).
 
 **Design-time preview**: all three IDE extensions can render the open `.axaml` next to the editor without running the app
 (VS Code: *Spyglass: Open Preview*, Rider: Tools › Spyglass › Open Preview, Visual Studio: Extensions › Spyglass › Open Preview,

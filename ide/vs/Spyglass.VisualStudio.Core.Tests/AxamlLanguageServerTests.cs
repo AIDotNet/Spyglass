@@ -91,9 +91,13 @@ public sealed class AxamlLanguageServerTests : IAsyncDisposable
         await Notify("initialized", []);
     }
 
+    /// <summary>Returns once the server has handled didOpen: notifications get no response, but it prepares the file last.</summary>
     async Task Open(string text)
     {
+        int PreparedCount() { lock (_backend.Prepared) return _backend.Prepared.Count; }
+        var before = PreparedCount();
         await Notify("textDocument/didOpen", new JsonObject { ["textDocument"] = new JsonObject { ["uri"] = Uri, ["languageId"] = "axaml", ["version"] = 1, ["text"] = text } });
+        await Wait.UntilAsync(() => PreparedCount() > before, "the server to handle didOpen");
     }
 
     static JsonObject At(int line, int character) => new()

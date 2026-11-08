@@ -51,7 +51,7 @@ internal sealed class XamlTextViewListener : ExtensionPart, ITextViewOpenClosedL
     public async Task TextViewClosedAsync(ITextViewSnapshot textView, CancellationToken cancellationToken)
     {
         await _spyglass.EnsureStartedAsync(cancellationToken);
-        if (PathOf(textView) is { } path) { _spyglass.ViewClosed(path); _preview.ViewClosed(path); }
+        if (PathOf(textView) is { } path && _spyglass.ViewClosed(path)) _preview.ViewClosed(path);
     }
 
     static string? PathOf(ITextViewSnapshot view) =>
