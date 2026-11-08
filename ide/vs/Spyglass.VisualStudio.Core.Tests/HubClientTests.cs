@@ -119,9 +119,10 @@ public sealed class HubClientTests : IAsyncLifetime
         Directory.CreateDirectory(_home);
         File.WriteAllText(Path.Combine(_home, $"hub-{Port}.json"), """{"token":"from-a-dead-hub"}""");
         var client = Client();
+        var failed = false;   // a refused connection takes about 2 s to report on Windows, so wait for it instead of a fixed time
+        client.StateChanged += s => { if (s == HubConnectionState.Disconnected) Volatile.Write(ref failed, true); };
         client.Start();
-        await Task.Delay(500);
-        Assert.Equal(HubConnectionState.Disconnected, client.State);
+        await Wait.UntilAsync(() => Volatile.Read(ref failed), "the connection to fail");
         var hub = await Hub();   // overwrites the token file
         await Wait.UntilAsync(() => client.IsConnected, "connected");
         Assert.Equal(1, hub.Accepted);
