@@ -25,6 +25,8 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.14.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // The platform's JUnit5TestSessionListener loads junit.framework.TestCase; without it the test process does not start.
+    testRuntimeOnly("junit:junit:4.13.2")
     testImplementation("org.java-websocket:Java-WebSocket:1.6.0")
 }
 

@@ -28,6 +28,7 @@ import dev.spyglass.rider.DiagnosticsPresenter
 import dev.spyglass.rider.hub.XamlDiagnostic
 import dev.spyglass.rider.hub.XamlDiagnostics
 import java.awt.image.BufferedImage
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
@@ -45,6 +46,7 @@ class SpyglassPreviewService(val project: Project) : Disposable {
     private var updateTimer: ScheduledFuture<*>? = null
     private var viewportTimer: ScheduledFuture<*>? = null
     private var watcher: ScheduledFuture<*>? = null
+    private val shadow = PreviewShadowCopy()   // the previewer runs from this copy, so bin/ stays unlocked for builds
     val diagnostics = DiagnosticsPresenter(project, this, "Spyglass Preview")
 
     // Session state; touched only on the scheduler thread except the @Volatile fields the UI reads.
@@ -103,7 +105,7 @@ class SpyglassPreviewService(val project: Project) : Disposable {
         active = false
         watcher?.cancel(false); watcher = null
         updateTimer?.cancel(false)
-        scheduler.execute { stopSession(); }
+        scheduler.execute { stopSession(); shadow.delete() }
         frame = null; error = null
         diagnostics.clearAll()
         updating = false
@@ -281,9 +283,13 @@ class SpyglassPreviewService(val project: Project) : Disposable {
         val dotnet = DotnetLocator.find(env)
         val info = PreviewProjects.load(csproj, dotnet, env)
         if (!active) return
+        val copy = try { shadow.sync(info) } catch (e: IOException) {
+            throw PreviewUnavailable("Could not copy the build output: ${e.message}", true, csproj)
+        }
+        if (!active) return
         val log = SpyglassProjectService.getInstance(project)
         lateinit var s: PreviewSession
-        s = PreviewSession(info, dotnet, object : PreviewSessionListener {
+        s = PreviewSession(copy, dotnet, object : PreviewSessionListener {
             override fun ready() { if (session === s && phase == PreviewPhase.LOADING) setState(PreviewPhase.STARTING, "Rendering…") }
             override fun frame(image: BufferedImage, dpi: Double) {
                 if (session !== s) return
@@ -372,6 +378,7 @@ class SpyglassPreviewService(val project: Project) : Disposable {
         updateTimer?.cancel(false); viewportTimer?.cancel(false); watcher?.cancel(false)
         session?.stop(); session = null
         scheduler.shutdownNow()
+        Thread({ shadow.delete() }, "Spyglass preview cleanup").apply { isDaemon = true; start() }
     }
 
     companion object {

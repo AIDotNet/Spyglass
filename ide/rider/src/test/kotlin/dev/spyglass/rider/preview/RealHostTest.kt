@@ -59,6 +59,38 @@ class RealHostTest {
     }
 
     @Test
+    fun `a real dotnet build succeeds while the previewer runs from the copy`() {
+        val dotnet = DotnetLocator.find()
+        val project = PreviewProjects.load(csproj, dotnet)
+        val shadow = PreviewShadowCopy()
+        try {
+            val s = PreviewSession(shadow.sync(project), dotnet, listener, log = { hostLog.appendLine(it) })
+            session = s
+            s.start(640.0, 480.0, 96.0)
+            assertNotNull(ready.poll(60, TimeUnit.SECONDS), "host did not announce the session; log:\n$hostLog")
+            s.updateXaml(Files.readString(xamlFile), "MainWindow.axaml")
+            val rendered = results.poll(60, TimeUnit.SECONDS)
+            assertNotNull(rendered, "no UpdateXamlResult; log:\n$hostLog")
+            assertNull(rendered!!.error, "unexpected error: ${rendered.error}")
+
+            val before = Files.getLastModifiedTime(project.targetPath)
+            // Touching a source file makes the build compile and copy the assembly again.
+            Files.setLastModifiedTime(csproj.resolveSibling("Program.cs"), java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis()))
+            val build = ProcessBuilder(dotnet, "build", csproj.toString(), "-nologo", "-v:q", "-p:UseSharedCompilation=false")
+                .redirectErrorStream(true)
+            build.environment()["MSBUILDDISABLENODEREUSE"] = "1"
+            val process = build.start()
+            val output = process.inputStream.bufferedReader().readText()
+            assertEquals(0, process.waitFor(), "dotnet build failed:\n$output")
+            assertTrue(Files.getLastModifiedTime(project.targetPath) > before, "the build did not rewrite bin/:\n$output")
+        } finally {
+            session?.stop()
+            session = null
+            shadow.delete()
+        }
+    }
+
+    @Test
     fun `renders the sample, reports xaml errors with line and column, and recovers`() {
         val projectInfo = PreviewProjects.load(csproj, DotnetLocator.find())
         assertEquals("MainWindow.axaml", PreviewProjects.projectRelativePath(projectInfo, xamlFile))
@@ -107,7 +139,7 @@ class RealHostTest {
     @Test
     fun `stopping ends the host process`() {
         val s = start()
-        val pid = ProcessHandle.allProcesses().filter { it.info().commandLine().map { c -> c.contains("Avalonia.Designer.HostApp") }.orElse(false) }.toList()
+        val pid = listOfNotNull(s.hostProcess?.toHandle())
         assertTrue(pid.isNotEmpty(), "host process not found")
         s.stop()
         val deadline = System.currentTimeMillis() + 10_000
@@ -118,7 +150,7 @@ class RealHostTest {
     @Test
     fun `a crashing host is reported as exited`() {
         val s = start()
-        ProcessHandle.allProcesses().filter { it.info().commandLine().map { c -> c.contains("Avalonia.Designer.HostApp") }.orElse(false) }.forEach { it.destroyForcibly() }
+        s.hostProcess!!.toHandle().destroyForcibly()
         assertNotNull(exited.poll(15, TimeUnit.SECONDS), "no exit notification")
         s.stop()
     }

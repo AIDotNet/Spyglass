@@ -30,3 +30,17 @@ jobs:
             /p:DeployExtension=false /v:minimal
           if ($LASTEXITCODE -ne 0) { throw "msbuild failed ($LASTEXITCODE)" }
           if (-not (Get-ChildItem ide/vs/Spyglass.VisualStudio/bin/Release -Recurse -Filter *.vsix)) { throw "no .vsix produced" }
+      # Rewrites the sample's bin/, so not with the other tests. Checks that a previewer running from bin/ breaks a real build
+      # on Windows (why the extensions run it from a copy), and that the Visual Studio extension's copy does not.
+      - name: Real build with the preview open
+        env:
+          SPYGLASS_REAL_BUILD_REPORT: ${{ runner.temp }}/real-build.md
+          MSBUILDDISABLENODEREUSE: 1
+        run: dotnet test --project ide/vs/Spyglass.VisualStudio.Core.Tests --filter-trait "Category=RealBuild"
+      - name: Real build results
+        if: ${{ !cancelled() }}
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP real-build.md
+          if (Test-Path $report) { Get-Content $report; Get-Content $report >> $env:GITHUB_STEP_SUMMARY }
+          else { Write-Host "No results: the real build step did not get that far." }

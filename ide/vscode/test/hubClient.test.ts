@@ -129,7 +129,8 @@ test("losing the hub clears reloadable files and reconnects", opts, async () => 
 });
 
 test("pathKey normalises", () => {
-  assert.equal(pathKey("/a/b/../c.axaml"), process.platform === "linux" ? "/a/c.axaml" : "/a/c.axaml".toLowerCase());
+  const resolved = path.resolve("/a/c.axaml");   // on Windows with the current drive and backslashes
+  assert.equal(pathKey("/a/b/../c.axaml"), process.platform === "linux" ? resolved : resolved.toLowerCase());
 });
 
 test("XAML IntelliSense: requests go out only when the hub has the capability", opts, async () => {
